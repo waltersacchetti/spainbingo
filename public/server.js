@@ -373,6 +373,16 @@ app.get('/api/test-simple', (req, res) => {
     });
 });
 
+// Endpoint de prueba simple
+app.get('/api/test-simple', (req, res) => {
+    console.log('🧪 Endpoint de prueba simple ejecutándose');
+    res.json({ 
+        success: true,
+        message: 'Endpoint de prueba funcionando',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Endpoint de prueba para login
 app.post('/api/test-login', (req, res) => {
     console.log('🧪 Endpoint de prueba login ejecutándose');
