@@ -3,6 +3,8 @@
  * Maneja login, registro y gestión de sesiones con base de datos real
  */
 
+console.log('🚀 auth.js cargado correctamente');
+
 class AuthManager {
     constructor() {
         this.currentUser = null;
@@ -89,6 +91,19 @@ class AuthManager {
         // Input validation
         this.setupInputValidation();
         console.log('🔗 Event listeners configurados');
+        
+        // Event listener directo al botón de registro como respaldo
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) {
+            console.log('🔘 Botón de registro encontrado, agregando listener directo');
+            registerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🔘 Click directo en botón de registro');
+                this.handleRegister();
+            });
+        } else {
+            console.log('❌ Botón de registro NO encontrado');
+        }
     }
 
     /**
@@ -155,6 +170,7 @@ class AuthManager {
      * Manejar registro
      */
     async handleRegister() {
+        console.log('🔐 ===== INICIO DE REGISTRO =====');
         console.log('🔐 Iniciando proceso de registro...');
         
         const fullName = document.getElementById('registerName').value;
@@ -662,4 +678,5 @@ const authManager = new AuthManager();
 // Exportar para uso global
 window.authManager = authManager;
 
-console.log('🔐 Sistema de autenticación cargado'); 
+console.log('🔐 Sistema de autenticación cargado');
+console.log('🔍 authManager disponible en:', window.authManager); 
