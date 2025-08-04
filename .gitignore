@@ -1,0 +1,303 @@
+# SpainBingo - .gitignore
+# Archivos y directorios que NO se deben incluir en Git
+
+# ========================================
+# DEPENDENCIAS Y MÓDULOS
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ========================================
+# ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# ========================================
+# Claves privadas y certificados
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+spainbingo-key.pem
+private-key.pem
+certificate.pem
+
+# Variables de entorno
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Configuración AWS
+aws-config.json
+aws-credentials.json
+.aws/
+
+# ========================================
+# ARCHIVOS DE LOGS
+# ========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Logs específicos de la aplicación
+app.log
+error.log
+access.log
+combined.log
+out.log
+err.log
+
+# Logs de PM2
+.pm2/
+pm2.log
+
+# ========================================
+# ARCHIVOS TEMPORALES Y CACHE
+# ========================================
+# Archivos temporales del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos temporales de editores
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Cache de npm/yarn
+.npm
+.eslintcache
+.stylelintcache
+
+# ========================================
+# ARCHIVOS DE DESPLIEGUE Y BUILD
+# ========================================
+# Archivos comprimidos
+*.tar.gz
+*.zip
+*.rar
+*.7z
+spainbingo-update.tar.gz
+backup-*.tar.gz
+
+# Archivos de build
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vuepress/dist
+
+# ========================================
+# ARCHIVOS DE AWS Y DESPLIEGUE
+# ========================================
+# Información de instancias (contiene datos sensibles)
+ec2-info.txt
+alb-info.txt
+cloudfront-info.txt
+instance-info.txt
+
+# Archivos de comandos temporales
+command_id.txt
+temp-*.txt
+
+# Buckets temporales
+spainbingo-temp/
+
+# ========================================
+# ARCHIVOS DE DESARROLLO
+# ========================================
+# Archivos de testing
+coverage/
+.nyc_output/
+.jest/
+
+# Archivos de debugging
+.debug/
+
+# Archivos de profiling
+*.cpuprofile
+*.heapsnapshot
+
+# ========================================
+# ARCHIVOS ESPECÍFICOS DEL PROYECTO
+# ========================================
+# Archivos de backup automáticos
+backup-before-deploy-*.tar.gz
+spainbingo-backup-*.tar.gz
+
+# Archivos de configuración local
+config.local.js
+settings.local.json
+
+# Archivos de sesión y datos temporales
+session-*.json
+temp-*.json
+cache-*.json
+
+# ========================================
+# ARCHIVOS DE SEGURIDAD
+# ========================================
+# Archivos de autenticación
+auth-tokens.json
+access-key.json
+credentials.json
+
+# Archivos de políticas
+codecommit-policy.json
+iam-policy.json
+
+# ========================================
+# ARCHIVOS DE MONITOREO Y MÉTRICAS
+# ========================================
+# Archivos de CloudWatch
+cloudwatch-*.json
+metrics-*.json
+
+# Archivos de logs de sistema
+system-logs/
+*.syslog
+
+# ========================================
+# ARCHIVOS DE BASE DE DATOS
+# ========================================
+# Archivos de base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# Dumps de base de datos
+*.sql
+*.dump
+
+# ========================================
+# ARCHIVOS DE MEDIA Y CONTENIDO
+# ========================================
+# Imágenes y archivos multimedia
+uploads/
+media/
+images/
+videos/
+audio/
+
+# Archivos de contenido generado
+generated/
+content/
+
+# ========================================
+# ARCHIVOS DE CONFIGURACIÓN DE EDITORES
+# ========================================
+# VSCode
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# IntelliJ/WebStorm
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ========================================
+# ARCHIVOS DE SISTEMA
+# ========================================
+# Archivos de sistema macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archivos de sistema Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de sistema Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ========================================
+# ARCHIVOS DE GIT
+# ========================================
+# Archivos de Git (por si acaso)
+.git/
+.gitignore~
+
+# ========================================
+# ARCHIVOS DE DOCKER
+# ========================================
+# Archivos de Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# ========================================
+# ARCHIVOS DE CI/CD
+# ========================================
+# Archivos de GitHub Actions
+.github/workflows/
+.github/actions/
+
+# Archivos de Travis CI
+.travis.yml
+
+# Archivos de Circle CI
+.circleci/
+
+# ========================================
+# ARCHIVOS DE DOCUMENTACIÓN TEMPORAL
+# ========================================
+# Archivos de documentación temporal
+docs/temp/
+*.md.bak
+*.txt.bak
+
+# ========================================
+# ARCHIVOS DE BACKUP Y VERSIONES
+# ========================================
+# Archivos de backup
+*.bak
+*.backup
+*.old
+*.orig
+
+# Archivos de versiones
+*.v1
+*.v2
+*.version
+
+# ========================================
+# COMENTARIOS Y EXPLICACIONES
+# ========================================
+# Este archivo .gitignore está diseñado específicamente para el proyecto SpainBingo
+# Incluye exclusiones para:
+# - Archivos sensibles (claves, certificados, variables de entorno)
+# - Dependencias y módulos
+# - Logs y archivos temporales
+# - Archivos de AWS y despliegue
+# - Archivos de desarrollo y testing
+# - Archivos de sistema operativo
+# - Archivos de editores y IDEs
+
+# Para agregar más exclusiones específicas, añádelas al final de este archivo 
