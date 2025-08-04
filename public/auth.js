@@ -143,6 +143,8 @@ class AuthManager {
      * Manejar registro
      */
     async handleRegister() {
+        console.log('🔐 Iniciando proceso de registro...');
+        
         const fullName = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
@@ -150,10 +152,15 @@ class AuthManager {
         const acceptTerms = document.getElementById('acceptTerms').checked;
         const acceptAge = document.getElementById('acceptAge').checked;
 
+        console.log('📝 Datos del formulario:', { fullName, email, acceptTerms, acceptAge });
+
         // Validar inputs
         if (!this.validateRegisterInputs(fullName, email, password, confirmPassword, acceptTerms, acceptAge)) {
+            console.log('❌ Validación fallida');
             return;
         }
+
+        console.log('✅ Validación exitosa');
 
         // Mostrar loading
         this.showLoading('register');
@@ -177,15 +184,21 @@ class AuthManager {
                 phone: ''
             };
 
+            console.log('📤 Enviando datos al servidor:', { ...userData, password: '[HIDDEN]' });
+
             const result = await this.register(userData);
             
+            console.log('📥 Respuesta del servidor:', result);
+            
             if (result.success) {
+                console.log('✅ Registro exitoso');
                 this.loginSuccess(result.user, false);
             } else {
+                console.log('❌ Error en registro:', result.error);
                 this.showError('register', result.error);
             }
         } catch (error) {
-            console.error('Error en registro:', error);
+            console.error('❌ Error en registro:', error);
             this.showError('register', 'Error al crear la cuenta');
         } finally {
             this.hideLoading('register');
@@ -425,6 +438,8 @@ class AuthManager {
      */
     async register(userData) {
         try {
+            console.log('🌐 Enviando petición a /api/register...');
+            
             const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
@@ -433,7 +448,10 @@ class AuthManager {
                 body: JSON.stringify(userData)
             });
 
+            console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+
             const data = await response.json();
+            console.log('📄 Datos de respuesta:', data);
             
             if (data.success) {
                 this.isAuthenticated = true;
@@ -445,7 +463,7 @@ class AuthManager {
                 return { success: false, error: data.error || 'Error de registro' };
             }
         } catch (error) {
-            console.error('Error en registro:', error);
+            console.error('❌ Error en registro:', error);
             return { success: false, error: 'Error de conexión' };
         }
     }
