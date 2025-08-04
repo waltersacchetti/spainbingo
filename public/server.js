@@ -445,6 +445,26 @@ app.get('/api/test-simple', (req, res) => {
     });
 });
 
+// Endpoint de prueba para login
+app.post('/api/test-login', (req, res) => {
+    console.log('🧪 Endpoint de prueba login ejecutándose');
+    console.log('📝 Datos recibidos:', req.body);
+    
+    res.json({ 
+        success: true,
+        message: 'Login de prueba exitoso',
+        user: {
+            id: 'test_123',
+            email: 'test@test.com',
+            username: 'testuser',
+            name: 'Usuario Test',
+            balance: 100.00,
+            level: 1
+        },
+        token: 'test_token_123'
+    });
+});
+
 // Endpoint de prueba para base de datos
 app.get('/api/test-db', async (req, res) => {
     try {
