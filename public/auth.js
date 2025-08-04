@@ -99,14 +99,6 @@ class AuthManager {
             });
         });
 
-        // Username validation
-        const usernameInput = document.getElementById('registerUsername');
-        if (usernameInput) {
-            usernameInput.addEventListener('blur', () => {
-                this.validateUsername(usernameInput.value);
-            });
-        }
-
         // Name validation
         const nameInput = document.getElementById('registerName');
         if (nameInput) {
@@ -151,19 +143,15 @@ class AuthManager {
      * Manejar registro
      */
     async handleRegister() {
-        const username = document.getElementById('registerUsername').value;
+        const fullName = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
-        const firstName = document.getElementById('registerFirstName').value;
-        const lastName = document.getElementById('registerLastName').value;
-        const dateOfBirth = document.getElementById('registerDateOfBirth').value;
-        const phone = document.getElementById('registerPhone').value;
         const acceptTerms = document.getElementById('acceptTerms').checked;
         const acceptAge = document.getElementById('acceptAge').checked;
 
         // Validar inputs
-        if (!this.validateRegisterInputs(username, email, password, confirmPassword, firstName, lastName, dateOfBirth, acceptTerms, acceptAge)) {
+        if (!this.validateRegisterInputs(fullName, email, password, confirmPassword, acceptTerms, acceptAge)) {
             return;
         }
 
@@ -171,14 +159,22 @@ class AuthManager {
         this.showLoading('register');
 
         try {
+            // Separar nombre completo en nombre y apellido
+            const nameParts = fullName.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
+            // Generar username basado en el email
+            const username = email.split('@')[0];
+
             const userData = {
                 username,
                 email,
                 password,
                 firstName,
                 lastName,
-                dateOfBirth,
-                phone
+                dateOfBirth: '1990-01-01', // Valor por defecto
+                phone: ''
             };
 
             const result = await this.register(userData);
@@ -189,6 +185,7 @@ class AuthManager {
                 this.showError('register', result.error);
             }
         } catch (error) {
+            console.error('Error en registro:', error);
             this.showError('register', 'Error al crear la cuenta');
         } finally {
             this.hideLoading('register');
@@ -217,10 +214,10 @@ class AuthManager {
     /**
      * Validar inputs de registro
      */
-    validateRegisterInputs(username, email, password, confirmPassword, firstName, lastName, dateOfBirth, acceptTerms, acceptAge) {
+    validateRegisterInputs(fullName, email, password, confirmPassword, acceptTerms, acceptAge) {
         let isValid = true;
 
-        if (!username || !this.validateUsername(username)) {
+        if (!fullName || !this.validateName(fullName)) {
             isValid = false;
         }
 
@@ -237,21 +234,6 @@ class AuthManager {
             isValid = false;
         }
 
-        if (!firstName) {
-            this.showFieldError('registerFirstName', 'El nombre es requerido');
-            isValid = false;
-        }
-
-        if (!lastName) {
-            this.showFieldError('registerLastName', 'El apellido es requerido');
-            isValid = false;
-        }
-
-        if (!dateOfBirth) {
-            this.showFieldError('registerDateOfBirth', 'La fecha de nacimiento es requerida');
-            isValid = false;
-        }
-
         if (!acceptTerms) {
             alert('Debes aceptar los términos y condiciones');
             isValid = false;
@@ -265,28 +247,7 @@ class AuthManager {
         return isValid;
     }
 
-    /**
-     * Validar username
-     */
-    validateUsername(username) {
-        if (!username) {
-            this.showFieldError('registerUsername', 'El usuario es requerido');
-            return false;
-        }
 
-        if (username.length < 3) {
-            this.showFieldError('registerUsername', 'El usuario debe tener al menos 3 caracteres');
-            return false;
-        }
-
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            this.showFieldError('registerUsername', 'El usuario solo puede contener letras, números y guiones bajos');
-            return false;
-        }
-
-        this.clearFieldError('registerUsername');
-        return true;
-    }
 
     /**
      * Validar email
