@@ -1,12 +1,13 @@
 /**
- * Sistema de Autenticación - Bingo Spain
- * Maneja login, registro y gestión de sesiones
+ * Sistema de Autenticación - SpainBingo
+ * Maneja login, registro y gestión de sesiones con base de datos real
  */
 
 class AuthManager {
     constructor() {
         this.currentUser = null;
         this.isAuthenticated = false;
+        this.sessionToken = null;
         this.initializeAuth();
     }
 
@@ -14,25 +15,27 @@ class AuthManager {
      * Inicializar sistema de autenticación
      */
     initializeAuth() {
-        this.checkExistingSession();
+        this.loadSession();
         this.setupEventListeners();
         console.log('🔐 Sistema de autenticación inicializado');
     }
 
     /**
-     * Verificar sesión existente
+     * Cargar sesión desde localStorage
      */
-    checkExistingSession() {
+    loadSession() {
         const session = localStorage.getItem('spainbingo_session');
         if (session) {
             try {
-                const userData = JSON.parse(session);
+                const sessionData = JSON.parse(session);
                 const now = Date.now();
-                
-                // Verificar si la sesión no ha expirado (24 horas)
-                if (userData.expiresAt && now < userData.expiresAt) {
-                    this.currentUser = userData.user;
+                const sessionAge = now - sessionData.timestamp;
+                const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+
+                if (sessionAge < maxAge) {
                     this.isAuthenticated = true;
+                    this.currentUser = sessionData.user;
+                    this.sessionToken = sessionData.token;
                     console.log('✅ Sesión existente encontrada');
                     
                     // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
@@ -44,7 +47,7 @@ class AuthManager {
                     this.logout();
                 }
             } catch (error) {
-                console.error('Error al parsear sesión:', error);
+                console.error('Error cargando sesión:', error);
                 this.logout();
             }
         }
@@ -96,6 +99,14 @@ class AuthManager {
             });
         });
 
+        // Username validation
+        const usernameInput = document.getElementById('registerUsername');
+        if (usernameInput) {
+            usernameInput.addEventListener('blur', () => {
+                this.validateUsername(usernameInput.value);
+            });
+        }
+
         // Name validation
         const nameInput = document.getElementById('registerName');
         if (nameInput) {
@@ -109,12 +120,12 @@ class AuthManager {
      * Manejar login
      */
     async handleLogin() {
-        const email = document.getElementById('loginEmail').value;
+        const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
         const rememberMe = document.getElementById('rememberMe').checked;
 
         // Validar inputs
-        if (!this.validateLoginInputs(email, password)) {
+        if (!this.validateLoginInputs(username, password)) {
             return;
         }
 
@@ -122,16 +133,12 @@ class AuthManager {
         this.showLoading('login');
 
         try {
-            // Simular llamada a API
-            await this.simulateApiCall(1000);
+            const result = await this.login(username, password);
             
-            // Verificar credenciales (en producción esto sería una llamada real a la API)
-            const user = this.authenticateUser(email, password);
-            
-            if (user) {
-                this.loginSuccess(user, rememberMe);
+            if (result.success) {
+                this.loginSuccess(result.user, rememberMe);
             } else {
-                this.showError('login', 'Email o contraseña incorrectos');
+                this.showError('login', result.error);
             }
         } catch (error) {
             this.showError('login', 'Error al conectar con el servidor');
@@ -144,15 +151,19 @@ class AuthManager {
      * Manejar registro
      */
     async handleRegister() {
-        const name = document.getElementById('registerName').value;
+        const username = document.getElementById('registerUsername').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        const firstName = document.getElementById('registerFirstName').value;
+        const lastName = document.getElementById('registerLastName').value;
+        const dateOfBirth = document.getElementById('registerDateOfBirth').value;
+        const phone = document.getElementById('registerPhone').value;
         const acceptTerms = document.getElementById('acceptTerms').checked;
         const acceptAge = document.getElementById('acceptAge').checked;
 
         // Validar inputs
-        if (!this.validateRegisterInputs(name, email, password, confirmPassword, acceptTerms, acceptAge)) {
+        if (!this.validateRegisterInputs(username, email, password, confirmPassword, firstName, lastName, dateOfBirth, acceptTerms, acceptAge)) {
             return;
         }
 
@@ -160,19 +171,23 @@ class AuthManager {
         this.showLoading('register');
 
         try {
-            // Simular llamada a API
-            await this.simulateApiCall(1500);
-            
-            // Verificar si el email ya existe
-            if (this.emailExists(email)) {
-                this.showError('register', 'Este email ya está registrado');
-                return;
-            }
+            const userData = {
+                username,
+                email,
+                password,
+                firstName,
+                lastName,
+                dateOfBirth,
+                phone
+            };
 
-            // Crear usuario
-            const user = this.createUser(name, email, password);
-            this.loginSuccess(user, false);
+            const result = await this.register(userData);
             
+            if (result.success) {
+                this.loginSuccess(result.user, false);
+            } else {
+                this.showError('register', result.error);
+            }
         } catch (error) {
             this.showError('register', 'Error al crear la cuenta');
         } finally {
@@ -183,10 +198,11 @@ class AuthManager {
     /**
      * Validar inputs de login
      */
-    validateLoginInputs(email, password) {
+    validateLoginInputs(username, password) {
         let isValid = true;
 
-        if (!email || !this.validateEmail(email, 'loginEmail')) {
+        if (!username) {
+            this.showFieldError('loginUsername', 'El usuario o email es requerido');
             isValid = false;
         }
 
@@ -201,10 +217,10 @@ class AuthManager {
     /**
      * Validar inputs de registro
      */
-    validateRegisterInputs(name, email, password, confirmPassword, acceptTerms, acceptAge) {
+    validateRegisterInputs(username, email, password, confirmPassword, firstName, lastName, dateOfBirth, acceptTerms, acceptAge) {
         let isValid = true;
 
-        if (!name || !this.validateName(name)) {
+        if (!username || !this.validateUsername(username)) {
             isValid = false;
         }
 
@@ -221,6 +237,21 @@ class AuthManager {
             isValid = false;
         }
 
+        if (!firstName) {
+            this.showFieldError('registerFirstName', 'El nombre es requerido');
+            isValid = false;
+        }
+
+        if (!lastName) {
+            this.showFieldError('registerLastName', 'El apellido es requerido');
+            isValid = false;
+        }
+
+        if (!dateOfBirth) {
+            this.showFieldError('registerDateOfBirth', 'La fecha de nacimiento es requerida');
+            isValid = false;
+        }
+
         if (!acceptTerms) {
             alert('Debes aceptar los términos y condiciones');
             isValid = false;
@@ -232,6 +263,29 @@ class AuthManager {
         }
 
         return isValid;
+    }
+
+    /**
+     * Validar username
+     */
+    validateUsername(username) {
+        if (!username) {
+            this.showFieldError('registerUsername', 'El usuario es requerido');
+            return false;
+        }
+
+        if (username.length < 3) {
+            this.showFieldError('registerUsername', 'El usuario debe tener al menos 3 caracteres');
+            return false;
+        }
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            this.showFieldError('registerUsername', 'El usuario solo puede contener letras, números y guiones bajos');
+            return false;
+        }
+
+        this.clearFieldError('registerUsername');
+        return true;
     }
 
     /**
@@ -332,7 +386,13 @@ class AuthManager {
      * Mostrar error general
      */
     showError(type, message) {
-        alert(message); // En producción esto sería un toast o modal más elegante
+        const errorElement = document.getElementById(type + 'Error');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        } else {
+            alert(message);
+        }
     }
 
     /**
@@ -370,69 +430,129 @@ class AuthManager {
     }
 
     /**
-     * Simular llamada a API
+     * Login real con base de datos
      */
-    simulateApiCall(delay) {
-        return new Promise(resolve => setTimeout(resolve, delay));
-    }
+    async login(username, password) {
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-    /**
-     * Autenticar usuario (simulado)
-     */
-    authenticateUser(email, password) {
-        // En producción esto sería una llamada real a la API
-        const users = JSON.parse(localStorage.getItem('spainbingo_users') || '[]');
-        const user = users.find(u => u.email === email && u.password === password);
-        
-        if (user) {
-            return {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                balance: user.balance || 50.00,
-                level: user.level || 1,
-                createdAt: user.createdAt
-            };
+            const data = await response.json();
+            
+            if (data.success) {
+                this.isAuthenticated = true;
+                this.currentUser = data.user;
+                this.sessionToken = data.token;
+                
+                return { success: true, user: this.currentUser };
+            } else {
+                return { success: false, error: data.error || 'Error de autenticación' };
+            }
+        } catch (error) {
+            console.error('Error en login:', error);
+            return { success: false, error: 'Error de conexión' };
         }
-        
-        return null;
     }
 
     /**
-     * Verificar si email existe
+     * Registro real con base de datos
      */
-    emailExists(email) {
-        const users = JSON.parse(localStorage.getItem('spainbingo_users') || '[]');
-        return users.some(u => u.email === email);
+    async register(userData) {
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.isAuthenticated = true;
+                this.currentUser = data.user;
+                this.sessionToken = data.token;
+                
+                return { success: true, user: this.currentUser };
+            } else {
+                return { success: false, error: data.error || 'Error de registro' };
+            }
+        } catch (error) {
+            console.error('Error en registro:', error);
+            return { success: false, error: 'Error de conexión' };
+        }
     }
 
     /**
-     * Crear usuario
+     * Obtener perfil del usuario
      */
-    createUser(name, email, password) {
-        const users = JSON.parse(localStorage.getItem('spainbingo_users') || '[]');
-        
-        const newUser = {
-            id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            name: name,
-            email: email,
-            password: password, // En producción esto estaría hasheado
-            balance: 50.00,
-            level: 1,
-            createdAt: new Date().toISOString()
-        };
-        
-        users.push(newUser);
-        localStorage.setItem('spainbingo_users', JSON.stringify(users));
-        
-        return {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            balance: newUser.balance,
-            level: newUser.level,
-            createdAt: newUser.createdAt
-        };
+    async getProfile() {
+        if (!this.sessionToken) {
+            return { success: false, error: 'No autenticado' };
+        }
+
+        try {
+            const response = await fetch('/api/user/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.sessionToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.currentUser = data.user;
+                return { success: true, user: this.currentUser };
+            } else {
+                if (response.status === 401) {
+                    this.logout();
+                }
+                return { success: false, error: data.error };
+            }
+        } catch (error) {
+            console.error('Error obteniendo perfil:', error);
+            return { success: false, error: 'Error de conexión' };
+        }
+    }
+
+    /**
+     * Actualizar perfil
+     */
+    async updateProfile(profileData) {
+        if (!this.sessionToken) {
+            return { success: false, error: 'No autenticado' };
+        }
+
+        try {
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.sessionToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.currentUser = data.user;
+                return { success: true, user: this.currentUser };
+            } else {
+                return { success: false, error: data.error };
+            }
+        } catch (error) {
+            console.error('Error actualizando perfil:', error);
+            return { success: false, error: 'Error de conexión' };
+        }
     }
 
     /**
@@ -442,21 +562,19 @@ class AuthManager {
         this.currentUser = user;
         this.isAuthenticated = true;
         
-        // Crear sesión
-        const sessionData = {
-            user: user,
-            expiresAt: rememberMe ? Date.now() + (7 * 24 * 60 * 60 * 1000) : Date.now() + (24 * 60 * 60 * 1000),
-            createdAt: Date.now()
-        };
-        
-        localStorage.setItem('spainbingo_session', JSON.stringify(sessionData));
+        // Guardar en localStorage
+        localStorage.setItem('spainbingo_session', JSON.stringify({
+            user: this.currentUser,
+            token: this.sessionToken,
+            timestamp: Date.now()
+        }));
         
         // Registrar evento de auditoría
         if (window.securityManager) {
-            window.securityManager.logEvent('user_login', { userId: user.id, email: user.email });
+            window.securityManager.logEvent('user_login', { userId: user.id, username: user.username });
         }
         
-        console.log('✅ Login exitoso:', user.name);
+        console.log('✅ Login exitoso:', user.username);
         
         // Redirigir al juego
         this.redirectToGame();
@@ -479,6 +597,7 @@ class AuthManager {
     logout() {
         this.currentUser = null;
         this.isAuthenticated = false;
+        this.sessionToken = null;
         localStorage.removeItem('spainbingo_session');
         
         // Registrar evento de auditoría
@@ -506,6 +625,13 @@ class AuthManager {
      */
     getCurrentUser() {
         return this.currentUser;
+    }
+
+    /**
+     * Obtener token de sesión
+     */
+    getSessionToken() {
+        return this.sessionToken;
     }
 }
 

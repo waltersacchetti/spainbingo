@@ -60,7 +60,13 @@ check_aws_cli() {
 
 # Crear Subnet Group para RDS
 create_subnet_group() {
-    show_info "Creando Subnet Group para RDS..."
+    show_info "Verificando Subnet Group para RDS..."
+    
+    # Verificar si ya existe
+    if aws rds describe-db-subnet-groups --db-subnet-group-names $DB_SUBNET_GROUP_NAME &>/dev/null; then
+        show_info "Subnet Group ya existe: $DB_SUBNET_GROUP_NAME"
+        return 0
+    fi
     
     # Obtener VPC ID y Subnets
     VPC_ID=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query 'Vpcs[0].VpcId' --output text)
@@ -79,10 +85,19 @@ create_subnet_group() {
 
 # Crear Security Group para RDS
 create_security_group() {
-    show_info "Creando Security Group para RDS..."
+    show_info "Verificando Security Group para RDS..."
     
     # Obtener VPC ID
     VPC_ID=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query 'Vpcs[0].VpcId' --output text)
+    
+    # Verificar si ya existe
+    EXISTING_SG=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$DB_SECURITY_GROUP_NAME" --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+    
+    if [ -n "$EXISTING_SG" ] && [ "$EXISTING_SG" != "None" ]; then
+        show_info "Security Group ya existe: $EXISTING_SG"
+        SG_ID=$EXISTING_SG
+        return 0
+    fi
     
     # Crear Security Group
     SG_ID=$(aws ec2 create-security-group \
@@ -92,19 +107,39 @@ create_security_group() {
         --query 'GroupId' \
         --output text)
     
-    # Permitir acceso desde EC2
-    aws ec2 authorize-security-group-ingress \
-        --group-id $SG_ID \
-        --protocol tcp \
-        --port 5432 \
-        --source-group $(aws ec2 describe-security-groups --filters "Name=group-name,Values=spainbingo-ec2-sg" --query 'SecurityGroups[0].GroupId' --output text)
+    # Permitir acceso desde EC2 (usar CIDR por defecto si no encuentra el SG)
+    EC2_SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=spainbingo-ec2-sg" --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+    
+    if [ -n "$EC2_SG_ID" ] && [ "$EC2_SG_ID" != "None" ]; then
+        aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 5432 \
+            --source-group $EC2_SG_ID
+        show_info "Acceso configurado desde Security Group EC2: $EC2_SG_ID"
+    else
+        # Si no encuentra el SG, permitir acceso desde cualquier IP de la VPC
+        VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids $VPC_ID --query 'Vpcs[0].CidrBlock' --output text)
+        aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 5432 \
+            --cidr $VPC_CIDR
+        show_info "Acceso configurado desde VPC CIDR: $VPC_CIDR"
+    fi
     
     show_success "Security Group creado: $SG_ID"
 }
 
 # Crear Parameter Group
 create_parameter_group() {
-    show_info "Creando Parameter Group para RDS..."
+    show_info "Verificando Parameter Group para RDS..."
+    
+    # Verificar si ya existe
+    if aws rds describe-db-parameter-groups --db-parameter-group-names $DB_PARAMETER_GROUP_NAME &>/dev/null; then
+        show_info "Parameter Group ya existe: $DB_PARAMETER_GROUP_NAME"
+        return 0
+    fi
     
     aws rds create-db-parameter-group \
         --db-parameter-group-name $DB_PARAMETER_GROUP_NAME \
@@ -116,7 +151,13 @@ create_parameter_group() {
 
 # Crear instancia de base de datos
 create_database() {
-    show_info "Creando instancia de base de datos PostgreSQL..."
+    show_info "Verificando instancia de base de datos PostgreSQL..."
+    
+    # Verificar si ya existe
+    if aws rds describe-db-instances --db-instance-identifier $DB_INSTANCE_IDENTIFIER &>/dev/null; then
+        show_info "Instancia de base de datos ya existe: $DB_INSTANCE_IDENTIFIER"
+        return 0
+    fi
     
     # Obtener VPC ID
     VPC_ID=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query 'Vpcs[0].VpcId' --output text)

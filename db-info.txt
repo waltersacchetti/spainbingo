@@ -1,0 +1,8 @@
+# Información de la Base de Datos SpainBingo
+DB_INSTANCE_IDENTIFIER=spainbingo-db
+DB_NAME=spainbingo
+DB_USERNAME=spainbingo_admin
+DB_PASSWORD=SpainBingo2024!
+DB_ENDPOINT=spainbingo-db.clzgxn85wdjh.eu-west-1.rds.amazonaws.com
+DB_PORT=5432
+DB_CONNECTION_STRING=postgresql://spainbingo_admin:SpainBingo2024!@spainbingo-db.clzgxn85wdjh.eu-west-1.rds.amazonaws.com:5432/spainbingo
