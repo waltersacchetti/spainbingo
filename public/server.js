@@ -201,6 +201,7 @@ app.post('/api/login', [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty()
 ], async (req, res) => {
+    console.log('🚀 ENDPOINT LOGIN EJECUTÁNDOSE');
     try {
         console.log('🔐 ===== INICIO DE LOGIN =====');
         console.log('📝 Datos recibidos:', req.body);
@@ -333,7 +334,9 @@ app.post('/api/login', [
         console.log('🔐 ===== LOGIN EXITOSO =====');
         console.log('📤 Enviando respuesta:', { ...response, token: '[HIDDEN]' });
         
+        console.log('📤 Enviando respuesta final...');
         res.json(response);
+        console.log('✅ Respuesta enviada');
 
     } catch (error) {
         console.error('❌ Error en login:', error);
