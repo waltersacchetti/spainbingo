@@ -198,27 +198,24 @@ app.post('/api/register', [
 });
 
 app.post('/api/login', [
-    body('username').notEmpty(),
+    body('email').isEmail().normalizeEmail(),
     body('password').notEmpty()
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ 
-                error: 'Usuario y contraseña son requeridos' 
+                error: 'Email y contraseña son requeridos' 
             });
         }
 
-        const { username, password } = req.body;
+        const { email, password } = req.body;
 
-        // Buscar usuario por username o email
+        console.log('🔐 Intento de login para email:', email);
+
+        // Buscar usuario por email
         const user = await User.findOne({
-            where: {
-                [sequelize.Op.or]: [
-                    { username: username },
-                    { email: username }
-                ]
-            }
+            where: { email: email }
         });
 
         if (!user) {

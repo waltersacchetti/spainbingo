@@ -16,9 +16,9 @@ class AuthManager {
     /**
      * Inicializar sistema de autenticación
      */
-    initializeAuth() {
+    async initializeAuth() {
         console.log('🔐 Iniciando sistema de autenticación...');
-        this.loadSession();
+        await this.loadSession();
         this.setupEventListeners();
         console.log('🔐 Sistema de autenticación inicializado');
     }
@@ -26,7 +26,7 @@ class AuthManager {
     /**
      * Cargar sesión desde localStorage
      */
-    loadSession() {
+    async loadSession() {
         const session = localStorage.getItem('spainbingo_session');
         if (session) {
             try {
@@ -36,23 +36,64 @@ class AuthManager {
                 const maxAge = 24 * 60 * 60 * 1000; // 24 horas
 
                 if (sessionAge < maxAge) {
-                    this.isAuthenticated = true;
-                    this.currentUser = sessionData.user;
-                    this.sessionToken = sessionData.token;
-                    console.log('✅ Sesión existente encontrada');
+                    // Verificar con el servidor que la sesión sigue siendo válida
+                    console.log('🔍 Verificando sesión con el servidor...');
+                    const isValid = await this.verifySessionWithServer(sessionData.token);
                     
-                    // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
-                    if (window.location.pathname.includes('login.html')) {
-                        this.redirectToGame();
+                    if (isValid) {
+                        this.isAuthenticated = true;
+                        this.currentUser = sessionData.user;
+                        this.sessionToken = sessionData.token;
+                        console.log('✅ Sesión válida confirmada por el servidor');
+                        
+                        // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
+                        if (window.location.pathname.includes('login.html')) {
+                            this.redirectToGame();
+                        }
+                    } else {
+                        console.log('❌ Sesión inválida según el servidor');
+                        this.logout();
                     }
                 } else {
                     // Sesión expirada
+                    console.log('❌ Sesión expirada');
                     this.logout();
                 }
             } catch (error) {
                 console.error('Error cargando sesión:', error);
                 this.logout();
             }
+        } else {
+            console.log('🔍 No hay sesión existente');
+        }
+    }
+
+    /**
+     * Verificar sesión con el servidor
+     */
+    async verifySessionWithServer(token) {
+        try {
+            const response = await fetch('/api/user/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log('✅ Sesión verificada con el servidor');
+                    return true;
+                }
+            }
+            
+            console.log('❌ Sesión no válida en el servidor');
+            return false;
+        } catch (error) {
+            console.error('❌ Error verificando sesión:', error);
+            return false;
         }
     }
 
@@ -459,29 +500,34 @@ class AuthManager {
     /**
      * Login real con base de datos
      */
-    async login(username, password) {
+    async login(email, password) {
         try {
+            console.log('🌐 Enviando petición de login...');
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ email, password })
             });
 
+            console.log('📡 Respuesta del servidor:', response.status, response.statusText);
             const data = await response.json();
+            console.log('📄 Datos de respuesta:', data);
             
             if (data.success) {
                 this.isAuthenticated = true;
                 this.currentUser = data.user;
                 this.sessionToken = data.token;
                 
+                console.log('✅ Login exitoso en el servidor');
                 return { success: true, user: this.currentUser };
             } else {
+                console.log('❌ Login fallido:', data.error);
                 return { success: false, error: data.error || 'Error de autenticación' };
             }
         } catch (error) {
-            console.error('Error en login:', error);
+            console.error('❌ Error en login:', error);
             return { success: false, error: 'Error de conexión' };
         }
     }
@@ -699,6 +745,13 @@ function showForgotPassword() {
 
 // Inicializar sistema de autenticación
 const authManager = new AuthManager();
+
+// Inicializar de forma asíncrona
+authManager.initializeAuth().then(() => {
+    console.log('🔐 Sistema de autenticación inicializado completamente');
+}).catch(error => {
+    console.error('❌ Error inicializando autenticación:', error);
+});
 
 // Exportar para uso global
 window.authManager = authManager;
