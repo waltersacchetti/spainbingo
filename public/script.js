@@ -1,12 +1,10 @@
 // Variable global para el juego
 let game;
 
-console.log('🚀 script.js cargado correctamente');
-
 // Clase principal del juego
 class BingoPro {
     constructor() {
-        console.log('🎮 Inicializando BingoPro...');
+        console.log('Inicializando BingoPro...');
         this.calledNumbers = new Set();
         this.userCards = [];
         this.userBalance = 50.00;
@@ -41,10 +39,7 @@ class BingoPro {
         this.setupEventListeners();
         this.initializeSounds();
         this.updateUI();
-        console.log('🎮 BingoPro inicializado correctamente');
-        console.log('🎮 Event listeners configurados');
-        console.log('🎮 Sonidos inicializados');
-        console.log('🎮 UI actualizada');
+        console.log('BingoPro inicializado correctamente');
     }
 
     initializeGame() {
@@ -899,7 +894,7 @@ class BingoPro {
     }
 
     setupEventListeners() {
-        console.log('🎮 Configurando event listeners...');
+        console.log('Configurando event listeners...');
         
         // Navegación por pestañas
         document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -1182,22 +1177,17 @@ window.resetWelcomeExperience = function() {
 
 // Inicializar el juego cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎮 DOM cargado, verificando autenticación...');
-    console.log('🔍 authManager disponible:', typeof authManager !== 'undefined');
-    
     // Verificar autenticación antes de inicializar el juego
     if (typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
         const user = authManager.getCurrentUser();
-        console.log('✅ Usuario autenticado:', user);
+        console.log('✅ Usuario autenticado:', user.name);
         
         // Actualizar información del usuario en la UI
         updateUserInfo(user);
         
         // Inicializar el juego
-        console.log('🎮 Inicializando juego...');
         bingoGame = new BingoPro();
         bingoGame.initializeGame();
-        console.log('🎮 Juego inicializado correctamente');
     } else {
         // Usuario no autenticado, redirigir a login
         console.log('🔒 Usuario no autenticado, redirigiendo a login...');
@@ -1207,39 +1197,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Función para actualizar información del usuario en la UI
 function updateUserInfo(user) {
-    console.log('👤 Actualizando información del usuario:', user);
+    // Actualizar nombre de usuario
+    const usernameElement = document.querySelector('.username');
+    if (usernameElement) {
+        usernameElement.textContent = user.name;
+    }
     
-    try {
-        // Actualizar nombre de usuario
-        const usernameElement = document.querySelector('.username');
-        if (usernameElement && user && user.name) {
-            usernameElement.textContent = user.name;
-            console.log('✅ Nombre de usuario actualizado:', user.name);
-        } else {
-            console.log('⚠️ No se pudo actualizar nombre de usuario');
-        }
-        
-        // Actualizar saldo
-        const balanceElement = document.getElementById('userBalance');
-        if (balanceElement && user && typeof user.balance === 'number') {
-            balanceElement.textContent = `€${user.balance.toFixed(2)}`;
-            console.log('✅ Saldo actualizado:', user.balance);
-        } else {
-            console.log('⚠️ No se pudo actualizar saldo');
-        }
-        
-        // Actualizar nivel
-        const levelElement = document.querySelector('.user-level');
-        if (levelElement && user && user.level) {
-            levelElement.textContent = `Nivel ${user.level}`;
-            console.log('✅ Nivel actualizado:', user.level);
-        } else {
-            console.log('⚠️ No se pudo actualizar nivel');
-        }
-        
-        console.log('✅ Información del usuario actualizada correctamente');
-    } catch (error) {
-        console.error('❌ Error actualizando información del usuario:', error);
+    // Actualizar saldo
+    const balanceElement = document.getElementById('userBalance');
+    if (balanceElement) {
+        balanceElement.textContent = `€${user.balance.toFixed(2)}`;
+    }
+    
+    // Actualizar nivel
+    const levelElement = document.querySelector('.user-level');
+    if (levelElement) {
+        levelElement.textContent = `Nivel ${user.level}`;
     }
 }
 

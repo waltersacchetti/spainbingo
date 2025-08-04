@@ -2,16 +2,16 @@ module.exports = {
   apps: [{
     name: 'spainbingo',
     script: 'server.js',
-    cwd: '/home/ec2-user',
     instances: 1,
     exec_mode: 'fork',
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
+    cwd: '/home/ec2-user',
     env: {
       NODE_ENV: 'production',
       PORT: 3000,
-      DB_HOST: 'spainbingo-db.clzgxn85wdjh.eu-west-1.rds.amazonaws.com',
+      DB_HOST: 'spainbingo-db.cqjqjqjqjqjq.eu-west-1.rds.amazonaws.com',
       DB_PORT: 5432,
       DB_NAME: 'spainbingo',
       DB_USERNAME: 'spainbingo_admin',
