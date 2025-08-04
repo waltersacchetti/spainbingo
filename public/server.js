@@ -435,6 +435,15 @@ app.get('/health', async (req, res) => {
     }
 });
 
+// Endpoint de prueba simple
+app.get('/api/test-simple', (req, res) => {
+    console.log('🧪 Endpoint de prueba simple ejecutándose');
+    res.json({ 
+        message: 'Endpoint de prueba funcionando',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Endpoint de prueba para base de datos
 app.get('/api/test-db', async (req, res) => {
     try {
