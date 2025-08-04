@@ -92,6 +92,12 @@ check_app_status() {
 update_from_git() {
     show_info "Actualizando desde Git..."
     
+    # Primero sincronizar archivos con public
+    if [ -f "sync-public.sh" ]; then
+        show_info "Sincronizando archivos con carpeta public..."
+        ./sync-public.sh sync
+    fi
+    
     aws ssm send-command \
         --instance-ids $INSTANCE_ID \
         --document-name "AWS-RunShellScript" \
