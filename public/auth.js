@@ -120,12 +120,12 @@ class AuthManager {
      * Manejar login
      */
     async handleLogin() {
-        const username = document.getElementById('loginUsername').value;
+        const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         const rememberMe = document.getElementById('rememberMe').checked;
 
         // Validar inputs
-        if (!this.validateLoginInputs(username, password)) {
+        if (!this.validateLoginInputs(email, password)) {
             return;
         }
 
@@ -198,11 +198,11 @@ class AuthManager {
     /**
      * Validar inputs de login
      */
-    validateLoginInputs(username, password) {
+    validateLoginInputs(email, password) {
         let isValid = true;
 
-        if (!username) {
-            this.showFieldError('loginUsername', 'El usuario o email es requerido');
+        if (!email) {
+            this.showFieldError('loginEmail', 'El email es requerido');
             isValid = false;
         }
 
@@ -432,14 +432,14 @@ class AuthManager {
     /**
      * Login real con base de datos
      */
-    async login(username, password) {
+    async login(email, password) {
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ email, password })
             });
 
             const data = await response.json();
