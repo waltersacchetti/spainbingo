@@ -217,12 +217,12 @@ class AuthManager {
             
             console.log('📥 Respuesta del login:', result);
             
-            if (result.success) {
+            if (result.success && result.user) {
                 console.log('✅ Login exitoso');
                 this.loginSuccess(result.user, rememberMe);
             } else {
-                console.log('❌ Error en login:', result.error);
-                this.showError('login', result.error);
+                console.log('❌ Error en login:', result.error || 'Usuario no recibido');
+                this.showError('login', result.error || 'Error de autenticación');
             }
         } catch (error) {
             console.error('❌ Error en login:', error);
@@ -515,15 +515,16 @@ class AuthManager {
             const data = await response.json();
             console.log('📄 Datos de respuesta:', data);
             
-            if (data.success) {
+            if (data.success && data.user) {
                 this.isAuthenticated = true;
                 this.currentUser = data.user;
                 this.sessionToken = data.token;
                 
                 console.log('✅ Login exitoso en el servidor');
+                console.log('👤 Usuario recibido:', this.currentUser);
                 return { success: true, user: this.currentUser };
             } else {
-                console.log('❌ Login fallido:', data.error);
+                console.log('❌ Login fallido:', data.error || 'Usuario no encontrado en respuesta');
                 return { success: false, error: data.error || 'Error de autenticación' };
             }
         } catch (error) {
@@ -637,6 +638,14 @@ class AuthManager {
      * Login exitoso
      */
     loginSuccess(user, rememberMe) {
+        console.log('🎉 Iniciando loginSuccess con usuario:', user);
+        
+        if (!user) {
+            console.error('❌ Error: usuario es undefined en loginSuccess');
+            this.showError('login', 'Error: datos de usuario no recibidos');
+            return;
+        }
+        
         this.currentUser = user;
         this.isAuthenticated = true;
         
@@ -649,10 +658,12 @@ class AuthManager {
         
         // Registrar evento de auditoría
         if (window.securityManager) {
-            window.securityManager.logEvent('user_login', { userId: user.id, username: user.username });
+            const username = user.username || user.email || 'unknown';
+            const userId = user.id || 'temp';
+            window.securityManager.logEvent('user_login', { userId: userId, username: username });
         }
         
-        console.log('✅ Login exitoso:', user.username);
+        console.log('✅ Login exitoso:', user.username || user.email);
         
         // Redirigir al juego
         this.redirectToGame();

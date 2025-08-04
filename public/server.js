@@ -333,6 +333,7 @@ app.post('/api/login', [
         
         console.log('🔐 ===== LOGIN EXITOSO =====');
         console.log('📤 Enviando respuesta:', { ...response, token: '[HIDDEN]' });
+        console.log('👤 Datos del usuario:', response.user);
         
         console.log('📤 Enviando respuesta final...');
         res.json(response);
