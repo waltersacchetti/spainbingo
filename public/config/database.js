@@ -36,9 +36,11 @@ const config = {
             acquire: 30000,
             idle: 10000
         },
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
+        dialectOptions: {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false
+            }
         },
         define: {
             timestamps: true,
@@ -63,7 +65,7 @@ const sequelize = new Sequelize(
         dialect: dbConfig.dialect,
         logging: dbConfig.logging,
         pool: dbConfig.pool,
-        ssl: dbConfig.ssl,
+        dialectOptions: dbConfig.dialectOptions,
         define: dbConfig.define
     }
 );
