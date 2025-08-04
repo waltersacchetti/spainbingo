@@ -72,6 +72,10 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-simple.html'));
+});
+
 // Middleware para verificar JWT
 const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];

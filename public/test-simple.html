@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test JavaScript - SpainBingo</title>
+</head>
+<body>
+    <h1>Test JavaScript</h1>
+    
+    <form id="testForm">
+        <input type="text" id="testName" placeholder="Nombre" required>
+        <input type="email" id="testEmail" placeholder="Email" required>
+        <button type="submit" id="testBtn">Probar Registro</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        console.log('🚀 Test page cargada');
+        
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('🔘 Formulario de prueba enviado');
+            
+            const name = document.getElementById('testName').value;
+            const email = document.getElementById('testEmail').value;
+            
+            console.log('📝 Datos:', { name, email });
+            
+            // Probar la API directamente
+            fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: email.split('@')[0],
+                    email: email,
+                    password: 'TestPass123',
+                    firstName: name,
+                    lastName: 'Test',
+                    dateOfBirth: '1990-01-01'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('📥 Respuesta:', data);
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                console.error('❌ Error:', error);
+                document.getElementById('result').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            });
+        });
+    </script>
+</body>
+</html> 
