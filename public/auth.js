@@ -15,6 +15,7 @@ class AuthManager {
      * Inicializar sistema de autenticación
      */
     initializeAuth() {
+        console.log('🔐 Iniciando sistema de autenticación...');
         this.loadSession();
         this.setupEventListeners();
         console.log('🔐 Sistema de autenticación inicializado');
@@ -57,26 +58,37 @@ class AuthManager {
      * Configurar event listeners
      */
     setupEventListeners() {
+        console.log('🔗 Configurando event listeners...');
+        
         // Login form
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
+            console.log('✅ Formulario de login encontrado');
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
+                console.log('📝 Evento submit del login capturado');
                 this.handleLogin();
             });
+        } else {
+            console.log('❌ Formulario de login NO encontrado');
         }
 
         // Register form
         const registerForm = document.getElementById('registerForm');
         if (registerForm) {
+            console.log('✅ Formulario de registro encontrado');
             registerForm.addEventListener('submit', (e) => {
                 e.preventDefault();
+                console.log('📝 Evento submit del registro capturado');
                 this.handleRegister();
             });
+        } else {
+            console.log('❌ Formulario de registro NO encontrado');
         }
 
         // Input validation
         this.setupInputValidation();
+        console.log('🔗 Event listeners configurados');
     }
 
     /**
