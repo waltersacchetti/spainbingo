@@ -1,0 +1,117 @@
+{
+  "aws": {
+    "region": "eu-west-1",
+    "services": {
+      "s3": {
+        "bucket": "spainbingo-static",
+        "website": {
+          "indexDocument": "entrada.html",
+          "errorDocument": "error.html"
+        },
+        "cors": [
+          {
+            "AllowedHeaders": ["*"],
+            "AllowedMethods": ["GET"],
+            "AllowedOrigins": ["*"],
+            "ExposeHeaders": []
+          }
+        ]
+      },
+      "cloudfront": {
+        "distribution": {
+          "enabled": true,
+          "defaultRootObject": "entrada.html",
+          "aliases": ["spainbingo.es", "www.spainbingo.es"],
+          "sslCertificate": "arn:aws:acm:us-east-1:ACCOUNT:certificate/CERTIFICATE-ID"
+        }
+      },
+      "waf": {
+        "webAcl": {
+          "name": "SpainBingo-WAF",
+          "rules": [
+            {
+              "name": "RateLimit",
+              "priority": 1,
+              "action": "BLOCK",
+              "rateLimit": 2000
+            },
+            {
+              "name": "GeoRestriction",
+              "priority": 2,
+              "action": "BLOCK",
+              "geoRestriction": {
+                "allowedCountries": ["ES", "PT", "FR", "IT", "DE"]
+              }
+            },
+            {
+              "name": "IPReputation",
+              "priority": 3,
+              "action": "BLOCK",
+              "managedRuleGroup": "AWSManagedRulesAnonymousIpList"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "security": {
+    "headers": {
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+    },
+    "ssl": {
+      "enabled": true,
+      "minTLSVersion": "TLSv1.2",
+      "cipherSuites": [
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      ]
+    }
+  },
+  "monitoring": {
+    "cloudwatch": {
+      "logs": {
+        "enabled": true,
+        "retentionDays": 30
+      },
+      "alarms": [
+        {
+          "name": "HighErrorRate",
+          "metric": "5XXError",
+          "threshold": 5,
+          "period": 300
+        },
+        {
+          "name": "HighLatency",
+          "metric": "Latency",
+          "threshold": 1000,
+          "period": 300
+        }
+      ]
+    }
+  },
+  "compliance": {
+    "gdpr": {
+      "enabled": true,
+      "dataRetention": {
+        "auditLogs": "5 years",
+        "userData": "2 years",
+        "sessionData": "session only"
+      }
+    },
+    "gaming": {
+      "responsibleGaming": {
+        "enabled": true,
+        "ageVerification": true,
+        "selfExclusion": true,
+        "timeLimits": true,
+        "spendingLimits": true
+      }
+    }
+  }
+} 

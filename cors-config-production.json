@@ -1,0 +1,11 @@
+{
+    "CORSRules": [
+      {
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["GET"],
+        "AllowedOrigins": ["https://spainbingo.es", "https://www.spainbingo.es"],
+        "ExposeHeaders": []
+      }
+    ]
+  }
+  

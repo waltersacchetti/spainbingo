@@ -1,0 +1,4 @@
+{
+    "DashboardName": "SpainBingo-Dashboard",
+    "DashboardBody": "{\"widgets\":[{\"type\":\"metric\",\"properties\":{\"metrics\":[[\"AWS/S3\",\"NumberOfObjects\",\"BucketName\",\"spainbingo.es\"]],\"period\":300,\"stat\":\"Average\",\"region\":\"REGION_PLACEHOLDER\",\"title\":\"S3 Objects\"}]}]}"
+}

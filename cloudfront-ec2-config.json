@@ -1,0 +1,36 @@
+{
+    "CallerReference": "spainbingo-ec2-distribution",
+    "Comment": "SpainBingo EC2 Distribution",
+    "Origins": {
+        "Quantity": 1,
+        "Items": [
+            {
+                "Id": "EC2-spainbingo",
+                "DomainName": "EC2_IP_PLACEHOLDER",
+                "CustomOriginConfig": {
+                    "HTTPPort": 80,
+                    "HTTPSPort": 443,
+                    "OriginProtocolPolicy": "http-only"
+                }
+            }
+        ]
+    },
+    "DefaultCacheBehavior": {
+        "TargetOriginId": "EC2-spainbingo",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+        },
+        "ForwardedValues": {
+            "QueryString": true,
+            "Cookies": {
+                "Forward": "all"
+            }
+        },
+        "MinTTL": 0,
+        "Compress": true
+    },
+    "Enabled": true,
+    "PriceClass": "PriceClass_100"
+}

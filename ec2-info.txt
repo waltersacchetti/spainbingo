@@ -1,0 +1,4 @@
+INSTANCE_ID=i-04ab7400a1c44d0d6
+PUBLIC_IP=52.212.178.26
+KEY_FILE=spainbingo-key.pem
+INSTANCE_PROFILE=AmazonSSMRoleForInstancesQuickSetup

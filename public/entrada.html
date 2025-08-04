@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Spain - Entrada</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #00d4aa 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .loading-container {
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #00d4aa;
+            text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .redirect-text {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <h1>🎲 SpainBingo</h1>
+        <p>Cargando la mejor experiencia de bingo...</p>
+        <div class="spinner"></div>
+        <div class="redirect-text">Redirigiendo automáticamente...</div>
+    </div>
+
+    <script>
+        // Redirigir automáticamente a la página de bienvenida
+        setTimeout(() => {
+            window.location.href = 'welcome.html';
+        }, 2000);
+    </script>
+</body>
+</html> 
