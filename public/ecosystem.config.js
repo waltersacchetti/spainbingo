@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'spainbingo',
-    script: './server.js',
+    script: 'server.js',
     cwd: '/home/ec2-user',
     instances: 1,
     autorestart: true,
@@ -9,7 +9,12 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: 3000,
+      DB_HOST: 'spainbingo-db.clzgxn85wdjh.eu-west-1.rds.amazonaws.com',
+      DB_PORT: 5432,
+      DB_NAME: 'spainbingo',
+      DB_USERNAME: 'spainbingo_admin',
+      DB_PASSWORD: 'SpainBingo2024!'
     }
   }]
 };
