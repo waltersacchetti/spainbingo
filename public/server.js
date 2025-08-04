@@ -202,10 +202,10 @@ app.post('/api/login', [
     body('password').notEmpty()
 ], async (req, res) => {
     console.log('🚀 ENDPOINT LOGIN EJECUTÁNDOSE');
+    console.log('🔐 ===== INICIO DE LOGIN =====');
+    console.log('📝 Datos recibidos:', req.body);
+    
     try {
-        console.log('🔐 ===== INICIO DE LOGIN =====');
-        console.log('📝 Datos recibidos:', req.body);
-        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             console.log('❌ Errores de validación:', errors.array());
@@ -215,150 +215,55 @@ app.post('/api/login', [
         }
 
         const { email, password } = req.body;
-
         console.log('🔐 Intento de login para email:', email);
 
-        // Verificar conexión a base de datos
-        let dbConnected = false;
-        try {
-            await sequelize.authenticate();
-            dbConnected = true;
-            console.log('✅ Conexión a base de datos OK');
-        } catch (dbError) {
-            console.error('❌ Error de conexión a base de datos:', dbError);
-            console.log('🔄 Usando sistema de autenticación temporal...');
-        }
-
-        let user = null;
+        // Sistema de autenticación temporal simplificado
+        const tempUsers = {
+            'waltersacchetti@gmail.com': { password: 'Test123!', name: 'Walter Sacchetti' },
+            'admin@spainbingo.es': { password: 'Admin123!', name: 'Administrador' },
+            'test@test.com': { password: 'Test123!', name: 'Usuario Test' }
+        };
         
-        if (dbConnected) {
-            // Buscar usuario por email en base de datos
-            console.log('🔍 Buscando usuario en base de datos...');
-            user = await User.findOne({
-                where: { email: email }
-            });
-
-            if (user) {
-                console.log('✅ Usuario encontrado en BD:', user.email);
-                
-                // Verificar contraseña
-                console.log('🔐 Verificando contraseña...');
-                const isValidPassword = await user.verifyPassword(password);
-                if (!isValidPassword) {
-                    console.log('❌ Contraseña inválida');
-                    return res.status(401).json({ 
-                        error: 'Credenciales inválidas' 
-                    });
-                }
-                console.log('✅ Contraseña válida');
-            }
-        }
-
-        // Si no hay usuario en BD o BD no está disponible, usar sistema temporal
-        if (!user) {
-            console.log('🔄 Usando autenticación temporal...');
-            
-            // Usuarios temporales para desarrollo
-            const tempUsers = {
-                'waltersacchetti@gmail.com': { password: 'Test123!', name: 'Walter Sacchetti' },
-                'admin@spainbingo.es': { password: 'Admin123!', name: 'Administrador' },
-                'test@test.com': { password: 'Test123!', name: 'Usuario Test' }
-            };
-            
-            const tempUser = tempUsers[email];
-            if (!tempUser || tempUser.password !== password) {
-                console.log('❌ Credenciales temporales inválidas');
-                return res.status(401).json({ 
-                    error: 'Credenciales inválidas' 
-                });
-            }
-            
-            console.log('✅ Usuario temporal autenticado:', email);
-            
-            // Crear objeto de usuario temporal
-            user = {
-                id: 'temp_' + Date.now(),
-                email: email,
-                username: email.split('@')[0],
-                name: tempUser.name,
-                first_name: tempUser.name.split(' ')[0],
-                last_name: tempUser.name.split(' ').slice(1).join(' '),
-                is_active: true,
-                balance: 100.00,
-                level: 1,
-                getPublicInfo: function() {
-                    return {
-                        id: this.id,
-                        email: this.email,
-                        username: this.username,
-                        name: this.name,
-                        first_name: this.first_name,
-                        last_name: this.last_name,
-                        balance: this.balance,
-                        level: this.level
-                    };
-                }
-            };
-            
-            console.log('👤 Usuario temporal creado:', user);
-        }
-
-        // Verificar si el usuario está activo
-        if (!user.is_active) {
-            return res.status(403).json({ 
-                error: 'Cuenta desactivada' 
+        const tempUser = tempUsers[email];
+        if (!tempUser || tempUser.password !== password) {
+            console.log('❌ Credenciales inválidas');
+            return res.status(401).json({ 
+                error: 'Credenciales inválidas' 
             });
         }
-
-        console.log('✅ Usuario activo');
-        console.log('👤 Usuario final antes de generar respuesta:', user);
-        console.log('🔍 Tipo de usuario:', typeof user);
-        console.log('🔍 Tiene getPublicInfo:', typeof user.getPublicInfo === 'function');
         
-        // Actualizar último login (solo si está en BD)
-        if (dbConnected && user.id && !user.id.startsWith('temp_')) {
-            await user.update({ last_login: new Date() });
-            console.log('✅ Último login actualizado');
-        }
-
+        console.log('✅ Usuario autenticado:', email);
+        
+        // Crear objeto de usuario
+        const userInfo = {
+            id: 'temp_' + Date.now(),
+            email: email,
+            username: email.split('@')[0],
+            name: tempUser.name,
+            first_name: tempUser.name.split(' ')[0],
+            last_name: tempUser.name.split(' ').slice(1).join(' '),
+            balance: 100.00,
+            level: 1
+        };
+        
         // Generar token JWT
         const token = jwt.sign(
-            { userId: user.id, username: user.username || user.email.split('@')[0] },
+            { userId: userInfo.id, username: userInfo.username },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
-        console.log('✅ Token JWT generado');
-
-        console.log('🔐 ===== GENERANDO RESPUESTA =====');
-        
-        let userInfo;
-        try {
-            userInfo = user.getPublicInfo();
-            console.log('✅ getPublicInfo ejecutado correctamente');
-        } catch (error) {
-            console.error('❌ Error en getPublicInfo:', error);
-            userInfo = {
-                id: user.id,
-                email: user.email,
-                username: user.username || user.email.split('@')[0],
-                name: user.name || user.email,
-                balance: user.balance || 100.00,
-                level: user.level || 1
-            };
-        }
         
         const response = {
             success: true,
             message: 'Login exitoso',
             user: userInfo,
-            token
+            token: token
         };
         
         console.log('🔐 ===== LOGIN EXITOSO =====');
         console.log('📤 Enviando respuesta:', { ...response, token: '[HIDDEN]' });
         console.log('👤 Datos del usuario:', response.user);
         
-        console.log('📤 Enviando respuesta final...');
         res.json(response);
         console.log('✅ Respuesta enviada');
 
