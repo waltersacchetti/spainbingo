@@ -266,30 +266,8 @@ body {
     font-size: 3.5rem;
     font-weight: 900;
     color: white;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-}
-
-.ci-cd-status {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
     margin-bottom: 1.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 25px;
-    display: inline-block;
-    border: 2px solid var(--accent-color);
-    animation: ciCdPulse 2s ease-in-out infinite alternate;
-}
-
-@keyframes ciCdPulse {
-    from {
-        box-shadow: 0 0 10px var(--accent-color);
-    }
-    to {
-        box-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
-    }
+    line-height: 1.2;
 }
 
 .hero-text p {
