@@ -299,6 +299,8 @@ app.post('/api/login', [
                     };
                 }
             };
+            
+            console.log('👤 Usuario temporal creado:', user);
         }
 
         // Verificar si el usuario está activo
@@ -309,6 +311,9 @@ app.post('/api/login', [
         }
 
         console.log('✅ Usuario activo');
+        console.log('👤 Usuario final antes de generar respuesta:', user);
+        console.log('🔍 Tipo de usuario:', typeof user);
+        console.log('🔍 Tiene getPublicInfo:', typeof user.getPublicInfo === 'function');
         
         // Actualizar último login (solo si está en BD)
         if (dbConnected && user.id && !user.id.startsWith('temp_')) {
@@ -324,10 +329,28 @@ app.post('/api/login', [
         );
         console.log('✅ Token JWT generado');
 
+        console.log('🔐 ===== GENERANDO RESPUESTA =====');
+        
+        let userInfo;
+        try {
+            userInfo = user.getPublicInfo();
+            console.log('✅ getPublicInfo ejecutado correctamente');
+        } catch (error) {
+            console.error('❌ Error en getPublicInfo:', error);
+            userInfo = {
+                id: user.id,
+                email: user.email,
+                username: user.username || user.email.split('@')[0],
+                name: user.name || user.email,
+                balance: user.balance || 100.00,
+                level: user.level || 1
+            };
+        }
+        
         const response = {
             success: true,
             message: 'Login exitoso',
-            user: user.getPublicInfo(),
+            user: userInfo,
             token
         };
         
