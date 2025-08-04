@@ -6,9 +6,33 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('.'));
 
+// Configurar CORS para permitir peticiones desde el navegador
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
+
 // Endpoint de prueba
 app.get('/api/test', (req, res) => {
     res.json({ success: true, message: 'Servidor funcionando' });
+});
+
+// Endpoint de prueba para verificar conectividad
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'Servidor funcionando correctamente',
+        timestamp: new Date().toISOString(),
+        cors: 'configurado',
+        endpoints: ['/api/login', '/api/test', '/api/health']
+    });
 });
 
 // Endpoint de login simplificado

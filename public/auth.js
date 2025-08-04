@@ -8,7 +8,21 @@ class AuthManager {
         this.currentUser = null;
         this.isAuthenticated = false;
         this.sessionToken = null;
+        this.apiBaseUrl = this.getApiBaseUrl();
         this.initializeAuth();
+    }
+
+    /**
+     * Obtener la URL base para las APIs
+     */
+    getApiBaseUrl() {
+        // Si estamos en desarrollo local, usar la URL actual
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return '';
+        }
+        
+        // Si estamos en CloudFront o ALB, usar la URL del ALB
+        return 'http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com';
     }
 
     /**
@@ -133,7 +147,7 @@ class AuthManager {
         this.showLoading('login');
 
         try {
-            const result = await this.login(username, password);
+            const result = await this.login(email, password);
             
             if (result.success) {
                 this.loginSuccess(result.user, rememberMe);
@@ -434,13 +448,18 @@ class AuthManager {
      */
     async login(email, password) {
         try {
-            const response = await fetch('/api/login', {
+            console.log('🔐 Intentando login con URL:', `${this.apiBaseUrl}/api/login`);
+            console.log('📝 Datos enviados:', { email, password });
+            
+            const response = await fetch(`${this.apiBaseUrl}/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email, password })
             });
+            
+            console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
             const data = await response.json();
             
@@ -464,7 +483,7 @@ class AuthManager {
      */
     async register(userData) {
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch(`${this.apiBaseUrl}/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -498,7 +517,7 @@ class AuthManager {
         }
 
         try {
-            const response = await fetch('/api/user/profile', {
+            const response = await fetch(`${this.apiBaseUrl}/api/user/profile`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${this.sessionToken}`,
@@ -532,7 +551,7 @@ class AuthManager {
         }
 
         try {
-            const response = await fetch('/api/user/profile', {
+            const response = await fetch(`${this.apiBaseUrl}/api/user/profile`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${this.sessionToken}`,
