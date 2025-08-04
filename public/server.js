@@ -202,8 +202,12 @@ app.post('/api/login', [
     body('password').notEmpty()
 ], async (req, res) => {
     try {
+        console.log('🔐 ===== INICIO DE LOGIN =====');
+        console.log('📝 Datos recibidos:', req.body);
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log('❌ Errores de validación:', errors.array());
             return res.status(400).json({ 
                 error: 'Email y contraseña son requeridos' 
             });
@@ -213,24 +217,43 @@ app.post('/api/login', [
 
         console.log('🔐 Intento de login para email:', email);
 
+        // Verificar conexión a base de datos
+        try {
+            await sequelize.authenticate();
+            console.log('✅ Conexión a base de datos OK');
+        } catch (dbError) {
+            console.error('❌ Error de conexión a base de datos:', dbError);
+            return res.status(500).json({ 
+                error: 'Error de conexión a base de datos' 
+            });
+        }
+
         // Buscar usuario por email
+        console.log('🔍 Buscando usuario en base de datos...');
         const user = await User.findOne({
             where: { email: email }
         });
 
         if (!user) {
+            console.log('❌ Usuario no encontrado');
             return res.status(401).json({ 
                 error: 'Credenciales inválidas' 
             });
         }
 
+        console.log('✅ Usuario encontrado:', user.email);
+
         // Verificar contraseña
+        console.log('🔐 Verificando contraseña...');
         const isValidPassword = await user.verifyPassword(password);
         if (!isValidPassword) {
+            console.log('❌ Contraseña inválida');
             return res.status(401).json({ 
                 error: 'Credenciales inválidas' 
             });
         }
+
+        console.log('✅ Contraseña válida');
 
         // Verificar si el usuario está activo
         if (!user.is_active) {
@@ -246,8 +269,11 @@ app.post('/api/login', [
             });
         }
 
+        console.log('✅ Usuario activo y sin auto-exclusión');
+        
         // Actualizar último login
         await user.update({ last_login: new Date() });
+        console.log('✅ Último login actualizado');
 
         // Generar token JWT
         const token = jwt.sign(
@@ -255,16 +281,22 @@ app.post('/api/login', [
             JWT_SECRET,
             { expiresIn: '24h' }
         );
+        console.log('✅ Token JWT generado');
 
-        res.json({
+        const response = {
             success: true,
             message: 'Login exitoso',
             user: user.getPublicInfo(),
             token
-        });
+        };
+        
+        console.log('🔐 ===== LOGIN EXITOSO =====');
+        console.log('📤 Enviando respuesta:', { ...response, token: '[HIDDEN]' });
+        
+        res.json(response);
 
     } catch (error) {
-        console.error('Error en login:', error);
+        console.error('❌ Error en login:', error);
         res.status(500).json({ 
             error: 'Error interno del servidor' 
         });
