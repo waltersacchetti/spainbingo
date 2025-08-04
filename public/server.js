@@ -392,6 +392,59 @@ app.get('/health', async (req, res) => {
     }
 });
 
+// Endpoint de prueba para base de datos
+app.get('/api/test-db', async (req, res) => {
+    try {
+        console.log('🔍 ===== PRUEBA DE BASE DE DATOS =====');
+        
+        // Verificar conexión
+        const dbConnected = await testConnection();
+        console.log('📡 Conexión a BD:', dbConnected ? 'OK' : 'ERROR');
+        
+        if (!dbConnected) {
+            return res.status(500).json({
+                error: 'No se puede conectar a la base de datos'
+            });
+        }
+        
+        // Verificar modelo User
+        console.log('🔍 Verificando modelo User...');
+        const userCount = await User.count();
+        console.log('👥 Número de usuarios en BD:', userCount);
+        
+        // Intentar crear un usuario de prueba
+        console.log('🔍 Intentando crear usuario de prueba...');
+        const testUser = await User.create({
+            username: 'test_user_' + Date.now(),
+            email: 'test_' + Date.now() + '@test.com',
+            password_hash: 'test123',
+            first_name: 'Test',
+            last_name: 'User',
+            is_verified: false,
+            is_active: true
+        });
+        console.log('✅ Usuario de prueba creado:', testUser.id);
+        
+        // Eliminar usuario de prueba
+        await testUser.destroy();
+        console.log('🗑️ Usuario de prueba eliminado');
+        
+        res.json({
+            success: true,
+            message: 'Base de datos funcionando correctamente',
+            userCount: userCount,
+            testUserCreated: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en prueba de BD:', error);
+        res.status(500).json({
+            error: 'Error en base de datos',
+            details: error.message
+        });
+    }
+});
+
 // Manejo de errores
 app.use((err, req, res, next) => {
     console.error(err.stack);
