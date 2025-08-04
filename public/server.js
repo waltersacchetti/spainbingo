@@ -473,7 +473,7 @@ app.post('/api/test-login', (req, res) => {
     console.log('🧪 Endpoint de prueba login ejecutándose');
     console.log('📝 Datos recibidos:', req.body);
     
-    res.json({ 
+    const response = { 
         success: true,
         message: 'Login de prueba exitoso',
         user: {
@@ -485,7 +485,11 @@ app.post('/api/test-login', (req, res) => {
             level: 1
         },
         token: 'test_token_123'
-    });
+    };
+    
+    console.log('📤 Enviando respuesta de prueba:', response);
+    res.json(response);
+    console.log('✅ Respuesta de prueba enviada');
 });
 
 // Endpoint de prueba para base de datos
