@@ -104,6 +104,19 @@ class AuthManager {
         } else {
             console.log('❌ Botón de registro NO encontrado');
         }
+        
+        // Event listener directo al botón de login como respaldo
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            console.log('🔘 Botón de login encontrado, agregando listener directo');
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🔘 Click directo en botón de login');
+                this.handleLogin();
+            });
+        } else {
+            console.log('❌ Botón de login NO encontrado');
+        }
     }
 
     /**
@@ -139,27 +152,39 @@ class AuthManager {
      * Manejar login
      */
     async handleLogin() {
-        const username = document.getElementById('loginUsername').value;
+        console.log('🔐 ===== INICIO DE LOGIN =====');
+        
+        const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         const rememberMe = document.getElementById('rememberMe').checked;
 
+        console.log('📝 Datos del login:', { email, rememberMe });
+
         // Validar inputs
-        if (!this.validateLoginInputs(username, password)) {
+        if (!this.validateLoginInputs(email, password)) {
+            console.log('❌ Validación de login fallida');
             return;
         }
+
+        console.log('✅ Validación de login exitosa');
 
         // Mostrar loading
         this.showLoading('login');
 
         try {
-            const result = await this.login(username, password);
+            const result = await this.login(email, password);
+            
+            console.log('📥 Respuesta del login:', result);
             
             if (result.success) {
+                console.log('✅ Login exitoso');
                 this.loginSuccess(result.user, rememberMe);
             } else {
+                console.log('❌ Error en login:', result.error);
                 this.showError('login', result.error);
             }
         } catch (error) {
+            console.error('❌ Error en login:', error);
             this.showError('login', 'Error al conectar con el servidor');
         } finally {
             this.hideLoading('login');
@@ -236,11 +261,11 @@ class AuthManager {
     /**
      * Validar inputs de login
      */
-    validateLoginInputs(username, password) {
+    validateLoginInputs(email, password) {
         let isValid = true;
 
-        if (!username) {
-            this.showFieldError('loginUsername', 'El usuario o email es requerido');
+        if (!email) {
+            this.showFieldError('loginEmail', 'El email es requerido');
             isValid = false;
         }
 

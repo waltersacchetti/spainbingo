@@ -1,10 +1,12 @@
 // Variable global para el juego
 let game;
 
+console.log('🚀 script.js cargado correctamente');
+
 // Clase principal del juego
 class BingoPro {
     constructor() {
-        console.log('Inicializando BingoPro...');
+        console.log('🎮 Inicializando BingoPro...');
         this.calledNumbers = new Set();
         this.userCards = [];
         this.userBalance = 50.00;
@@ -1177,17 +1179,22 @@ window.resetWelcomeExperience = function() {
 
 // Inicializar el juego cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎮 DOM cargado, verificando autenticación...');
+    console.log('🔍 authManager disponible:', typeof authManager !== 'undefined');
+    
     // Verificar autenticación antes de inicializar el juego
     if (typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
         const user = authManager.getCurrentUser();
-        console.log('✅ Usuario autenticado:', user.name);
+        console.log('✅ Usuario autenticado:', user);
         
         // Actualizar información del usuario en la UI
         updateUserInfo(user);
         
         // Inicializar el juego
+        console.log('🎮 Inicializando juego...');
         bingoGame = new BingoPro();
         bingoGame.initializeGame();
+        console.log('🎮 Juego inicializado correctamente');
     } else {
         // Usuario no autenticado, redirigir a login
         console.log('🔒 Usuario no autenticado, redirigiendo a login...');
