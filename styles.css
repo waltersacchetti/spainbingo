@@ -148,6 +148,23 @@ body::before {
     font-weight: 500;
 }
 
+.welcome-message {
+    font-size: 0.8rem;
+    color: var(--gold-color);
+    font-weight: 400;
+    margin-top: 0.3rem;
+    animation: welcomeGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes welcomeGlow {
+    from {
+        text-shadow: 0 0 5px var(--gold-color);
+    }
+    to {
+        text-shadow: 0 0 10px var(--gold-color), 0 0 20px var(--gold-color);
+    }
+}
+
 .user-section {
     display: flex;
     align-items: center;
