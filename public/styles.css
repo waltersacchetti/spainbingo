@@ -465,11 +465,12 @@ body::before {
     display: grid;
     grid-template-columns: 320px 1fr 320px;
     gap: 1.5rem;
-    height: calc(100vh - 400px);
+    height: calc(100vh - 500px);
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 1rem;
+    margin-bottom: 2rem;
 }
 
 /* Hero Section - Inspirado en YoBingo.es */
@@ -566,7 +567,8 @@ body::before {
     flex-direction: column;
     border: 1px solid var(--border-color);
     position: relative;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 300px);
+    min-height: 500px;
 }
 
 .left-panel::before, .center-panel::before, .right-panel::before {
@@ -737,10 +739,10 @@ body::before {
     flex: 1;
     padding: 1rem;
     overflow-y: auto;
-    max-height: 400px;
+    max-height: 350px;
     display: flex;
     flex-direction: column;
-    min-height: 300px;
+    min-height: 250px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     margin: 0.5rem;
@@ -832,7 +834,7 @@ body::before {
 .news-section-main {
     background: var(--gradient-card);
     border-radius: 16px;
-    margin: 2rem 0;
+    margin: 1rem 0 2rem 0;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
@@ -855,11 +857,11 @@ body::before {
 }
 
 .news-section-main .news-content {
-    padding: 2rem;
+    padding: 1.5rem;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    max-height: 400px;
+    gap: 1rem;
+    max-height: 300px;
     overflow-y: auto;
 }
 
@@ -2573,14 +2575,17 @@ body::before {
         grid-template-rows: auto 1fr auto;
         height: auto;
         gap: 1rem;
+        margin-bottom: 1rem;
     }
     
     .left-panel, .right-panel {
-        height: 300px;
+        height: 250px;
+        min-height: 250px;
     }
     
     .hero-section {
         padding: 2rem 1rem;
+        margin-bottom: 1rem;
     }
     
     .hero-section h1 {
@@ -2598,6 +2603,7 @@ body::before {
     
     .news-section-main .news-content {
         grid-template-columns: 1fr;
+        max-height: 250px;
     }
 }
 
