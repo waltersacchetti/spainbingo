@@ -377,6 +377,7 @@ body {
     grid-template-columns: 320px 1fr 320px;
     gap: var(--spacing-xl);
     margin-bottom: var(--spacing-2xl);
+    min-height: 600px;
 }
 
 /* Paneles del juego */
@@ -388,7 +389,8 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 500px;
+    min-height: 600px;
+    height: 600px;
 }
 
 .panel-header {
@@ -460,14 +462,20 @@ body {
 .numbers-grid {
     flex: 1;
     padding: var(--spacing-lg);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-md);
 }
 
 .numbers-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-sm);
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
 }
 
 .called-number {
@@ -537,6 +545,9 @@ body {
     padding: var(--spacing-lg);
     overflow-y: auto;
     background: var(--bg-tertiary);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 .cards-grid {
@@ -546,6 +557,10 @@ body {
     justify-content: center;
     align-items: flex-start;
     min-height: 100%;
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-sm);
 }
 
 /* Cartones de bingo */
@@ -670,6 +685,8 @@ body {
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-tertiary);
+    margin: var(--spacing-md);
+    border-radius: var(--radius-lg);
 }
 
 .purchase-info {
@@ -783,6 +800,7 @@ body {
 /* Panel derecho - Premios y estadísticas */
 .side-prize-info {
     margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
 }
 
 .prize-section {
@@ -818,6 +836,10 @@ body {
 /* Estadísticas */
 .stats-section {
     flex: 1;
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-md);
 }
 
 .stats-grid {
