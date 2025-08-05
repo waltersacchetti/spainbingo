@@ -66,7 +66,7 @@ class BingoPro {
             antiSpamDelay: 500
         };
         // Variables para chat en vivo
-        this.chatApiUrl = 'https://lej9m1ngfi.execute-api.eu-west-1.amazonaws.com/prod/chat';
+        this.chatApiUrl = '/api/chat';
         this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         this.userName = 'Jugador';
         this.chatPollingInterval = null;
