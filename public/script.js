@@ -118,6 +118,14 @@ class BingoPro {
         this.selectedCards = [];
         this.loadFavoriteCards(); // Load favorite cards from localStorage
         this.loadAnalytics(); // Load analytics data
+        
+        // Generar cartones de demostración si no hay ninguno
+        if (this.userCards.length === 0) {
+            console.log('Generando cartones de demostración...');
+            this.addCard(); // Agregar 1 cartón de demostración
+            this.addCard(); // Agregar 1 cartón más
+        }
+        
         this.updateDisplay();
         this.updateAnalyticsDisplay();
         this.saveAnalytics(); // Save analytics data after each update // Initialize analytics display
