@@ -568,11 +568,12 @@ body {
     background: white;
     border: 2px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     box-shadow: var(--shadow-md);
     transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
+    max-width: 320px;
     min-width: 280px;
     transform: rotate(-1deg);
 }
@@ -596,7 +597,7 @@ body {
     color: white;
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
-    margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg);
+    margin: calc(-1 * var(--spacing-md)) calc(-1 * var(--spacing-md)) var(--spacing-md);
     text-align: center;
 }
 
@@ -633,8 +634,8 @@ body {
 /* Grid del cartón */
 .bingo-card-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(9, 1fr);
+    gap: 2px;
     margin-top: var(--spacing-md);
 }
 
@@ -647,11 +648,13 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: var(--text-primary);
     transition: var(--transition-fast);
     cursor: pointer;
     position: relative;
+    min-width: 20px;
+    min-height: 20px;
 }
 
 .bingo-cell:hover {
