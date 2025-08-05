@@ -840,12 +840,15 @@ body {
     background: var(--bg-tertiary);
     border-radius: var(--radius-lg);
     margin: var(--spacing-md);
+    overflow-y: auto;
+    max-height: 400px;
 }
 
 .stats-grid {
     display: grid;
     gap: var(--spacing-md);
     padding: var(--spacing-lg);
+    min-height: 500px;
 }
 
 .stat-card {
