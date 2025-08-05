@@ -16,13 +16,8 @@ class AuthManager {
      * Obtener la URL base para las APIs
      */
     getApiBaseUrl() {
-        // Si estamos en desarrollo local, usar la URL actual
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            return '';
-        }
-        
-        // Si estamos en CloudFront o ALB, usar la URL del ALB
-        return 'http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com';
+        // Usar URL relativa para que funcione tanto en local como en producción
+        return '';
     }
 
     /**

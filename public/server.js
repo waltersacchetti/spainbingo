@@ -8,6 +8,19 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// CORS configuration
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
+
 // Servir archivos estáticos
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'entrada.html'));
@@ -25,15 +38,141 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// API endpoints para autenticación (simulada)
+// API endpoints para autenticación
 app.post('/api/login', (req, res) => {
-    // Simular autenticación
-    res.json({ success: true, user: req.body.username });
+    try {
+        const { email, password } = req.body;
+        
+        console.log('🔐 Login attempt:', { email, password: password ? '***' : 'missing' });
+        
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email y contraseña son requeridos'
+            });
+        }
+        
+        // Simular autenticación exitosa (en producción esto verificaría contra la base de datos)
+        const user = {
+            id: 'user_' + Date.now(),
+            username: email.split('@')[0],
+            email: email,
+            firstName: 'Usuario',
+            lastName: 'Demo',
+            balance: 1000,
+            level: 'Bronce',
+            avatar: 'default'
+        };
+        
+        const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        console.log('✅ Login successful for:', email);
+        
+        res.json({
+            success: true,
+            user: user,
+            token: token
+        });
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
 });
 
 app.post('/api/register', (req, res) => {
-    // Simular registro
-    res.json({ success: true, user: req.body.username });
+    try {
+        const { username, email, password, firstName, lastName, dateOfBirth, phone } = req.body;
+        
+        console.log('📝 Register attempt:', { username, email, firstName, lastName });
+        
+        if (!username || !email || !password || !firstName || !lastName || !dateOfBirth) {
+            return res.status(400).json({
+                success: false,
+                error: 'Todos los campos obligatorios son requeridos'
+            });
+        }
+        
+        // Simular registro exitoso (en producción esto guardaría en la base de datos)
+        const user = {
+            id: 'user_' + Date.now(),
+            username: username,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            dateOfBirth: dateOfBirth,
+            phone: phone || '',
+            balance: 500,
+            level: 'Bronce',
+            avatar: 'default',
+            createdAt: new Date().toISOString()
+        };
+        
+        const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        console.log('✅ Registration successful for:', email);
+        
+        res.json({
+            success: true,
+            user: user,
+            token: token
+        });
+    } catch (error) {
+        console.error('❌ Registration error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+app.post('/api/register-with-confirmation', (req, res) => {
+    try {
+        const { username, email, password, firstName, lastName, dateOfBirth, phone, confirmationMethod } = req.body;
+        
+        console.log('📝 Register with confirmation attempt:', { username, email, confirmationMethod });
+        
+        if (!username || !email || !password || !firstName || !lastName || !dateOfBirth || !confirmationMethod) {
+            return res.status(400).json({
+                success: false,
+                error: 'Todos los campos obligatorios son requeridos'
+            });
+        }
+        
+        // Simular registro exitoso con confirmación pendiente
+        const user = {
+            id: 'user_' + Date.now(),
+            username: username,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            dateOfBirth: dateOfBirth,
+            phone: phone || '',
+            confirmationMethod: confirmationMethod,
+            isVerified: false,
+            verificationCode: Math.floor(100000 + Math.random() * 900000).toString(),
+            balance: 0,
+            level: 'Bronce',
+            avatar: 'default',
+            createdAt: new Date().toISOString()
+        };
+        
+        console.log('✅ Registration with confirmation successful for:', email);
+        
+        res.json({
+            success: true,
+            user: user,
+            message: 'Cuenta creada. Por favor verifica tu ' + confirmationMethod
+        });
+    } catch (error) {
+        console.error('❌ Registration with confirmation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
 });
 
 // API para el juego
