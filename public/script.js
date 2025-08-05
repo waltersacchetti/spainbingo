@@ -2366,11 +2366,26 @@ function toggleChat() {
     console.log('Chat section:', chatSection);
     console.log('Toggle button:', toggleBtn);
     
-    if (chatSection.classList.contains('expanded')) {
+    if (!chatSection || !toggleBtn) {
+        console.error('❌ Chat elements not found');
+        return;
+    }
+    
+    const isExpanded = chatSection.classList.contains('expanded');
+    
+    if (isExpanded) {
+        // Colapsar el chat
         chatSection.classList.remove('expanded');
         toggleBtn.classList.remove('active');
         console.log('🔽 Chat collapsed');
+        
+        // Limpiar el input cuando se colapsa
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.blur();
+        }
     } else {
+        // Expandir el chat
         chatSection.classList.add('expanded');
         toggleBtn.classList.add('active');
         console.log('🔼 Chat expanded');
@@ -2396,12 +2411,15 @@ function toggleChat() {
                     this.select();
                 });
                 
-                // Enviar mensaje de bienvenida automático
-                setTimeout(() => {
-                    if (window.bingoGame) {
-                        window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
-                    }
-                }, 500);
+                // Enviar mensaje de bienvenida automático solo si es la primera vez
+                if (!chatSection.dataset.welcomeSent) {
+                    setTimeout(() => {
+                        if (window.bingoGame) {
+                            window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
+                            chatSection.dataset.welcomeSent = 'true';
+                        }
+                    }, 500);
+                }
                 
                 console.log('🎯 Chat input enfocado y configurado después de expandir');
             }

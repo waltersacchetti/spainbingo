@@ -1694,23 +1694,16 @@ body::before {
     display: flex;
     flex-direction: column;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-    max-height: 60vh;
-}
-
-.chat-section-fixed.expanded {
-    max-height: 60vh;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .chat-section-fixed.expanded {
     max-height: 400px;
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
+    overflow: visible;
 }
 
 /* Chat Desplegable Original (oculto) */
@@ -1772,10 +1765,34 @@ body::before {
     display: flex;
     flex-direction: column;
     height: 100%;
-    pointer-events: auto;
-    background: rgba(0, 0, 0, 0.95);
-    border-radius: 8px;
-    overflow: hidden;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.chat-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.chat-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
 .chat-messages {

@@ -91,7 +91,13 @@
         
         <div class="chat-section-fixed" id="chatSectionFixed">
             <div class="chat-container">
-                                                <div class="chat-messages" id="chatMessages">
+                <div class="chat-header">
+                    <span>Chat en Vivo</span>
+                    <button class="chat-close-btn" onclick="toggleChat()" title="Cerrar chat">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
                                     <div class="chat-message system">
                                         <span class="message-time">15:30</span>
                                         <span class="message-text">¡Bienvenido al BingoPro!</span>
