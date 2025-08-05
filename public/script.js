@@ -73,6 +73,35 @@ class BingoPro {
         this.lastMessageId = null;
         this.newsScrollInterval = null;
         
+        // Enhanced Analytics and Statistics
+        this.gameAnalytics = {
+            totalGamesPlayed: 0,
+            totalWins: 0,
+            totalLosses: 0,
+            totalCardsPurchased: 0,
+            totalMoneySpent: 0,
+            totalMoneyWon: 0,
+            averageGameDuration: 0,
+            winRate: 0,
+            favoriteNumbers: new Map(),
+            luckyCards: [],
+            gameHistory: [],
+            sessionStats: {
+                startTime: new Date(),
+                gamesPlayed: 0,
+                cardsUsed: 0,
+                numbersCalled: 0
+            }
+        };
+        
+        // Performance tracking
+        this.performanceMetrics = {
+            gameLoadTime: 0,
+            numberCallDelay: 0,
+            uiUpdateTime: 0,
+            memoryUsage: 0
+        };
+        
         this.initializeGame();
         this.setupEventListeners();
         this.initializeSounds();
@@ -87,7 +116,11 @@ class BingoPro {
         this.currentGameId = this.generateGameId();
         this.isPlayerJoined = false;
         this.selectedCards = [];
+        this.loadFavoriteCards(); // Load favorite cards from localStorage
+        this.loadAnalytics(); // Load analytics data
         this.updateDisplay();
+        this.updateAnalyticsDisplay();
+        this.saveAnalytics(); // Save analytics data after each update // Initialize analytics display
     }
 
     startGameScheduler() {
@@ -450,6 +483,9 @@ class BingoPro {
         // Registrar evento de auditoría
         securityManager.logEvent('number_called', { number: number, gameId: this.currentGameId });
 
+        // Update analytics
+        this.updateAnalytics('number_called', { number });
+
         this.playNumberSound();
         this.updateDisplay();
         this.checkWin();
@@ -635,6 +671,13 @@ class BingoPro {
         this.gameHistory.push(winRecord);
         card.winHistory.push(winRecord);
         
+        // Update analytics
+        this.updateAnalytics('win', {
+            cardId: card.id,
+            winType: winType,
+            prize: prize
+        });
+        
         this.showWinModal(winType, prize);
         this.playWinSound();
         this.updateUI();
@@ -721,6 +764,15 @@ class BingoPro {
     endGame() {
         this.gameState = 'finished';
         this.stopAutoPlay();
+        
+        // Update analytics
+        this.updateAnalytics('game_end', {
+            gameId: this.currentGameId,
+            duration: this.gameStartTime ? Date.now() - this.gameStartTime.getTime() : 0,
+            numbersCalled: this.calledNumbers.size,
+            finalBalance: this.userBalance
+        });
+        
         this.showGameOverModal();
         
         // Programar la próxima partida
@@ -778,6 +830,12 @@ class BingoPro {
         
         // Agregar a cartones seleccionados
         this.selectedCards.push(...newCards);
+        
+        // Update analytics
+        this.updateAnalytics('card_purchased', {
+            quantity: quantity,
+            cost: totalCost
+        });
         
         this.updateUI();
         this.updateDisplay();
@@ -1325,6 +1383,14 @@ class BingoPro {
         this.updateDisplay();
         this.updateUI();
         this.updatePrizeDisplay(dynamicPrizes);
+        
+        // Update analytics
+        this.updateAnalytics('game_start', {
+            gameId: this.globalGameState.gameId,
+            cardsCount: this.userCards.length,
+            isSpecialGame: dynamicPrizes.isSpecialGame,
+            basePrize: dynamicPrizes.basePrize
+        });
         
         // Agregar mensaje al chat
         const prizeMessage = dynamicPrizes.isSpecialGame 
@@ -1927,6 +1993,248 @@ class BingoPro {
             itemDiv.textContent = number;
             calledList.appendChild(itemDiv);
         });
+    }
+
+    // Analytics Methods
+    updateAnalytics(event, data = {}) {
+        const timestamp = new Date();
+        
+        switch (event) {
+            case 'game_start':
+                this.gameAnalytics.totalGamesPlayed++;
+                this.gameAnalytics.sessionStats.gamesPlayed++;
+                this.gameAnalytics.gameHistory.push({
+                    type: 'game_start',
+                    timestamp,
+                    gameId: this.currentGameId,
+                    ...data
+                });
+                break;
+                
+            case 'number_called':
+                this.gameAnalytics.sessionStats.numbersCalled++;
+                const number = data.number;
+                this.gameAnalytics.favoriteNumbers.set(
+                    number, 
+                    (this.gameAnalytics.favoriteNumbers.get(number) || 0) + 1
+                );
+                break;
+                
+            case 'card_purchased':
+                this.gameAnalytics.totalCardsPurchased += data.quantity || 1;
+                this.gameAnalytics.totalMoneySpent += data.cost || 0;
+                this.gameAnalytics.sessionStats.cardsUsed += data.quantity || 1;
+                break;
+                
+            case 'win':
+                this.gameAnalytics.totalWins++;
+                this.gameAnalytics.totalMoneyWon += data.prize || 0;
+                this.gameAnalytics.luckyCards.push({
+                    cardId: data.cardId,
+                    winType: data.winType,
+                    prize: data.prize,
+                    timestamp
+                });
+                break;
+                
+            case 'game_end':
+                const gameDuration = timestamp - this.gameStartTime;
+                this.gameAnalytics.averageGameDuration = 
+                    (this.gameAnalytics.averageGameDuration * (this.gameAnalytics.totalGamesPlayed - 1) + gameDuration) / 
+                    this.gameAnalytics.totalGamesPlayed;
+                break;
+        }
+        
+        this.updateAnalyticsDisplay();
+        this.saveAnalytics(); // Save analytics data after each update
+    }
+    
+    updateAnalyticsDisplay() {
+        const analyticsContainer = document.getElementById('analytics-display');
+        if (!analyticsContainer) return;
+        
+        const winRate = this.gameAnalytics.totalGamesPlayed > 0 
+            ? (this.gameAnalytics.totalWins / this.gameAnalytics.totalGamesPlayed * 100).toFixed(1)
+            : '0.0';
+            
+        const sessionDuration = Math.floor((new Date() - this.gameAnalytics.sessionStats.startTime) / 1000 / 60);
+        
+        analyticsContainer.innerHTML = `
+            <div class="analytics-grid">
+                <div class="analytics-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>Partidas: ${this.gameAnalytics.totalGamesPlayed}</span>
+                </div>
+                <div class="analytics-item">
+                    <i class="fas fa-percentage"></i>
+                    <span>Victoria: ${winRate}%</span>
+                </div>
+                <div class="analytics-item">
+                    <i class="fas fa-coins"></i>
+                    <span>Ganado: €${this.gameAnalytics.totalMoneyWon.toFixed(2)}</span>
+                </div>
+                <div class="analytics-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Sesión: ${sessionDuration}m</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    getTopFavoriteNumbers() {
+        return Array.from(this.gameAnalytics.favoriteNumbers.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([number, count]) => ({ number, count }));
+    }
+
+    // Enhanced Card Management
+    selectCard(cardId) {
+        const card = this.userCards.find(c => c.id === cardId);
+        if (!card) return;
+        
+        card.isSelected = !card.isSelected;
+        this.updateCardSelection();
+        this.updateUI();
+    }
+    
+    selectAllCards() {
+        this.userCards.forEach(card => {
+            card.isSelected = true;
+        });
+        this.updateCardSelection();
+        this.updateUI();
+    }
+    
+    deselectAllCards() {
+        this.userCards.forEach(card => {
+            card.isSelected = false;
+        });
+        this.updateCardSelection();
+        this.updateUI();
+    }
+    
+    updateCardSelection() {
+        const selectedCards = this.userCards.filter(card => card.isSelected);
+        this.selectedCards = selectedCards;
+        
+        // Update analytics
+        this.updateAnalytics('cards_selected', {
+            quantity: selectedCards.length,
+            totalCards: this.userCards.length
+        });
+    }
+    
+    markCardAsFavorite(cardId) {
+        const card = this.userCards.find(c => c.id === cardId);
+        if (card) {
+            card.isFavorite = !card.isFavorite;
+            this.updateUI();
+            
+            // Save to localStorage
+            this.saveFavoriteCards();
+        }
+    }
+    
+    saveFavoriteCards() {
+        const favoriteCardIds = this.userCards
+            .filter(card => card.isFavorite)
+            .map(card => card.id);
+        localStorage.setItem('spainbingo_favorite_cards', JSON.stringify(favoriteCardIds));
+    }
+    
+    loadFavoriteCards() {
+        const favoriteCardIds = JSON.parse(localStorage.getItem('spainbingo_favorite_cards') || '[]');
+        this.userCards.forEach(card => {
+            card.isFavorite = favoriteCardIds.includes(card.id);
+        });
+    }
+    
+    getCardStats(cardId) {
+        const card = this.userCards.find(c => c.id === cardId);
+        if (!card) return null;
+        
+        const wins = this.gameAnalytics.luckyCards.filter(win => win.cardId === cardId);
+        const totalWins = wins.length;
+        const totalWinnings = wins.reduce((sum, win) => sum + win.prize, 0);
+        
+        return {
+            cardId,
+            totalWins,
+            totalWinnings,
+            winRate: this.gameAnalytics.totalGamesPlayed > 0 
+                ? (totalWins / this.gameAnalytics.totalGamesPlayed * 100).toFixed(1)
+                : '0.0',
+            lastWin: wins.length > 0 ? wins[wins.length - 1] : null
+        };
+    }
+    
+    // Analytics Data Persistence
+    saveAnalytics() {
+        try {
+            localStorage.setItem('spainbingo_analytics', JSON.stringify(this.gameAnalytics));
+            console.log('Analytics data saved successfully');
+        } catch (error) {
+            console.error('Error saving analytics:', error);
+        }
+    }
+    
+    loadAnalytics() {
+        try {
+            const saved = localStorage.getItem('spainbingo_analytics');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.gameAnalytics = { ...this.gameAnalytics, ...parsed };
+                console.log('Analytics data loaded successfully');
+            }
+        } catch (error) {
+            console.error('Error loading analytics:', error);
+        }
+    }
+    
+    exportAnalytics() {
+        const data = {
+            ...this.gameAnalytics,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `spainbingo-analytics-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    resetAnalytics() {
+        if (confirm('¿Estás seguro de que quieres resetear todas las estadísticas? Esta acción no se puede deshacer.')) {
+            this.gameAnalytics = {
+                totalGamesPlayed: 0,
+                totalWins: 0,
+                totalLosses: 0,
+                totalCardsPurchased: 0,
+                totalMoneySpent: 0,
+                totalMoneyWon: 0,
+                averageGameDuration: 0,
+                winRate: 0,
+                favoriteNumbers: new Map(),
+                luckyCards: [],
+                gameHistory: [],
+                sessionStats: {
+                    startTime: new Date(),
+                    gamesPlayed: 0,
+                    cardsUsed: 0,
+                    numbersCalled: 0
+                }
+            };
+            this.saveAnalytics();
+            this.updateAnalyticsDisplay();
+            alert('Estadísticas reseteadas correctamente');
+        }
     }
 }
 

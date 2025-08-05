@@ -2790,3 +2790,175 @@ body::before {
         padding: 1rem;
     }
 } 
+
+/* Analytics Section Styles */
+.analytics-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.analytics-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.analytics-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.analytics-header i {
+    font-size: 1.2rem;
+    color: #00d4aa;
+}
+
+.analytics-content {
+    color: white;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.analytics-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.analytics-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.analytics-item i {
+    font-size: 1.5rem;
+    color: #00d4aa;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.analytics-item span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: block;
+}
+
+/* Enhanced Card Management Styles */
+.card-management-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-card-action {
+    background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-card-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+}
+
+.btn-card-action.secondary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-card-action.danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Enhanced Card Styles */
+.bingo-card {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.bingo-card.selected {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+    border: 2px solid #00d4aa;
+}
+
+.bingo-card.favorite {
+    border: 2px solid #ffd700;
+}
+
+.bingo-card.favorite::before {
+    content: '⭐';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 1.2rem;
+    z-index: 10;
+}
+
+.card-stats {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    backdrop-filter: blur(5px);
+}
+
+/* Responsive Analytics */
+@media (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .analytics-item {
+        padding: 0.8rem;
+    }
+    
+    .analytics-item i {
+        font-size: 1.2rem;
+    }
+    
+    .analytics-item span {
+        font-size: 0.8rem;
+    }
+    
+    .card-management-controls {
+        justify-content: center;
+    }
+    
+    .btn-card-action {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.7rem;
+    }
+}

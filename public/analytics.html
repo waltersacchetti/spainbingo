@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - SpainBingo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .analytics-dashboard {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #00d4aa 100%);
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #00d4aa, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: #00d4aa;
+            margin-right: 1rem;
+        }
+
+        .stat-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-description {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .favorite-numbers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .number-item {
+            background: linear-gradient(135deg, #00d4aa, #00b894);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .number-frequency {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: linear-gradient(135deg, #00d4aa, #00b894);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .analytics-dashboard {
+                padding: 1rem;
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1.5rem;
+            }
+            
+            .back-button {
+                position: static;
+                margin-bottom: 2rem;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-dashboard">
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Juego
+        </a>
+
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">📊 Analytics Dashboard</h1>
+            <p class="dashboard-subtitle">Tus estadísticas detalladas de juego</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-gamepad stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Partidas Jugadas</div>
+                        <div class="stat-value" id="totalGames">0</div>
+                        <div class="stat-description">Total de partidas completadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-trophy stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Tasa de Victoria</div>
+                        <div class="stat-value" id="winRate">0%</div>
+                        <div class="stat-description">Porcentaje de partidas ganadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-coins stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Total Ganado</div>
+                        <div class="stat-value" id="totalWon">€0.00</div>
+                        <div class="stat-description">Dinero total ganado</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-ticket-alt stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Cartones Comprados</div>
+                        <div class="stat-value" id="totalCards">0</div>
+                        <div class="stat-description">Total de cartones adquiridos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-clock stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Tiempo Promedio</div>
+                        <div class="stat-value" id="avgTime">0m</div>
+                        <div class="stat-description">Duración promedio por partida</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-chart-line stat-icon"></i>
+                    <div>
+                        <div class="stat-title">Sesión Actual</div>
+                        <div class="stat-value" id="sessionTime">0m</div>
+                        <div class="stat-description">Tiempo en esta sesión</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">📈 Progreso de Victorias</h3>
+            <canvas id="winsChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">🎯 Números Favoritos</h3>
+            <div class="favorite-numbers" id="favoriteNumbers">
+                <!-- Los números favoritos se cargarán dinámicamente -->
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">📊 Distribución de Premios</h3>
+            <canvas id="prizesChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Analytics Dashboard JavaScript
+        class AnalyticsDashboard {
+            constructor() {
+                this.analytics = this.loadAnalytics();
+                this.initCharts();
+                this.updateStats();
+                this.updateFavoriteNumbers();
+            }
+
+            loadAnalytics() {
+                const saved = localStorage.getItem('spainbingo_analytics');
+                return saved ? JSON.parse(saved) : {
+                    totalGamesPlayed: 0,
+                    totalWins: 0,
+                    totalMoneyWon: 0,
+                    totalCardsPurchased: 0,
+                    averageGameDuration: 0,
+                    favoriteNumbers: {},
+                    winHistory: [],
+                    sessionStats: {
+                        startTime: new Date().toISOString(),
+                        gamesPlayed: 0,
+                        cardsUsed: 0,
+                        numbersCalled: 0
+                    }
+                };
+            }
+
+            updateStats() {
+                const winRate = this.analytics.totalGamesPlayed > 0 
+                    ? (this.analytics.totalWins / this.analytics.totalGamesPlayed * 100).toFixed(1)
+                    : '0.0';
+
+                const sessionDuration = Math.floor((new Date() - new Date(this.analytics.sessionStats.startTime)) / 1000 / 60);
+                const avgTime = Math.floor(this.analytics.averageGameDuration / 1000 / 60);
+
+                document.getElementById('totalGames').textContent = this.analytics.totalGamesPlayed;
+                document.getElementById('winRate').textContent = winRate + '%';
+                document.getElementById('totalWon').textContent = '€' + this.analytics.totalMoneyWon.toFixed(2);
+                document.getElementById('totalCards').textContent = this.analytics.totalCardsPurchased;
+                document.getElementById('avgTime').textContent = avgTime + 'm';
+                document.getElementById('sessionTime').textContent = sessionDuration + 'm';
+            }
+
+            updateFavoriteNumbers() {
+                const container = document.getElementById('favoriteNumbers');
+                const numbers = Object.entries(this.analytics.favoriteNumbers || {})
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+
+                container.innerHTML = numbers.map(([number, count]) => `
+                    <div class="number-item">
+                        <div>${number}</div>
+                        <div class="number-frequency">${count} veces</div>
+                    </div>
+                `).join('');
+            }
+
+            initCharts() {
+                this.initWinsChart();
+                this.initPrizesChart();
+            }
+
+            initWinsChart() {
+                const ctx = document.getElementById('winsChart').getContext('2d');
+                const winHistory = this.analytics.winHistory || [];
+                
+                const labels = winHistory.slice(-10).map((win, index) => `Partida ${winHistory.length - 9 + index}`);
+                const data = winHistory.slice(-10).map(win => win.prize);
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Premios Ganados (€)',
+                            data: data,
+                            borderColor: '#00d4aa',
+                            backgroundColor: 'rgba(0, 212, 170, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'white'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            initPrizesChart() {
+                const ctx = document.getElementById('prizesChart').getContext('2d');
+                const winHistory = this.analytics.winHistory || [];
+                
+                const lineWins = winHistory.filter(win => win.winType === 'LINE').length;
+                const bingoWins = winHistory.filter(win => win.winType === 'BINGO').length;
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Líneas', 'Bingos'],
+                        datasets: [{
+                            data: [lineWins, bingoWins],
+                            backgroundColor: [
+                                '#00d4aa',
+                                '#ff6b6b'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: 'white',
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AnalyticsDashboard();
+        });
+    </script>
+</body>
+</html> 
