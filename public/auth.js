@@ -192,13 +192,15 @@ class AuthManager {
                 firstName,
                 lastName,
                 dateOfBirth,
-                phone
+                phone,
+                confirmationMethod: document.getElementById('confirmationMethod').value
             };
 
-            const result = await this.register(userData);
+            const result = await this.registerWithConfirmation(userData);
             
             if (result.success) {
-                this.loginSuccess(result.user, false);
+                // No hacer login automático, la redirección se maneja en registerWithConfirmation
+                console.log('✅ Registro exitoso, redirigiendo a verificación...');
             } else {
                 this.showError('register', result.error);
             }
@@ -504,6 +506,36 @@ class AuthManager {
             }
         } catch (error) {
             console.error('Error en registro:', error);
+            return { success: false, error: 'Error de conexión' };
+        }
+    }
+
+    /**
+     * Registro con confirmación por email/SMS
+     */
+    async registerWithConfirmation(userData) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/register-with-confirmation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Redirigir a la página de verificación
+                const verificationUrl = `/verification.html?userId=${data.user.id}&contact=${userData.confirmationMethod === 'email' ? userData.email : userData.phone}&method=${userData.confirmationMethod}`;
+                window.location.href = verificationUrl;
+                
+                return { success: true, user: data.user };
+            } else {
+                return { success: false, error: data.error || 'Error de registro' };
+            }
+        } catch (error) {
+            console.error('Error en registro con confirmación:', error);
             return { success: false, error: 'Error de conexión' };
         }
     }

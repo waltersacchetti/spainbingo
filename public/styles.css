@@ -251,23 +251,25 @@ body::before {
     background: var(--gradient-button);
     color: white;
     border: none;
-    padding: 1rem 1.5rem;
+    padding: 0.875rem 1.25rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-size: 0.9rem;
-    min-width: 120px;
+    width: 100%;
     justify-content: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border: 1px solid var(--success-color);
     position: relative;
     overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    min-height: 44px;
 }
 
 .btn-call::before, .btn-auto::before, .btn-new-game::before {
@@ -476,6 +478,7 @@ body::before {
     flex-direction: column;
     border: 1px solid var(--border-color);
     position: relative;
+    max-height: 70vh;
 }
 
 .left-panel::before, .center-panel::before, .right-panel::before {
@@ -491,23 +494,25 @@ body::before {
 
 .panel-header {
     background: var(--gradient-header);
-    padding: 1.5rem 2rem;
+    padding: 1.5rem;
     border-bottom: 2px solid var(--success-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 70px;
+    min-height: 60px;
     position: relative;
+    border-radius: 12px 12px 0 0;
 }
 
 .panel-header h3 {
-    font-size: 1.2rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: white;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .panel-header i {
@@ -523,9 +528,15 @@ body::before {
 /* Controles del llamador y cartones */
 .caller-controls, .card-controls {
     display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 1rem;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
 /* Panel Izquierdo - Números Llamados */
@@ -533,6 +544,7 @@ body::before {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
+    max-height: calc(70vh - 120px);
 }
 
 .numbers-container {
@@ -545,23 +557,24 @@ body::before {
     max-height: 400px;
     overflow-y: auto;
     margin-top: 1rem;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Números llamados */
 .called-number {
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
@@ -636,23 +649,632 @@ body::before {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
+    max-height: calc(70vh - 120px);
+    display: flex;
+    flex-direction: column;
 }
 
 .cards-grid {
-    display: grid;
-    gap: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100%;
 }
 
-/* Cartones de bingo */
+/* Cartones de bingo - Estilo realista */
 .bingo-card {
-    background: var(--gradient-card);
-    border: 2px solid var(--border-color);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    transform: rotate(-2deg);
+    margin: 0.5rem;
+    min-width: 280px;
+}
+
+.bingo-card:nth-child(even) {
+    transform: rotate(1deg);
+}
+
+.bingo-card:nth-child(3n) {
+    transform: rotate(-1deg);
+}
+
+.bingo-card:nth-child(4n) {
+    transform: rotate(2deg);
+}
+
+/* Variantes de colores para cartones */
+.bingo-card.card-red {
+    border-color: #dc3545;
+}
+
+.bingo-card.card-red .card-header {
+    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+}
+
+.bingo-card.card-blue {
+    border-color: #007bff;
+}
+
+.bingo-card.card-blue .card-header {
+    background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+}
+
+.bingo-card.card-green {
+    border-color: #28a745;
+}
+
+.bingo-card.card-green .card-header {
+    background: linear-gradient(90deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bingo-card.card-purple {
+    border-color: #6f42c1;
+}
+
+.bingo-card.card-purple .card-header {
+    background: linear-gradient(90deg, #6f42c1 0%, #5a2d91 100%);
+}
+
+/* Información del cartón */
+.card-info {
+    padding: 0.5rem 1rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.05);
+    border-top: 1px solid #e9ecef;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* Panel de Noticias y Próximos Premios */
+.news-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    min-height: 140px;
+    overflow: visible;
+    position: relative;
+}
+
+.news-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.news-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.news-header i {
+    color: #ffc107;
+    font-size: 1.1rem;
+}
+
+.news-content {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 0.5rem 0;
+    min-height: 100px;
+    align-items: flex-start;
+}
+
+.news-content::-webkit-scrollbar {
+    height: 4px;
+}
+
+.news-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.news-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 193, 7, 0.5);
+    border-radius: 2px;
+}
+
+.news-item {
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #ffc107;
+    transition: all 0.3s ease;
+    min-width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 90px;
+}
+
+.news-item:hover {
+    background: rgba(0, 0, 0, 0.15);
+    transform: translateX(2px);
+}
+
+.news-item.prize-alert {
+    border-left-color: #ff6b35;
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.news-item.prize-alert:hover {
+    background: rgba(255, 107, 53, 0.15);
+}
+
+.news-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.news-description {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.news-time {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+}
+
+/* Animación automática para noticias */
+@keyframes newsSlide {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    10% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    90% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+.news-item.animate {
+    animation: newsSlide 8s ease-in-out;
+}
+
+/* Sistema de Compra de Cartones Mejorado */
+.card-purchase-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: var(--shadow-md);
+    margin: 1rem;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.purchase-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+}
+
+.price-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.selected-cards {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.purchase-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(0, 212, 170, 0.3);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.quantity-selector:hover {
+    border-color: rgba(0, 212, 170, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.btn-quantity {
+    background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+    color: white;
+    border: none;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.1rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+.btn-quantity::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.3s;
+}
+
+.btn-quantity:hover::before {
+    left: 100%;
+}
+
+.btn-quantity:hover {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    transform: scale(1.05);
+}
+
+#cardQuantity {
+    border: none;
+    padding: 0.6rem;
+    text-align: center;
+    width: 70px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: transparent;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+#cardQuantity:focus {
+    outline: none;
+    background: rgba(0, 212, 170, 0.1);
+    border-radius: 4px;
+}
+
+#cardQuantity::-webkit-inner-spin-button,
+#cardQuantity::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.btn-buy-cards {
+    background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-buy-cards::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-buy-cards:hover::before {
+    left: 100%;
+}
+
+.btn-buy-cards:hover {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+}
+
+.btn-join-game {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-join-game::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-join-game:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.btn-join-game:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-join-game:disabled {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Countdown del juego */
+.game-countdown {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff5252 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    animation: countdownPulse 2s ease-in-out infinite;
+}
+
+@keyframes countdownPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Premios especiales */
+.special-prize {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%) !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8) !important;
+}
+
+@keyframes prizeGlow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.9);
+        transform: scale(1.05);
+    }
+}
+
+/* Información de premios en laterales */
+.side-prize-info {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Sección de premios mejorada */
+.prize-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 200px;
+}
+
+.main-prize {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+    color: #000;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    font-weight: 800;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.main-prize::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shine 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+}
+
+.main-prize i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #b8860b;
+}
+
+.main-prize #currentPrize {
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.25rem;
+}
+
+.main-prize .prize-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #b8860b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Desglose de premios mejorado */
+.prize-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prize-breakdown .prize-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid var(--success-color);
+    transition: all 0.2s ease;
+}
+
+.prize-breakdown .prize-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+}
+
+.prize-breakdown .prize-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.prize-breakdown .prize-amount {
+    font-weight: 800;
+    color: var(--success-color);
+    font-size: 1rem;
+    text-shadow: 0 0 5px rgba(0, 212, 170, 0.5);
+}
+
+/* Premios especiales */
+.special-prize {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff5252 50%, #ff6b35 100%) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(255, 107, 53, 0.8) !important;
+    animation: specialPrizeGlow 2s ease-in-out infinite !important;
+}
+
+@keyframes specialPrizeGlow {
+    0%, 100% { 
+        box-shadow: 0 4px 20px rgba(255, 107, 53, 0.6);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 6px 30px rgba(255, 107, 53, 0.9);
+        transform: scale(1.02);
+    }
+}
+
+/* Responsive para laterales de premios */
+@media (max-width: 1200px) {
+    .side-prize-info {
+        margin-bottom: 0.5rem;
+        padding: 0.25rem;
+    }
+    
+    .main-prize {
+        padding: 0.75rem;
+    }
+    
+    .main-prize #currentPrizeLeft,
+    .main-prize #currentPrizeRight {
+        font-size: 1.4rem;
+    }
+    
+    .prize-breakdown {
+        padding: 0.5rem;
+    }
+    
+    .prize-breakdown .prize-item {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .side-prize-info {
+        display: none; /* Ocultar en móviles para ahorrar espacio */
+    }
+}
+
+.bingo-card:hover {
+    transform: rotate(0deg) scale(1.02);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
 .bingo-card::before {
@@ -675,15 +1297,24 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(90deg, #00d4aa 0%, #00b894 100%);
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 0.75rem 1rem;
+    color: white;
+    border-radius: 6px 6px 0 0;
 }
 
 .card-header h4 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .card-status {
@@ -694,6 +1325,10 @@ body::before {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: var(--shadow-sm);
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
 }
 
 .card-status.active {
@@ -717,28 +1352,29 @@ body::before {
 .bingo-card-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 0.75rem;
-    padding: 1.5rem;
-    background: var(--light-color);
-    border-radius: 12px;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 
 /* Celdas del bingo */
 .bingo-cell {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-primary);
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #495057;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
     margin: 0 auto;
@@ -768,12 +1404,13 @@ body::before {
 }
 
 .bingo-cell.marked {
-    background: var(--gradient-success);
+    background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
     color: white;
-    border-color: var(--success-color);
-    box-shadow: 0 0 12px rgba(0, 212, 170, 0.3);
-    animation: cellMarked 0.4s ease;
-    transform: scale(1.05);
+    border-color: #00b894;
+    box-shadow: 0 0 8px rgba(0, 212, 170, 0.4);
+    animation: cellMarked 0.3s ease;
+    transform: scale(1.1);
+    font-weight: 800;
 }
 
 @keyframes cellMarked {
@@ -783,22 +1420,163 @@ body::before {
 }
 
 .bingo-cell.empty {
-    background: var(--light-color);
-    border-color: var(--border-color);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-color: #dee2e6;
     color: transparent;
     cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.bingo-cell.empty::before {
+    content: '🎲';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    opacity: 0.6;
+    color: #6c757d;
+}
+
+.bingo-cell.empty::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(108, 117, 125, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.bingo-cell.empty:hover::after {
+    transform: translateX(100%);
+}
+
+/* Variantes de logotipos para diferentes cartones */
+.bingo-card.card-red .bingo-cell.empty::before {
+    content: '🎯';
+    color: #dc3545;
+}
+
+.bingo-card.card-blue .bingo-cell.empty::before {
+    content: '⭐';
+    color: #007bff;
+}
+
+.bingo-card.card-green .bingo-cell.empty::before {
+    content: '🍀';
+    color: #28a745;
+}
+
+.bingo-card.card-purple .bingo-cell.empty::before {
+    content: '💎';
+    color: #6f42c1;
+}
+
+/* Logotipos alternativos para variedad */
+.bingo-card:nth-child(2n) .bingo-cell.empty::before {
+    content: '🎪';
+}
+
+.bingo-card:nth-child(3n) .bingo-cell.empty::before {
+    content: '🎰';
+}
+
+.bingo-card:nth-child(5n) .bingo-cell.empty::before {
+    content: '🏆';
+}
+
+.bingo-card:nth-child(7n) .bingo-cell.empty::before {
+    content: '🎨';
+}
+
+/* Logotipos aleatorios por posición */
+.bingo-cell.empty:nth-child(2n+1)::before {
+    content: '🎯';
+}
+
+.bingo-cell.empty:nth-child(3n+2)::before {
+    content: '⭐';
+}
+
+.bingo-cell.empty:nth-child(5n+3)::before {
+    content: '🍀';
+}
+
+.bingo-cell.empty:nth-child(7n+4)::before {
+    content: '💎';
+}
+
+.bingo-cell.empty:nth-child(11n+5)::before {
+    content: '🎪';
+}
+
+.bingo-cell.empty:nth-child(13n+6)::before {
+    content: '🎰';
+}
+
+.bingo-cell.empty:nth-child(17n+7)::before {
+    content: '🏆';
+}
+
+.bingo-cell.empty:nth-child(19n+8)::before {
+    content: '🎨';
+}
+
+/* Logotipos aleatorios por clase */
+.bingo-cell.empty.logo-0::before {
+    content: '🎯';
+}
+
+.bingo-cell.empty.logo-1::before {
+    content: '⭐';
+}
+
+.bingo-cell.empty.logo-2::before {
+    content: '🍀';
+}
+
+.bingo-cell.empty.logo-3::before {
+    content: '💎';
+}
+
+.bingo-cell.empty.logo-4::before {
+    content: '🎪';
+}
+
+.bingo-cell.empty.logo-5::before {
+    content: '🎰';
+}
+
+.bingo-cell.empty.logo-6::before {
+    content: '🏆';
+}
+
+.bingo-cell.empty.logo-7::before {
+    content: '🎨';
 }
 
 .bingo-cell.empty:hover {
-    transform: none;
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border-color);
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: #adb5bd;
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bingo-cell.empty:hover::before {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 /* Panel Derecho - Estadísticas y Chat */
 .stats-section {
     flex: 1;
     border-bottom: 1px solid var(--border-color);
+    overflow-y: auto;
+    max-height: calc(70vh - 120px);
 }
 
 .stats-grid {
@@ -859,15 +1637,145 @@ body::before {
     font-weight: 600;
 }
 
+/* Chat Desplegable - Posición Fija */
+.chat-toggle-section-fixed {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    z-index: 1000;
+    width: 200px;
+}
+
+.chat-toggle-btn-fixed {
+    width: 100%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.chat-toggle-btn-fixed:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.chat-toggle-btn-fixed .toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.chat-toggle-btn-fixed.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.chat-section-fixed {
+    position: fixed;
+    top: 180px;
+    right: 20px;
+    width: 300px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 9999;
+    color: white;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    max-height: 60vh;
+}
+
+.chat-section-fixed.expanded {
+    max-height: 60vh;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-section-fixed.expanded {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Chat Desplegable Original (oculto) */
+.chat-toggle-section {
+    display: none;
+}
+
+.chat-toggle-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+}
+
+.chat-toggle-btn:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.chat-toggle-btn .toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.chat-toggle-btn.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
 /* Chat */
 .chat-section {
-    flex: 1;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(-10px);
+    margin-top: 0;
+}
+
+.chat-section.expanded {
+    max-height: 400px;
+    margin-top: 0.5rem;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: visible;
 }
 
 .chat-container {
     display: flex;
     flex-direction: column;
     height: 100%;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .chat-messages {
@@ -877,18 +1785,67 @@ body::before {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    color: white;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 8px 8px 0 0;
+    max-height: calc(60vh - 120px);
+    min-height: 200px;
 }
 
 .chat-message {
     padding: 0.5rem;
     border-radius: 8px;
     font-size: 0.875rem;
+    color: white;
 }
 
 .chat-message.system {
     background: var(--light-color);
     color: var(--text-secondary);
     text-align: center;
+}
+
+.chat-message.bot {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-left: 3px solid #2980b9;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.chat-message.bot .message-user {
+    color: #ecf0f1;
+    font-weight: 700;
+}
+
+.chat-message.bot .message-text {
+    line-height: 1.4;
+}
+
+.chat-message.bot .message-text strong {
+    color: #ffd700;
+    font-weight: 700;
+}
+
+.chat-message.bot .message-text ul {
+    margin: 0.5rem 0;
+    padding-left: 1rem;
+}
+
+.chat-message.bot .message-text li {
+    margin: 0.25rem 0;
+    list-style: none;
+    position: relative;
+    padding-left: 0.5rem;
+}
+
+.chat-message.bot .message-text li:before {
+    content: "•";
+    color: #ffd700;
+    font-weight: bold;
+    position: absolute;
+    left: -0.5rem;
 }
 
 .chat-message .message-time {
@@ -905,17 +1862,127 @@ body::before {
 
 .chat-input {
     padding: 1rem;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 0 0 8px 8px;
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
 }
 
 .chat-input input {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 6px;
     font-size: 0.875rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    pointer-events: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+.chat-input input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.chat-input input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.chat-input input:focus::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilos adicionales para asegurar que el input del chat funcione */
+.chat-input input[type="text"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    font-family: inherit;
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.chat-input input[type="text"]:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.chat-input input[type="text"]:focus {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Asegurar que el chat sea interactivo cuando está expandido */
+.chat-section-fixed.expanded .chat-input input {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+}
+
+.chat-section-fixed.expanded .btn-send {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Scrollbars personalizados para los paneles */
+.left-panel::-webkit-scrollbar,
+.center-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar,
+.numbers-grid::-webkit-scrollbar,
+.cards-container::-webkit-scrollbar,
+.stats-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.left-panel::-webkit-scrollbar-track,
+.center-panel::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track,
+.numbers-grid::-webkit-scrollbar-track,
+.cards-container::-webkit-scrollbar-track,
+.stats-section::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb,
+.center-panel::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb,
+.numbers-grid::-webkit-scrollbar-thumb,
+.cards-container::-webkit-scrollbar-thumb,
+.stats-section::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover,
+.center-panel::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover,
+.numbers-grid::-webkit-scrollbar-thumb:hover,
+.cards-container::-webkit-scrollbar-thumb:hover,
+.stats-section::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
 }
 
 /* Botón de envío de chat */
@@ -1387,6 +2454,42 @@ body::before {
     .amount-options {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    /* Mejoras para botones en móviles */
+    .caller-controls, .card-controls {
+        padding: 0.5rem 0;
+        gap: 0.75rem;
+    }
+
+    .btn-call, .btn-auto, .btn-new-game, .btn-view-numbers {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .caller-controls, .card-controls {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .numbers-container {
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+
+    .called-number {
+        width: 40px;
+        height: 40px;
+        font-size: 0.8rem;
+    }
+
+    .card-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 0.5rem auto;
+        display: inline-block;
+    }
 } 
 
 /* Modal de Números Llamados */
@@ -1554,23 +2657,25 @@ body::before {
     background: var(--gradient-info);
     color: white;
     border: none;
-    padding: 0.875rem 1.5rem;
+    padding: 0.875rem 1.25rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-size: 0.9rem;
-    min-width: 100px;
+    width: 100%;
     justify-content: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border: 1px solid var(--info-color);
     position: relative;
     overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    min-height: 44px;
 }
 
 .btn-view-numbers::before {
@@ -1596,6 +2701,18 @@ body::before {
 
 /* Responsive para el modal de números llamados */
 @media (max-width: 768px) {
+    .chat-toggle-section-fixed {
+        top: 100px;
+        right: 10px;
+        width: 150px;
+    }
+    
+    .chat-section-fixed {
+        top: 150px;
+        right: 10px;
+        width: 250px;
+    }
+    
     .called-numbers-modal .modal-content {
         width: 98%;
         max-height: 90vh;

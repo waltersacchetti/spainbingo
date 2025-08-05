@@ -80,6 +80,57 @@
             </div>
         </header>
 
+        <!-- Chat Desplegable - Posición Fija -->
+        <div class="chat-toggle-section-fixed">
+            <button class="chat-toggle-btn-fixed" onclick="toggleChat()">
+                <i class="fas fa-comments"></i>
+                <span>Chat en Vivo</span>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+        </div>
+        
+        <div class="chat-section-fixed" id="chatSectionFixed">
+            <div class="chat-container">
+                                                <div class="chat-messages" id="chatMessages">
+                                    <div class="chat-message system">
+                                        <span class="message-time">15:30</span>
+                                        <span class="message-text">¡Bienvenido al BingoPro!</span>
+                                    </div>
+                                    <div class="chat-message bot">
+                                        <span class="message-time">15:31</span>
+                                        <span class="message-user">BingoBot:</span>
+                                        <span class="message-text">¡Hola! ¡Bienvenido al mejor Bingo de España! 🎯</span>
+                                    </div>
+                                    <div class="chat-message bot">
+                                        <span class="message-time">15:32</span>
+                                        <span class="message-user">BingoBot:</span>
+                                        <span class="message-text">Escribe "ayuda" para ver las opciones disponibles 💬</span>
+                                    </div>
+                                    <div class="chat-message">
+                                        <span class="message-time">15:33</span>
+                                        <span class="message-user">María:</span>
+                                        <span class="message-text">¡Buena suerte a todos!</span>
+                                    </div>
+                                    <div class="chat-message">
+                                        <span class="message-time">15:34</span>
+                                        <span class="message-user">Carlos:</span>
+                                        <span class="message-text">Casi tengo línea 😄</span>
+                                    </div>
+                                    <div class="chat-message">
+                                        <span class="message-time">15:35</span>
+                                        <span class="message-user">Ana:</span>
+                                        <span class="message-text">¿Cuáles son los premios de hoy?</span>
+                                    </div>
+                                </div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Escribe un mensaje..." id="chatInput" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button class="btn-send" onclick="sendChatMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Barra de Navegación -->
         <nav class="main-nav">
             <div class="nav-content">
@@ -109,7 +160,11 @@
                     </div>
                     <div class="status-item">
                         <i class="fas fa-trophy"></i>
-                        <span id="currentPrize">€2,500</span> premio
+                        <span id="currentPrize">€500</span> premio
+                    </div>
+                    <div class="status-item game-countdown">
+                        <i class="fas fa-clock"></i>
+                        <span>Próxima partida: <span id="gameCountdown">2:00</span></span>
                     </div>
                 </div>
             </div>
@@ -140,6 +195,8 @@
                             </div>
                         </div>
                         
+
+                        
                         <div class="numbers-grid">
                             <div id="calledNumbers" class="numbers-container">
                                 <!-- Los números se generarán dinámicamente -->
@@ -156,10 +213,43 @@
                     <div class="center-panel">
                         <div class="panel-header">
                             <h3><i class="fas fa-ticket-alt"></i> Mis Cartones</h3>
-                            <div class="card-controls">
-                                <button class="btn-new-game">
-                                    <i class="fas fa-plus"></i>
-                                    Nuevo Juego
+                        </div>
+                        
+                        <!-- Panel de Noticias y Próximos Premios -->
+                        <div class="news-section">
+                            <div class="news-header">
+                                <h4><i class="fas fa-newspaper"></i> Noticias y Próximos Premios</h4>
+                            </div>
+                            <div class="news-content" id="newsContent">
+                                <!-- El contenido se generará dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Sistema de Compra de Cartones -->
+                        <div class="card-purchase-section">
+                            <div class="purchase-info">
+                                <div class="price-info">
+                                    <i class="fas fa-euro-sign"></i>
+                                    <span>€1.00 por cartón</span>
+                                </div>
+                                <div class="selected-cards">
+                                    <span id="selectedCardsCount">0</span> cartones seleccionados
+                                </div>
+                            </div>
+                            
+                            <div class="purchase-controls">
+                                <div class="quantity-selector">
+                                    <button class="btn-quantity" onclick="changeQuantity(-1)">-</button>
+                                    <input type="number" id="cardQuantity" value="1" min="1" max="20">
+                                    <button class="btn-quantity" onclick="changeQuantity(1)">+</button>
+                                </div>
+                                <button class="btn-buy-cards" onclick="buySelectedCards()">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    Comprar Cartones
+                                </button>
+                                <button class="btn-join-game" onclick="joinCurrentGame()" id="joinGameBtn" disabled>
+                                    <i class="fas fa-play"></i>
+                                    Unirse a la Partida
                                 </button>
                             </div>
                         </div>
@@ -173,6 +263,20 @@
 
                     <!-- Panel Derecho - Estadísticas y Chat -->
                     <div class="right-panel">
+                        <!-- Información de Premios en Lateral Derecho -->
+                        <div class="side-prize-info">
+                            <div class="prize-section">
+                                <div class="main-prize">
+                                    <i class="fas fa-trophy"></i>
+                                    <span id="currentPrizeRight">€500</span>
+                                    <span class="prize-label">premio total</span>
+                                </div>
+                                <div id="prizeInfoRight" class="prize-breakdown">
+                                    <!-- Información detallada de premios se mostrará aquí -->
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="stats-section">
                             <div class="panel-header">
                                 <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
@@ -208,33 +312,7 @@
                             </div>
                         </div>
 
-                        <div class="chat-section">
-                            <div class="panel-header">
-                                <h3><i class="fas fa-comments"></i> Chat en Vivo</h3>
-                            </div>
-                            <div class="chat-container">
-                                <div class="chat-messages" id="chatMessages">
-                                    <div class="chat-message system">
-                                        <span class="message-time">15:30</span>
-                                        <span class="message-text">¡Bienvenido al BingoPro!</span>
-                                    </div>
-                                    <div class="chat-message">
-                                        <span class="message-user">María:</span>
-                                        <span class="message-text">¡Buena suerte a todos!</span>
-                                    </div>
-                                    <div class="chat-message">
-                                        <span class="message-user">Carlos:</span>
-                                        <span class="message-text">Casi tengo línea 😄</span>
-                                    </div>
-                                </div>
-                                <div class="chat-input">
-                                    <input type="text" placeholder="Escribe un mensaje..." id="chatInput">
-                                    <button class="btn-send">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </div>

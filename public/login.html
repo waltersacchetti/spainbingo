@@ -383,15 +383,39 @@
                 <!-- Formulario de Registro -->
                 <form class="auth-form" id="registerForm">
                     <div class="form-group">
-                        <label class="form-label">Nombre completo</label>
-                        <input type="text" class="form-input" id="registerName" placeholder="Tu nombre completo" required>
-                        <div class="form-error" id="registerNameError"></div>
+                        <label class="form-label">Nombre de usuario</label>
+                        <input type="text" class="form-input" id="registerUsername" placeholder="Tu nombre de usuario" required>
+                        <div class="form-error" id="registerUsernameError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-input" id="registerFirstName" placeholder="Tu nombre" required>
+                        <div class="form-error" id="registerFirstNameError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Apellido</label>
+                        <input type="text" class="form-input" id="registerLastName" placeholder="Tu apellido" required>
+                        <div class="form-error" id="registerLastNameError"></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Email</label>
                         <input type="email" class="form-input" id="registerEmail" placeholder="tu@email.com" required>
                         <div class="form-error" id="registerEmailError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Fecha de nacimiento</label>
+                        <input type="date" class="form-input" id="registerDateOfBirth" required>
+                        <div class="form-error" id="registerDateOfBirthError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Teléfono (opcional)</label>
+                        <input type="tel" class="form-input" id="registerPhone" placeholder="Tu teléfono">
+                        <div class="form-error" id="registerPhoneError"></div>
                     </div>
 
                     <div class="form-group">
@@ -409,6 +433,16 @@
                     <div class="form-checkbox">
                         <input type="checkbox" id="acceptTerms" required>
                         <label for="acceptTerms">Acepto los <a href="terms.html" target="_blank">Términos y Condiciones</a> y la <a href="privacy-policy.html" target="_blank">Política de Privacidad</a></label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Método de confirmación</label>
+                        <select class="form-input" id="confirmationMethod" required>
+                            <option value="">Selecciona un método</option>
+                            <option value="email">Email</option>
+                            <option value="sms">SMS</option>
+                        </select>
+                        <div class="form-error" id="confirmationMethodError"></div>
                     </div>
 
                     <div class="form-checkbox">

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registro - SpainBingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .test-container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.9);
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Registro - SpainBingo</h1>
+        
+        <div class="test-section">
+            <h3>1. Test Registro Básico</h3>
+            <button onclick="testBasicRegister()">Probar Registro Básico</button>
+            <div id="basic-register-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test Registro con Confirmación</h3>
+            <div class="form-group">
+                <label>Método de confirmación:</label>
+                <select id="confirmationMethod">
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                </select>
+            </div>
+            <button onclick="testRegisterWithConfirmation()">Probar Registro con Confirmación</button>
+            <div id="confirmation-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Verificación de Código</h3>
+            <div class="form-group">
+                <label>Código de verificación:</label>
+                <input type="text" id="verificationCode" placeholder="123456">
+            </div>
+            <button onclick="testVerification()">Verificar Código</button>
+            <div id="verification-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test Reenvío de Código</h3>
+            <button onclick="testResendCode()">Reenviar Código</button>
+            <div id="resend-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Información del Sistema</h3>
+            <button onclick="showSystemInfo()">Mostrar Info</button>
+            <div id="system-info" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Función para mostrar resultados
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<span class="${type}">${message}</span>`;
+        }
+
+        // 1. Test registro básico
+        function testBasicRegister() {
+            showResult('basic-register-result', '🔄 Probando registro básico...', 'info');
+            
+            const userData = {
+                username: 'testuser_' + Date.now(),
+                email: 'test_' + Date.now() + '@test.com',
+                password: 'Test123!',
+                firstName: 'Test',
+                lastName: 'User',
+                dateOfBirth: '1990-01-01',
+                phone: '123456789'
+            };
+
+            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('basic-register-result', 
+                        `✅ Registro exitoso<br>
+                         Usuario: ${data.user.username}<br>
+                         Email: ${data.user.email}<br>
+                         ID: ${data.user.id}`, 'success');
+                } else {
+                    showResult('basic-register-result', 
+                        `❌ Error en registro: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('basic-register-result', 
+                    `❌ Error de conexión: ${error.message}`, 'error');
+            });
+        }
+
+        // 2. Test registro con confirmación
+        function testRegisterWithConfirmation() {
+            showResult('confirmation-result', '🔄 Probando registro con confirmación...', 'info');
+            
+            const method = document.getElementById('confirmationMethod').value;
+            const userData = {
+                username: 'testuser_' + Date.now(),
+                email: 'test_' + Date.now() + '@test.com',
+                password: 'Test123!',
+                firstName: 'Test',
+                lastName: 'User',
+                dateOfBirth: '1990-01-01',
+                phone: '123456789',
+                confirmationMethod: method
+            };
+
+            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/register-with-confirmation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('confirmation-result', 
+                        `✅ Registro con confirmación exitoso<br>
+                         Usuario: ${data.user.username}<br>
+                         Método: ${method}<br>
+                         Estado: ${data.user.status}<br>
+                         Código enviado a: ${method === 'email' ? data.user.email : data.user.phone}`, 'success');
+                } else {
+                    showResult('confirmation-result', 
+                        `❌ Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('confirmation-result', 
+                    `❌ Error de conexión: ${error.message}`, 'error');
+            });
+        }
+
+        // 3. Test verificación de código
+        function testVerification() {
+            showResult('verification-result', '🔄 Probando verificación...', 'info');
+            
+            const code = document.getElementById('verificationCode').value;
+            const verificationData = {
+                userId: 'temp_user_id',
+                code: code
+            };
+
+            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/verify-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(verificationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('verification-result', 
+                        `✅ Verificación exitosa<br>
+                         Usuario activado: ${data.user.username}<br>
+                         Estado: ${data.user.status}`, 'success');
+                } else {
+                    showResult('verification-result', 
+                        `❌ Error de verificación: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('verification-result', 
+                    `❌ Error de conexión: ${error.message}`, 'error');
+            });
+        }
+
+        // 4. Test reenvío de código
+        function testResendCode() {
+            showResult('resend-result', '🔄 Probando reenvío de código...', 'info');
+            
+            const resendData = {
+                userId: 'temp_user_id',
+                method: document.getElementById('confirmationMethod').value
+            };
+
+            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/resend-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(resendData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('resend-result', 
+                        `✅ Código reenviado exitosamente<br>
+                         Método: ${resendData.method}<br>
+                         Mensaje: ${data.message}`, 'success');
+                } else {
+                    showResult('resend-result', 
+                        `❌ Error al reenviar: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('resend-result', 
+                    `❌ Error de conexión: ${error.message}`, 'error');
+            });
+        }
+
+        // 5. Información del sistema
+        function showSystemInfo() {
+            const info = {
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString(),
+                endpoints: [
+                    '/api/register',
+                    '/api/register-with-confirmation',
+                    '/api/verify-code',
+                    '/api/resend-code'
+                ]
+            };
+
+            showResult('system-info', 
+                `🌐 Información del sistema:<br>
+                 URL: ${info.url}<br>
+                 Timestamp: ${info.timestamp}<br>
+                 Endpoints disponibles: ${info.endpoints.join(', ')}`, 'info');
+        }
+
+        // Auto-ejecutar algunos tests al cargar
+        window.onload = function() {
+            setTimeout(() => {
+                showSystemInfo();
+            }, 500);
+        };
+    </script>
+</body>
+</html> 

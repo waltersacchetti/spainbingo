@@ -17,9 +17,39 @@ class BingoPro {
         this.gameStartTime = null;
         this.lastNumberCalled = null;
         this.callHistory = [];
+        
+        // Nuevas variables para el sistema de partidas
+        this.currentGame = null;
+        this.gameQueue = [];
+        this.nextGameStartTime = null;
+        this.gameCountdown = null;
+        this.isPlayerJoined = false;
+        this.selectedCards = [];
+        this.cardPrice = 1.00; // 1 euro por cartón
+        
+        // Variables para juego global
+        this.globalGameState = {
+            gameId: null,
+            startTime: null,
+            endTime: null,
+            totalPlayers: 0,
+            totalCards: 0,
+            calledNumbers: new Set(),
+            winners: {
+                line: null,
+                twoLines: null,
+                bingo: null
+            },
+            prizes: {
+                line: 0,
+                twoLines: 0,
+                bingo: 0
+            },
+            isActive: false
+        };
+        
         this.winConditions = {
             LINE: { name: 'línea', required: 5, prize: 10, probability: 0.15 },
-            TWO_LINES: { name: 'dos líneas', required: 10, prize: 25, probability: 0.08 },
             BINGO: { name: 'bingo', required: 15, prize: 100, probability: 0.02 }
         };
         this.availableNumbers = this.generateNumberPool();
@@ -35,20 +65,68 @@ class BingoPro {
             maxAutoPlayDuration: 300000, // 5 minutos máximo
             antiSpamDelay: 500
         };
+        // Variables para chat en vivo
+        this.chatApiUrl = 'https://lej9m1ngfi.execute-api.eu-west-1.amazonaws.com/prod/chat';
+        this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        this.userName = 'Jugador';
+        this.chatPollingInterval = null;
+        this.lastMessageId = null;
+        this.newsScrollInterval = null;
+        
         this.initializeGame();
         this.setupEventListeners();
         this.initializeSounds();
         this.updateUI();
+        this.startGameScheduler();
+        this.initializeLiveChat();
         console.log('BingoPro inicializado correctamente');
     }
 
     initializeGame() {
-        // Generar cartones iniciales con validación
-        this.addCard();
-        this.addCard();
-        this.updateDisplay();
         this.gameState = 'waiting';
         this.currentGameId = this.generateGameId();
+        this.isPlayerJoined = false;
+        this.selectedCards = [];
+        this.updateDisplay();
+    }
+
+    startGameScheduler() {
+        // Programar la próxima partida en 2 minutos
+        this.scheduleNextGame();
+        
+        // Actualizar el countdown cada segundo
+        this.gameCountdown = setInterval(() => {
+            this.updateGameCountdown();
+        }, 1000);
+    }
+
+    scheduleNextGame() {
+        const now = new Date();
+        this.nextGameStartTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutos
+        console.log('Próxima partida programada para:', this.nextGameStartTime);
+        this.updateGameCountdown();
+    }
+
+    updateGameCountdown() {
+        if (!this.nextGameStartTime) return;
+        
+        const now = new Date();
+        const timeLeft = this.nextGameStartTime.getTime() - now.getTime();
+        
+        if (timeLeft <= 0) {
+            this.startNewGame();
+        } else {
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            this.updateCountdownDisplay(minutes, seconds);
+        }
+    }
+
+    updateCountdownDisplay(minutes, seconds) {
+        const countdownElement = document.getElementById('gameCountdown');
+        if (countdownElement) {
+            countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
     }
 
     generateGameId() {
@@ -78,8 +156,16 @@ class BingoPro {
             isActive: true,
             createdAt: new Date(),
             lastModified: new Date(),
-            winHistory: []
+            winHistory: [],
+            // Agregar información del cartón
+            totalNumbers: 0,
+            emptyCells: 0
         };
+        
+        // Calcular estadísticas del cartón
+        card.totalNumbers = card.numbers.flat().filter(num => num !== null).length;
+        card.emptyCells = card.numbers.flat().filter(num => num === null).length;
+        
         this.userCards.push(card);
         return card;
     }
@@ -90,34 +176,62 @@ class BingoPro {
 
     generateBingoCard() {
         const card = [];
+        const totalPositions = 27; // 9 columnas x 3 filas
+        const numbersToPlace = 15; // Exactamente 15 números
+        const emptyPositions = 12; // 12 espacios vacíos con logotipos
         
+        // Crear array de todas las posiciones disponibles
+        const allPositions = [];
         for (let col = 0; col < 9; col++) {
-            const columnNumbers = [];
+            for (let row = 0; row < 3; row++) {
+                allPositions.push({ col, row });
+            }
+        }
+        
+        // Mezclar aleatoriamente todas las posiciones
+        for (let i = allPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+        }
+        
+        // Inicializar el cartón con null en todas las posiciones
+        for (let col = 0; col < 9; col++) {
+            card[col] = [null, null, null];
+        }
+        
+        // Colocar 15 números aleatoriamente
+        const numbersPlaced = [];
+        for (let i = 0; i < numbersToPlace; i++) {
+            const position = allPositions[i];
+            const col = position.col;
+            const row = position.row;
+            
+            // Generar número para esta columna
             const minNumber = col * 10 + 1;
             const maxNumber = Math.min((col + 1) * 10, 90);
-            
             const availableNumbers = [];
-            for (let i = minNumber; i <= maxNumber; i++) {
-                availableNumbers.push(i);
-            }
-            
-            // Mejorar la distribución para hacer el juego más desafiante
-            const numbersToPick = Math.min(3, availableNumbers.length);
-            for (let i = 0; i < numbersToPick; i++) {
-                if (availableNumbers.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-                    columnNumbers.push(availableNumbers[randomIndex]);
-                    availableNumbers.splice(randomIndex, 1);
+            for (let num = minNumber; num <= maxNumber; num++) {
+                if (!numbersPlaced.includes(num)) {
+                    availableNumbers.push(num);
                 }
             }
             
-            // Rellenar con espacios vacíos si es necesario
-            while (columnNumbers.length < 3) {
-                columnNumbers.push(null);
+            if (availableNumbers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                const selectedNumber = availableNumbers[randomIndex];
+                card[col][row] = selectedNumber;
+                numbersPlaced.push(selectedNumber);
             }
-            
-            columnNumbers.sort((a, b) => (a || 0) - (b || 0));
-            card.push(columnNumbers);
+        }
+        
+        // Ordenar números en cada columna
+        for (let col = 0; col < 9; col++) {
+            card[col].sort((a, b) => {
+                if (a === null && b === null) return 0;
+                if (a === null) return 1;
+                if (b === null) return -1;
+                return a - b;
+            });
         }
 
         return card;
@@ -134,16 +248,22 @@ class BingoPro {
 
         this.userCards.forEach((card, index) => {
             const cardElement = document.createElement('div');
-            cardElement.className = 'bingo-card';
+            // Asignar colores aleatorios a los cartones
+            const colorClasses = ['card-red', 'card-blue', 'card-green', 'card-purple'];
+            const randomColor = colorClasses[index % colorClasses.length];
+            cardElement.className = `bingo-card ${randomColor}`;
             cardElement.innerHTML = `
                 <div class="card-header">
-                    <h4>Cartón ${index + 1}</h4>
+                    <h4><i class="fas fa-ticket-alt"></i> Cartón N° ${index + 1}</h4>
                     <div class="card-status ${card.isActive ? 'active' : 'inactive'}">
                         ${card.isActive ? 'Activo' : 'Inactivo'}
                     </div>
                 </div>
                 <div class="bingo-card-grid">
                     ${this.renderCardGrid(card)}
+                </div>
+                <div class="card-info">
+                    <small>15 números • 12 espacios</small>
                 </div>
             `;
             cardsContainer.appendChild(cardElement);
@@ -152,14 +272,25 @@ class BingoPro {
 
     renderCardGrid(card) {
         let html = '';
+        const logos = ['🎯', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
+        let logoIndex = 0;
+        
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 9; col++) {
                 const number = card.numbers[col][row];
                 const isMarked = number && this.calledNumbers.has(number);
                 const isEmpty = !number;
                 
+                // Asignar logotipo aleatorio para celdas vacías
+                let logoClass = '';
+                if (isEmpty) {
+                    const randomLogo = logos[Math.floor(Math.random() * logos.length)];
+                    logoClass = `logo-${logoIndex % logos.length}`;
+                    logoIndex++;
+                }
+                
                 html += `
-                    <div class="bingo-cell ${isMarked ? 'marked' : ''} ${isEmpty ? 'empty' : ''}" 
+                    <div class="bingo-cell ${isMarked ? 'marked' : ''} ${isEmpty ? 'empty' : ''} ${logoClass}" 
                          data-card-id="${card.id}" data-row="${row}" data-col="${col}">
                         ${number || ''}
                     </div>
@@ -422,11 +553,37 @@ class BingoPro {
     }
 
     checkWin() {
+        // Verificar si ya hay ganadores globales
+        if (this.globalGameState && this.globalGameState.winners.bingo) {
+            // Bingo ya ganado globalmente
+            return false;
+        }
+        
+        if (this.globalGameState && this.globalGameState.winners.line) {
+            // Línea ya ganada globalmente
+            return false;
+        }
+        
         this.userCards.forEach(card => {
             if (!card.isActive) return;
             
             const winResult = this.checkCardWin(card);
             if (winResult.won) {
+                // Verificar si este tipo de premio ya fue ganado globalmente
+                if (this.globalGameState && this.globalGameState.winners[winResult.type.toLowerCase()]) {
+                    return; // Ya ganado por otro jugador
+                }
+                
+                // Marcar como ganador global
+                if (this.globalGameState) {
+                    this.globalGameState.winners[winResult.type.toLowerCase()] = {
+                        playerId: 'current_user', // En producción sería el ID real del usuario
+                        cardId: card.id,
+                        timestamp: new Date(),
+                        prize: this.globalGameState.prizes[winResult.type.toLowerCase()]
+                    };
+                }
+                
                 this.handleWin(card, winResult.type);
             }
         });
@@ -439,12 +596,6 @@ class BingoPro {
         // Verificar Bingo (cartón completo) - más difícil
         if (markedCount === 15) {
             return { won: true, type: 'BINGO' };
-        }
-        
-        // Verificar dos líneas - más difícil
-        if (completedLines >= 2 && card.linesCompleted < 2) {
-            card.linesCompleted = 2;
-            return { won: true, type: 'TWO_LINES' };
         }
         
         // Verificar línea - más difícil
@@ -500,8 +651,6 @@ class BingoPro {
         switch (winType) {
             case 'BINGO':
                 return markedCount === 15 && this.calledNumbers.size >= 30; // Mínimo 30 números llamados
-            case 'TWO_LINES':
-                return completedLines >= 2 && this.calledNumbers.size >= 20; // Mínimo 20 números llamados
             case 'LINE':
                 return completedLines >= 1 && this.calledNumbers.size >= 10; // Mínimo 10 números llamados
             default:
@@ -535,11 +684,108 @@ class BingoPro {
         return basePrize + bonus;
     }
 
+    /**
+     * Calcular premios dinámicos basados en el horario
+     */
+    calculateDynamicPrizes() {
+        const now = new Date();
+        const hour = now.getHours();
+        const dayOfWeek = now.getDay(); // 0 = Domingo, 6 = Sábado
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        let basePrize = 500; // Premio base por partida
+        
+        // Premio especial cada 2 horas (a las horas pares)
+        if (hour % 2 === 0) {
+            basePrize = 1500;
+        }
+        
+        // Premio especial los fines de semana a las 21:00
+        if (isWeekend && hour === 21) {
+            basePrize = 5000;
+        }
+        
+        // Distribuir el premio base entre las diferentes combinaciones ganadoras
+        const prizes = {
+            line: Math.floor(basePrize * 0.20),      // 20% del premio total
+            bingo: Math.floor(basePrize * 0.80)      // 80% del premio total
+        };
+        
+        return {
+            basePrize,
+            prizes,
+            isSpecialGame: basePrize > 500
+        };
+    }
+
     endGame() {
         this.gameState = 'finished';
         this.stopAutoPlay();
         this.showGameOverModal();
+        
+        // Programar la próxima partida
+        this.scheduleNextGame();
+        
+        // Resetear estado del jugador
+        this.isPlayerJoined = false;
+        this.selectedCards = [];
+        
+        this.addChatMessage('system', '¡Partida terminada! La próxima partida comenzará en 2 minutos.');
         console.log('Juego terminado');
+    }
+
+    joinGame() {
+        if (this.gameState === 'playing') {
+            alert('No puedes unirte a una partida que ya ha comenzado');
+            return false;
+        }
+
+        if (this.selectedCards.length === 0) {
+            alert('Debes comprar al menos 1 cartón para unirte a la partida');
+            return false;
+        }
+
+        this.isPlayerJoined = true;
+        this.addChatMessage('system', `¡Te has unido a la partida con ${this.selectedCards.length} cartón(es)!`);
+        console.log('Jugador unido a la partida');
+        return true;
+    }
+
+    buyCards(quantity) {
+        const totalCost = quantity * this.cardPrice;
+        
+        if (this.userBalance < totalCost) {
+            alert('Saldo insuficiente para comprar estos cartones');
+            return false;
+        }
+
+        if (this.gameState === 'playing') {
+            alert('No puedes comprar cartones durante una partida en curso');
+            return false;
+        }
+
+        // Procesar compra
+        this.userBalance -= totalCost;
+        
+        // Generar cartones
+        const newCards = [];
+        for (let i = 0; i < quantity; i++) {
+            const card = this.addCard();
+            if (card) {
+                newCards.push(card);
+            }
+        }
+        
+        // Agregar a cartones seleccionados
+        this.selectedCards.push(...newCards);
+        
+        this.updateUI();
+        this.updateDisplay();
+        
+        this.addChatMessage('system', `${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`);
+        console.log(`${quantity} cartones comprados por €${totalCost}`);
+        
+        return true;
     }
 
     buyPackage(packageType) {
@@ -652,13 +898,35 @@ class BingoPro {
         
         const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
         
+        // Formatear mensaje del bot con markdown básico
+        let formattedMessage = message;
+        if (type === 'bot') {
+            // Convertir **texto** a <strong>texto</strong>
+            formattedMessage = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Convertir • a <li>
+            formattedMessage = formattedMessage.replace(/•/g, '<li>');
+            // Convertir saltos de línea a <br>
+            formattedMessage = formattedMessage.replace(/\n/g, '<br>');
+            // Envolver listas en <ul>
+            if (formattedMessage.includes('<li>')) {
+                formattedMessage = formattedMessage.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>');
+            }
+        }
+        
         if (type === 'system') {
             messageDiv.innerHTML = `
                 <span class="message-time">${time}</span>
                 <span class="message-text">${message}</span>
             `;
+        } else if (type === 'bot') {
+            messageDiv.innerHTML = `
+                <span class="message-time">${time}</span>
+                <span class="message-user">BingoBot:</span>
+                <span class="message-text">${formattedMessage}</span>
+            `;
         } else {
             messageDiv.innerHTML = `
+                <span class="message-time">${time}</span>
                 <span class="message-user">Tú:</span>
                 <span class="message-text">${message}</span>
             `;
@@ -666,6 +934,206 @@ class BingoPro {
         
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    /**
+     * Inicializar chat en vivo
+     */
+    initializeLiveChat() {
+        // Probar conexión con la API
+        this.testChatConnection();
+        
+        // Cargar mensajes existentes
+        this.loadChatMessages();
+        
+        // Iniciar polling para nuevos mensajes
+        this.startChatPolling();
+        
+        console.log('Chat en vivo inicializado');
+    }
+
+    /**
+     * Probar conexión con la API del chat
+     */
+    async testChatConnection() {
+        try {
+            console.log('🔍 Probando conexión con la API del chat...');
+            const response = await fetch(this.chatApiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('📡 Estado de la conexión:', response.status, response.statusText);
+            
+            if (response.ok) {
+                console.log('✅ Conexión con la API del chat exitosa');
+            } else {
+                console.error('❌ Error en la conexión con la API del chat:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ Error probando conexión con la API del chat:', error);
+        }
+    }
+
+    /**
+     * Cargar mensajes del chat
+     */
+    async loadChatMessages() {
+        try {
+            const response = await fetch(this.chatApiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.messages) {
+                    this.displayChatMessages(data.messages);
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando mensajes del chat:', error);
+        }
+    }
+
+    /**
+     * Mostrar mensajes en el chat
+     */
+    displayChatMessages(messages) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        
+        // Limpiar mensajes existentes
+        chatMessages.innerHTML = '';
+        
+        // Mostrar mensajes en orden cronológico
+        messages.reverse().forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${msg.type}`;
+            
+            if (msg.type === 'system') {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            } else if (msg.type === 'bot') {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-user">BingoBot:</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            } else {
+                const displayName = msg.userId === this.userId ? 'Tú' : msg.userName;
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-user">${displayName}:</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+        });
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    /**
+     * Enviar mensaje al chat
+     */
+    async sendChatMessage(message) {
+        try {
+            console.log('📤 Enviando mensaje a la API:', message);
+            console.log('🔗 URL de la API:', this.chatApiUrl);
+            
+            const response = await fetch(this.chatApiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: message,
+                    userId: this.userId,
+                    userName: this.userName
+                })
+            });
+            
+            console.log('📥 Respuesta de la API:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📋 Datos de respuesta:', data);
+                
+                if (data.success) {
+                    // Mostrar mensaje del usuario
+                    this.addChatMessage('user', message);
+                    
+                    // Mostrar respuesta del bot si existe
+                    if (data.botMessage) {
+                        console.log('🤖 Respuesta del bot:', data.botMessage.message);
+                        setTimeout(() => {
+                            this.addChatMessage('bot', data.botMessage.message);
+                        }, 500);
+                    } else {
+                        console.log('⚠️ No hay respuesta del bot en los datos');
+                    }
+                } else {
+                    console.error('❌ Error en la respuesta de la API:', data.error);
+                    // Fallback: mostrar mensaje localmente
+                    this.addChatMessage('user', message);
+                }
+            } else {
+                console.error('❌ Error HTTP:', response.status, response.statusText);
+                // Fallback: mostrar mensaje localmente
+                this.addChatMessage('user', message);
+            }
+        } catch (error) {
+            console.error('❌ Error enviando mensaje:', error);
+            // Fallback: mostrar mensaje localmente
+            this.addChatMessage('user', message);
+        }
+    }
+
+    /**
+     * Iniciar polling para nuevos mensajes
+     */
+    startChatPolling() {
+        this.chatPollingInterval = setInterval(async () => {
+            try {
+                const response = await fetch(this.chatApiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.messages && data.messages.length > 0) {
+                        const latestMessage = data.messages[0];
+                        if (this.lastMessageId !== latestMessage.id) {
+                            this.lastMessageId = latestMessage.id;
+                            this.loadChatMessages();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error en polling del chat:', error);
+            }
+        }, 3000); // Polling cada 3 segundos
+    }
+
+    /**
+     * Detener polling del chat
+     */
+    stopChatPolling() {
+        if (this.chatPollingInterval) {
+            clearInterval(this.chatPollingInterval);
+            this.chatPollingInterval = null;
+        }
     }
 
     initializeSounds() {
@@ -814,6 +1282,80 @@ class BingoPro {
         this.addChatMessage('system', 'Nuevo juego iniciado');
     }
 
+    startNewGame() {
+        console.log('Iniciando nueva partida automática global...');
+        
+        if (this.gameState === 'playing') {
+            console.log('Ya hay una partida en curso');
+            return;
+        }
+        
+        // Calcular premios dinámicos
+        const dynamicPrizes = this.calculateDynamicPrizes();
+        
+        // Inicializar estado global del juego
+        this.globalGameState = {
+            gameId: this.generateGameId(),
+            startTime: new Date(),
+            endTime: null,
+            totalPlayers: Math.floor(Math.random() * 50) + 10, // Simular jugadores
+            totalCards: Math.floor(Math.random() * 200) + 50,  // Simular cartones
+            calledNumbers: new Set(),
+            winners: {
+                line: null,
+                twoLines: null,
+                bingo: null
+            },
+            prizes: dynamicPrizes.prizes,
+            isActive: true
+        };
+        
+        // Limpiar estado anterior
+        this.calledNumbers.clear();
+        this.callHistory = [];
+        this.lastNumberCalled = null;
+        this.gameState = 'playing';
+        this.currentGameId = this.globalGameState.gameId;
+        this.gameStartTime = new Date();
+        
+        // Solo usar cartones seleccionados por el jugador
+        this.userCards = [...this.selectedCards];
+        
+        // Actualizar interfaz
+        this.updateDisplay();
+        this.updateUI();
+        this.updatePrizeDisplay(dynamicPrizes);
+        
+        // Agregar mensaje al chat
+        const prizeMessage = dynamicPrizes.isSpecialGame 
+            ? `🎉 ¡PARTIDA ESPECIAL! Premio total: €${dynamicPrizes.basePrize}`
+            : `🎮 ¡Nueva partida iniciada! Premio total: €${dynamicPrizes.basePrize}`;
+        
+        this.addChatMessage('system', prizeMessage);
+        
+        // Iniciar llamada automática de números
+        this.startAutoCalling();
+        
+        console.log('Nueva partida global iniciada correctamente');
+    }
+
+    startAutoCalling() {
+        if (this.autoPlayInterval) {
+            clearInterval(this.autoPlayInterval);
+        }
+        
+        this.autoPlayInterval = setInterval(() => {
+            if (this.gameState === 'playing') {
+                this.callNumber();
+                
+                // Verificar si alguien ganó
+                if (this.checkWin()) {
+                    this.endGame();
+                }
+            }
+        }, 3000); // Llamar número cada 3 segundos
+    }
+
     // Función para resetear la experiencia de bienvenida (solo para desarrollo)
     resetWelcomeExperience() {
         localStorage.removeItem('bingospain_welcome_visited');
@@ -881,6 +1423,8 @@ class BingoPro {
         const balanceElement = document.getElementById('userBalance');
         const totalCardsElement = document.getElementById('totalCards');
         const activeCardsElement = document.getElementById('activeCards');
+        const selectedCardsElement = document.getElementById('selectedCardsCount');
+        const joinGameBtn = document.getElementById('joinGameBtn');
         
         if (balanceElement) {
             balanceElement.textContent = `€${this.userBalance.toFixed(2)}`;
@@ -891,6 +1435,176 @@ class BingoPro {
         if (activeCardsElement) {
             activeCardsElement.textContent = this.userCards.filter(card => card.isActive).length;
         }
+        if (selectedCardsElement) {
+            selectedCardsElement.textContent = this.selectedCards.length;
+        }
+        if (joinGameBtn) {
+            joinGameBtn.disabled = this.selectedCards.length === 0 || this.gameState === 'playing';
+        }
+    }
+
+    /**
+     * Actualizar display de premios en la UI
+     */
+    updatePrizeDisplay(dynamicPrizes) {
+        // Actualizar premio principal en el header
+        const currentPrizeElement = document.getElementById('currentPrize');
+        if (currentPrizeElement) {
+            currentPrizeElement.textContent = `€${dynamicPrizes.basePrize}`;
+        }
+        
+        // Actualizar premio en lateral derecho (estadísticas)
+        const currentPrizeRight = document.getElementById('currentPrizeRight');
+        const mainPrizeRight = currentPrizeRight?.closest('.main-prize');
+        if (currentPrizeRight) {
+            currentPrizeRight.textContent = `€${dynamicPrizes.basePrize}`;
+            
+            // Agregar clase especial para partidas especiales
+            if (dynamicPrizes.isSpecialGame) {
+                mainPrizeRight?.classList.add('special-prize');
+            } else {
+                mainPrizeRight?.classList.remove('special-prize');
+            }
+        }
+        
+        // Actualizar información detallada de premios en el lateral derecho
+        this.updateDetailedPrizeInfo(dynamicPrizes);
+    }
+
+    /**
+     * Actualizar información detallada de premios
+     */
+    updateDetailedPrizeInfo(dynamicPrizes) {
+        const prizeInfoRight = document.getElementById('prizeInfoRight');
+        
+        const prizeHTML = `
+            <div class="prize-breakdown">
+                <div class="prize-item">
+                    <span class="prize-label">Línea:</span>
+                    <span class="prize-amount">€${dynamicPrizes.prizes.line}</span>
+                </div>
+                <div class="prize-item">
+                    <span class="prize-label">Bingo:</span>
+                    <span class="prize-amount">€${dynamicPrizes.prizes.bingo}</span>
+                </div>
+            </div>
+        `;
+        
+        if (prizeInfoRight) {
+            prizeInfoRight.innerHTML = prizeHTML;
+        }
+        
+        // Actualizar noticias con información de premios
+        this.updateNewsContent(dynamicPrizes);
+    }
+
+    /**
+     * Actualizar contenido de noticias
+     */
+    updateNewsContent(dynamicPrizes) {
+        const newsContent = document.getElementById('newsContent');
+        if (!newsContent) return;
+        
+        const now = new Date();
+        const hour = now.getHours();
+        const dayOfWeek = now.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        let newsHTML = '';
+        
+        // Noticia sobre premio actual
+        if (dynamicPrizes.isSpecialGame) {
+            newsHTML += `
+                <div class="news-item prize-alert">
+                    <div class="news-title">🎉 ¡PARTIDA ESPECIAL ACTIVA!</div>
+                    <div class="news-description">Premio total: €${dynamicPrizes.basePrize} - ¡No te la pierdas!</div>
+                    <div class="news-time">Ahora mismo</div>
+                </div>
+            `;
+        }
+        
+        // Próximos premios especiales
+        if (hour % 2 === 1) {
+            const nextSpecialHour = hour + 1;
+            newsHTML += `
+                <div class="news-item">
+                    <div class="news-title">⏰ Próximo Premio Especial</div>
+                    <div class="news-description">A las ${nextSpecialHour}:00 - Premio de €1,500</div>
+                    <div class="news-time">En ${60 - now.getMinutes()} minutos</div>
+                </div>
+            `;
+        }
+        
+        // Premio de fin de semana
+        if (isWeekend && hour < 21) {
+            newsHTML += `
+                <div class="news-item prize-alert">
+                    <div class="news-title">🌟 Premio Mega del Fin de Semana</div>
+                    <div class="news-description">A las 21:00 - Premio de €5,000</div>
+                    <div class="news-time">Hoy a las 21:00</div>
+                </div>
+            `;
+        } else if (isWeekend && hour === 21) {
+            newsHTML += `
+                <div class="news-item prize-alert">
+                    <div class="news-title">🔥 ¡PREMIO MEGA ACTIVO!</div>
+                    <div class="news-description">€5,000 en juego - ¡Únete ahora!</div>
+                    <div class="news-time">Ahora mismo</div>
+                </div>
+            `;
+        }
+        
+        // Noticias generales
+        const generalNews = [
+            {
+                title: "📈 Récord de Jugadores",
+                description: "Más de 1,500 jugadores activos hoy",
+                time: "Hace 2 horas"
+            },
+            {
+                title: "🏆 Ganador del Día",
+                description: "María G. ganó €900 con Bingo",
+                time: "Hace 1 hora"
+            },
+            {
+                title: "🎮 Nuevas Funciones",
+                description: "Chat mejorado y noticias en tiempo real",
+                time: "Recién actualizado"
+            }
+        ];
+        
+        generalNews.forEach(news => {
+            newsHTML += `
+                <div class="news-item">
+                    <div class="news-title">${news.title}</div>
+                    <div class="news-description">${news.description}</div>
+                    <div class="news-time">${news.time}</div>
+                </div>
+            `;
+        });
+        
+        newsContent.innerHTML = newsHTML;
+        
+        // Auto-scroll horizontal cada 5 segundos
+        this.startNewsAutoScroll();
+    }
+    
+    startNewsAutoScroll() {
+        const newsContent = document.getElementById('newsContent');
+        if (!newsContent) return;
+        
+        // Limpiar intervalo anterior si existe
+        if (this.newsScrollInterval) {
+            clearInterval(this.newsScrollInterval);
+        }
+        
+        this.newsScrollInterval = setInterval(() => {
+            if (newsContent.scrollLeft >= newsContent.scrollWidth - newsContent.clientWidth) {
+                newsContent.scrollLeft = 0;
+            } else {
+                newsContent.scrollLeft += 260; // Ancho de una noticia + gap
+            }
+        }, 5000);
     }
 
     setupEventListeners() {
@@ -1016,29 +1730,89 @@ class BingoPro {
             }
         });
 
-        // Chat
+        // Chat - Event listeners mejorados
         const chatInput = document.getElementById('chatInput');
         const btnSend = document.querySelector('.btn-send');
         
+        console.log('🔧 Configurando chat event listeners...');
+        console.log('Chat input encontrado:', !!chatInput);
+        console.log('Botón enviar encontrado:', !!btnSend);
+        
         if (chatInput && btnSend) {
+            // Hacer el input editable y funcional
+            chatInput.readOnly = false;
+            chatInput.disabled = false;
+            chatInput.style.pointerEvents = 'auto';
+            chatInput.style.userSelect = 'text';
+            chatInput.style.webkitUserSelect = 'text';
+            
             const sendMessage = () => {
                 const message = chatInput.value.trim();
+                console.log('📤 Intentando enviar mensaje:', message);
                 if (message) {
-                    this.addChatMessage('user', message);
+                    // Usar sendChatMessage en lugar de addChatMessage para enviar al servidor
+                    this.sendChatMessage(message);
                     chatInput.value = '';
+                    chatInput.focus();
+                    console.log('✅ Mensaje enviado correctamente');
                 }
             };
             
-            btnSend.addEventListener('click', sendMessage);
+            // Event listener para el botón enviar
+            btnSend.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('📤 Click en botón enviar');
+                sendMessage();
+                return false;
+            });
+            
+            // Event listener para Enter en el input
             chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('⌨️ Enter presionado en chat');
                     sendMessage();
+                    return false;
                 }
             });
+            
+            // Event listener para keydown para prevenir propagación
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            });
+            
+            // Event listener para focus
+            chatInput.addEventListener('focus', (e) => {
+                console.log('🎯 Focus en chat input');
+                e.target.select();
+            });
+            
+            console.log('✅ Chat event listeners configurados correctamente');
+        } else {
+            console.log('❌ Elementos del chat no encontrados');
         }
 
         // Atajos de teclado
         document.addEventListener('keydown', (event) => {
+            // Verificar si el chat está activo
+            const chatInput = document.getElementById('chatInput');
+            const chatSection = document.getElementById('chatSectionFixed');
+            
+            // Si el chat está expandido y el input tiene focus, no ejecutar atajos
+            if (chatSection && chatSection.classList.contains('expanded') && 
+                chatInput && document.activeElement === chatInput) {
+                return;
+            }
+            
             switch(event.key) {
                 case ' ':
                     event.preventDefault();
@@ -1188,6 +1962,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inicializar el juego
         bingoGame = new BingoPro();
         bingoGame.initializeGame();
+        
+        // Configuración adicional del chat después de la inicialización
+        setTimeout(() => {
+            console.log('🔧 Configuración adicional del chat...');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.querySelector('.btn-send');
+            
+            if (chatInput) {
+                console.log('✅ Chat input encontrado y configurado');
+                chatInput.readOnly = false;
+                chatInput.disabled = false;
+                chatInput.style.pointerEvents = 'auto';
+                chatInput.style.userSelect = 'text';
+                chatInput.style.webkitUserSelect = 'text';
+            }
+            
+            if (sendButton) {
+                console.log('✅ Botón enviar encontrado y configurado');
+                sendButton.style.pointerEvents = 'auto';
+                sendButton.style.cursor = 'pointer';
+            }
+        }, 500);
     } else {
         // Usuario no autenticado, redirigir a login
         console.log('🔒 Usuario no autenticado, redirigiendo a login...');
@@ -1226,5 +2022,100 @@ function logout() {
             localStorage.removeItem('spainbingo_session');
             window.location.href = 'login.html';
         }
+    }
+}
+
+// Funciones globales para la interfaz de compra
+function changeQuantity(delta) {
+    const quantityInput = document.getElementById('cardQuantity');
+    if (quantityInput) {
+        let newValue = parseInt(quantityInput.value) + delta;
+        newValue = Math.max(1, Math.min(20, newValue));
+        quantityInput.value = newValue;
+    }
+}
+
+function buySelectedCards() {
+    const quantityInput = document.getElementById('cardQuantity');
+    if (quantityInput && window.bingoGame) {
+        const quantity = parseInt(quantityInput.value);
+        window.bingoGame.buyCards(quantity);
+    }
+}
+
+function joinCurrentGame() {
+    if (window.bingoGame) {
+        window.bingoGame.joinGame();
+    }
+}
+
+// Función para alternar el chat
+function toggleChat() {
+    const chatSection = document.getElementById('chatSectionFixed');
+    const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+    
+    console.log('🔧 Toggle chat clicked');
+    console.log('Chat section:', chatSection);
+    console.log('Toggle button:', toggleBtn);
+    
+    if (chatSection.classList.contains('expanded')) {
+        chatSection.classList.remove('expanded');
+        toggleBtn.classList.remove('active');
+        console.log('🔽 Chat collapsed');
+    } else {
+        chatSection.classList.add('expanded');
+        toggleBtn.classList.add('active');
+        console.log('🔼 Chat expanded');
+        
+        // Configurar el input del chat después de expandir
+        setTimeout(() => {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                // Forzar que el input sea editable
+                chatInput.readOnly = false;
+                chatInput.disabled = false;
+                chatInput.style.pointerEvents = 'auto';
+                chatInput.style.userSelect = 'text';
+                chatInput.style.webkitUserSelect = 'text';
+                
+                // Enfocar y seleccionar
+                chatInput.focus();
+                chatInput.select();
+                
+                // Agregar event listener adicional para asegurar que funcione
+                chatInput.addEventListener('click', function() {
+                    this.focus();
+                    this.select();
+                });
+                
+                // Enviar mensaje de bienvenida automático
+                setTimeout(() => {
+                    if (window.bingoGame) {
+                        window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
+                    }
+                }, 500);
+                
+                console.log('🎯 Chat input enfocado y configurado después de expandir');
+            }
+        }, 100);
+    }
+}
+
+// Función para enviar mensaje de chat
+function sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const message = chatInput.value.trim();
+    
+    console.log('📤 Sending chat message:', message);
+    console.log('BingoGame available:', !!window.bingoGame);
+    
+    if (message && window.bingoGame) {
+        window.bingoGame.sendChatMessage(message);
+        chatInput.value = '';
+        console.log('✅ Message sent successfully');
+    } else if (!message) {
+        console.log('⚠️ Empty message, not sending');
+    } else {
+        console.log('❌ BingoGame not available');
     }
 } 

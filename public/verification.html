@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Cuenta - SpainBingo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .verification-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #00d4aa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .verification-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .verification-header {
+            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .verification-logo {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .verification-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .verification-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .verification-body {
+            padding: 2rem;
+        }
+
+        .verification-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .verification-info i {
+            font-size: 3rem;
+            color: #00d4aa;
+            margin-bottom: 1rem;
+        }
+
+        .verification-info h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .verification-info p {
+            color: #666;
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+
+        .form-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .btn-verify {
+            width: 100%;
+            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-verify:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-resend {
+            width: 100%;
+            background: transparent;
+            color: #00d4aa;
+            padding: 0.75rem;
+            border: 2px solid #00d4aa;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-resend:hover {
+            background: #00d4aa;
+            color: white;
+        }
+
+        .btn-resend:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .countdown {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="verification-card">
+            <div class="verification-header">
+                <div class="verification-logo">
+                    <i class="fas fa-dice"></i>
+                    <span>SpainBingo</span>
+                </div>
+                <div class="verification-title">Verificar tu Cuenta</div>
+                <div class="verification-subtitle">Ingresa el código de verificación</div>
+            </div>
+
+            <div class="verification-body">
+                <div class="verification-info">
+                    <i class="fas fa-shield-check"></i>
+                    <h3>¡Casi listo!</h3>
+                    <p id="verification-method">Hemos enviado un código de verificación a tu <span id="contact-info">email</span>.</p>
+                </div>
+
+                <div class="success-message" id="successMessage">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>¡Cuenta verificada exitosamente!</strong>
+                    <p>Serás redirigido al juego en unos segundos...</p>
+                </div>
+
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Error de verificación</strong>
+                    <p id="errorText">Ha ocurrido un error al verificar tu cuenta.</p>
+                </div>
+
+                <form id="verificationForm">
+                    <div class="form-group">
+                        <label class="form-label">Código de Verificación</label>
+                        <input type="text" class="form-input" id="verificationCode" placeholder="000000" maxlength="6" required>
+                        <div class="form-error" id="codeError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-verify" id="verifyBtn">
+                        Verificar Cuenta
+                        <div class="loading-spinner" id="verifySpinner"></div>
+                    </button>
+
+                    <button type="button" class="btn-resend" id="resendBtn">
+                        Reenviar Código
+                    </button>
+
+                    <div class="countdown" id="countdown">
+                        Puedes reenviar el código en <span id="timer">60</span> segundos
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VerificationManager {
+            constructor() {
+                this.userId = this.getUserIdFromUrl();
+                this.contactInfo = this.getContactInfoFromUrl();
+                this.confirmationMethod = this.getConfirmationMethodFromUrl();
+                this.countdown = 60;
+                this.countdownInterval = null;
+                
+                this.initializeVerification();
+            }
+
+            getUserIdFromUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('userId');
+            }
+
+            getContactInfoFromUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('contact') || 'email';
+            }
+
+            getConfirmationMethodFromUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('method') || 'email';
+            }
+
+            initializeVerification() {
+                if (!this.userId) {
+                    this.showError('ID de usuario no encontrado. Por favor, regresa al registro.');
+                    return;
+                }
+
+                this.updateContactInfo();
+                this.setupEventListeners();
+                this.startCountdown();
+            }
+
+            updateContactInfo() {
+                const contactElement = document.getElementById('contact-info');
+                const methodElement = document.getElementById('verification-method');
+                
+                if (this.confirmationMethod === 'sms') {
+                    contactElement.textContent = 'teléfono';
+                    methodElement.innerHTML = 'Hemos enviado un código de verificación a tu <span id="contact-info">teléfono</span>.';
+                } else {
+                    contactElement.textContent = 'email';
+                    methodElement.innerHTML = 'Hemos enviado un código de verificación a tu <span id="contact-info">email</span>.';
+                }
+            }
+
+            setupEventListeners() {
+                const form = document.getElementById('verificationForm');
+                const resendBtn = document.getElementById('resendBtn');
+                const codeInput = document.getElementById('verificationCode');
+
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.verifyCode();
+                });
+
+                resendBtn.addEventListener('click', () => {
+                    this.resendCode();
+                });
+
+                codeInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
+                });
+            }
+
+            async verifyCode() {
+                const code = document.getElementById('verificationCode').value;
+                
+                if (!code || code.length !== 6) {
+                    this.showFieldError('codeError', 'Ingresa un código de 6 dígitos');
+                    return;
+                }
+
+                this.showLoading('verify');
+                this.clearErrors();
+
+                try {
+                    const response = await fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/verify-code', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userId: this.userId,
+                            code: code
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showSuccess('¡Cuenta verificada exitosamente!');
+                        // Guardar datos del usuario
+                        localStorage.setItem('spainbingo_session', JSON.stringify({
+                            user: data.user,
+                            token: data.token,
+                            timestamp: Date.now()
+                        }));
+                        
+                        // Redirigir al juego después de 3 segundos
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 3000);
+                    } else {
+                        this.showError(data.error);
+                    }
+                } catch (error) {
+                    this.showError('Error de conexión. Intenta nuevamente.');
+                } finally {
+                    this.hideLoading('verify');
+                }
+            }
+
+            async resendCode() {
+                this.showLoading('resend');
+                this.disableResendButton();
+
+                try {
+                    const response = await fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/resend-code', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userId: this.userId,
+                            method: this.confirmationMethod
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showSuccess('Código reenviado exitosamente');
+                        this.startCountdown();
+                    } else {
+                        this.showError(data.error);
+                    }
+                } catch (error) {
+                    this.showError('Error al reenviar código. Intenta nuevamente.');
+                } finally {
+                    this.hideLoading('resend');
+                }
+            }
+
+            startCountdown() {
+                this.countdown = 60;
+                const resendBtn = document.getElementById('resendBtn');
+                const countdownElement = document.getElementById('countdown');
+                const timerElement = document.getElementById('timer');
+
+                resendBtn.disabled = true;
+                countdownElement.style.display = 'block';
+
+                this.countdownInterval = setInterval(() => {
+                    this.countdown--;
+                    timerElement.textContent = this.countdown;
+
+                    if (this.countdown <= 0) {
+                        clearInterval(this.countdownInterval);
+                        resendBtn.disabled = false;
+                        countdownElement.style.display = 'none';
+                    }
+                }, 1000);
+            }
+
+            disableResendButton() {
+                const resendBtn = document.getElementById('resendBtn');
+                resendBtn.disabled = true;
+            }
+
+            showLoading(type) {
+                const btn = document.getElementById(type === 'verify' ? 'verifyBtn' : 'resendBtn');
+                const spinner = document.getElementById(type === 'verify' ? 'verifySpinner' : 'resendSpinner');
+                
+                btn.disabled = true;
+                spinner.style.display = 'block';
+            }
+
+            hideLoading(type) {
+                const btn = document.getElementById(type === 'verify' ? 'verifyBtn' : 'resendBtn');
+                const spinner = document.getElementById(type === 'verify' ? 'verifySpinner' : 'resendSpinner');
+                
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+
+            showSuccess(message) {
+                const successElement = document.getElementById('successMessage');
+                successElement.style.display = 'block';
+                successElement.querySelector('strong').textContent = message;
+            }
+
+            showError(message) {
+                const errorElement = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                
+                errorElement.style.display = 'block';
+                errorText.textContent = message;
+            }
+
+            showFieldError(fieldId, message) {
+                const errorElement = document.getElementById(fieldId);
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            clearErrors() {
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('codeError').style.display = 'none';
+            }
+        }
+
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            new VerificationManager();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,21 @@
+{
+  "name": "spainbingo-chat-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for SpainBingo live chat with bot",
+  "main": "chat-handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1450.0"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "chat",
+    "bingo",
+    "bot"
+  ],
+  "author": "SpainBingo Team",
+  "license": "MIT"
+} 

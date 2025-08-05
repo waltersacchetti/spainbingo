@@ -11,9 +11,9 @@ class SecurityManager {
             maxDailyPlayTime: 8 * 60 * 60 * 1000, // 8 horas
             maxConcurrentSessions: 1,
             rateLimit: {
-                calls: 10, // máximo 10 llamadas por minuto
-                purchases: 5, // máximo 5 compras por hora
-                deposits: 3 // máximo 3 depósitos por día
+                calls: 100, // máximo 100 llamadas por minuto (aumentado para desarrollo)
+                purchases: 20, // máximo 20 compras por hora (aumentado para desarrollo)
+                deposits: 10 // máximo 10 depósitos por día (aumentado para desarrollo)
             },
             // Configuración de validación
             validationRules: {
@@ -127,6 +127,18 @@ class SecurityManager {
         }
 
         return true;
+    }
+
+    /**
+     * Resetear rate limiters (útil para desarrollo)
+     */
+    resetRateLimiters() {
+        if (!this.isProduction()) {
+            Object.keys(this.rateLimiters).forEach(action => {
+                this.rateLimiters[action].reset();
+            });
+            console.log('🔄 Rate limiters reseteados para desarrollo');
+        }
     }
 
     /**
@@ -587,6 +599,10 @@ class RateLimiter {
         this.requests.push(now);
         return true;
     }
+
+    reset() {
+        this.requests = [];
+    }
 }
 
 // Inicializar gestor de seguridad
@@ -595,4 +611,13 @@ const securityManager = new SecurityManager();
 // Exportar para uso global
 window.securityManager = securityManager;
 
-console.log('🔒 Módulo de seguridad cargado'); 
+// Función global para resetear rate limiters (útil para desarrollo)
+window.resetRateLimiters = function() {
+    if (securityManager) {
+        securityManager.resetRateLimiters();
+        console.log('✅ Rate limiters reseteados. Puedes continuar jugando.');
+    }
+};
+
+console.log('🔒 Módulo de seguridad cargado');
+console.log('💡 Para resetear rate limiters en desarrollo, usa: resetRateLimiters()'); 
