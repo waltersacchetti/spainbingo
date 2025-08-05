@@ -463,9 +463,11 @@ body::before {
 /* Layout del Juego */
 .game-layout {
     display: grid;
-    grid-template-columns: 300px 1fr 300px;
-    gap: 2rem;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 1.5rem;
     height: calc(100vh - 200px);
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 /* Paneles */
@@ -647,11 +649,15 @@ body::before {
 /* Panel Central - Cartones */
 .cards-container {
     flex: 1;
-    padding: 1.5rem;
+    padding: 1rem;
     overflow-y: auto;
-    max-height: calc(70vh - 120px);
+    max-height: calc(70vh - 100px);
     display: flex;
     flex-direction: column;
+    min-height: 450px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin: 0.5rem;
 }
 
 .cards-grid {
@@ -739,10 +745,12 @@ body::before {
 /* Panel de Noticias y Próximos Premios */
 .news-section {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-    border-radius: 12px;
-    padding: 0.75rem;
-    margin: 0.5rem 0;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
     border: 1px solid rgba(255, 193, 7, 0.3);
+    max-height: 120px;
+    overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     min-height: 140px;
@@ -753,14 +761,14 @@ body::before {
 .news-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid rgba(255, 193, 7, 0.2);
 }
 
 .news-header h4 {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
@@ -2811,28 +2819,30 @@ body::before {
 /* Analytics Section Styles */
 .analytics-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    max-height: 120px;
+    overflow: hidden;
 }
 
 .analytics-header {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     color: white;
 }
 
 .analytics-header h4 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 .analytics-header i {
