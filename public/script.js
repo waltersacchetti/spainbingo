@@ -112,10 +112,26 @@ class BingoPro {
     }
 
     initializeGame() {
+        console.log('Inicializando juego de bingo...');
+        
+        // Inicializar estado del juego
         this.gameState = 'waiting';
         this.currentGameId = this.generateGameId();
         this.isPlayerJoined = false;
+        this.calledNumbers = new Set();
+        this.callHistory = [];
+        this.lastNumberCalled = null;
+        this.gameStartTime = new Date();
+        
+        // Generar pool de números disponibles
+        this.availableNumbers = this.generateNumberPool();
+        
+        // Inicializar cartones del usuario
+        this.userCards = [];
         this.selectedCards = [];
+        this.favoriteCards = new Set();
+        
+        // Cargar datos guardados
         this.loadFavoriteCards(); // Load favorite cards from localStorage
         this.loadAnalytics(); // Load analytics data
         
@@ -126,15 +142,18 @@ class BingoPro {
             this.addCard(); // Agregar 1 cartón más
         }
         
+        // Seleccionar todos los cartones por defecto
+        this.selectedCards = [...this.userCards];
+        
         this.updateDisplay();
         this.updateAnalyticsDisplay();
-        this.saveAnalytics(); // Save analytics data after each update // Initialize analytics display
+        this.saveAnalytics(); // Save analytics data after each update
         
-        // Iniciar bingo automático después de 5 segundos
+        // Iniciar bingo automático después de 3 segundos
         setTimeout(() => {
             console.log('Iniciando bingo automático...');
             this.startNewGame();
-        }, 5000);
+        }, 3000);
     }
 
     startGameScheduler() {
@@ -330,16 +349,21 @@ class BingoPro {
                 
                 // Asignar logotipo aleatorio para celdas vacías
                 let logoClass = '';
+                let displayContent = '';
+                
                 if (isEmpty) {
                     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
                     logoClass = `logo-${logoIndex % logos.length}`;
+                    displayContent = randomLogo;
                     logoIndex++;
+                } else {
+                    displayContent = number.toString();
                 }
                 
                 html += `
                     <div class="bingo-cell ${isMarked ? 'marked' : ''} ${isEmpty ? 'empty' : ''} ${logoClass}" 
                          data-card-id="${card.id}" data-row="${row}" data-col="${col}">
-                        ${number || ''}
+                        ${displayContent}
                     </div>
                 `;
             }
@@ -1424,8 +1448,10 @@ class BingoPro {
         this.currentGameId = this.globalGameState.gameId;
         this.gameStartTime = new Date();
         
-        // Solo usar cartones seleccionados por el jugador
-        this.userCards = [...this.selectedCards];
+        // Usar todos los cartones del usuario si no hay seleccionados
+        if (this.selectedCards.length === 0) {
+            this.selectedCards = [...this.userCards];
+        }
         
         // Actualizar interfaz
         this.updateDisplay();

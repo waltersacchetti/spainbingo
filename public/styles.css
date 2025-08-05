@@ -553,7 +553,7 @@ body {
 .cards-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
     justify-content: center;
     align-items: flex-start;
     min-height: 100%;
@@ -561,6 +561,8 @@ body {
     background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     margin: var(--spacing-sm);
+    overflow-y: auto;
+    max-height: 600px;
 }
 
 /* Cartones de bingo */
@@ -575,19 +577,12 @@ body {
     overflow: hidden;
     max-width: 320px;
     min-width: 280px;
-    transform: rotate(-1deg);
-}
-
-.bingo-card:nth-child(even) {
-    transform: rotate(1deg);
-}
-
-.bingo-card:nth-child(3n) {
-    transform: rotate(-0.5deg);
+    flex-shrink: 0;
+    margin: var(--spacing-sm);
 }
 
 .bingo-card:hover {
-    transform: rotate(0deg) scale(1.02);
+    transform: scale(1.02);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-color);
 }
