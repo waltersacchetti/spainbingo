@@ -116,9 +116,9 @@ deploy_to_ec2() {
     show_info "Copiando archivos a la EC2..."
     scp -i spainbingo-key.pem -r public/ ec2-user@$PUBLIC_IP:/var/www/spainbingo/
     
-    # Reiniciar aplicación
+    # Reiniciar aplicación desde la carpeta public
     show_info "Reiniciando aplicación..."
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo && pm2 restart spainbingo'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo/public && pm2 restart spainbingo'
     
     show_success "Despliegue a EC2 completado"
 }
@@ -128,9 +128,9 @@ verify_deployment() {
     show_info "Verificando estado de la aplicación..."
     
     # Verificar health check
-    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/health')
+    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/health')
     
-    if echo "$health_check" | grep -q "OK"; then
+    if echo "$health_check" | grep -q "success"; then
         show_success "Aplicación funcionando correctamente"
     else
         show_error "La aplicación no responde correctamente"
@@ -139,7 +139,7 @@ verify_deployment() {
     
     # Verificar que los archivos se actualizaron
     show_info "Verificando archivos actualizados..."
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo && ls -la public/ | head -10'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo/public && ls -la | head -10'
 }
 
 # Despliegue completo
