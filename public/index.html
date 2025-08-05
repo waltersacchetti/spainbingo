@@ -389,22 +389,125 @@
             <!-- Pestaña de Mis Cartones -->
             <div class="tab-content" id="cards-tab">
                 <div class="my-cards-section">
-                    <div class="section-header">
-                        <h2>Mis Cartones</h2>
-                        <div class="cards-summary">
-                            <div class="summary-item">
-                                <span class="summary-value" id="totalCards">3</span>
-                                <span class="summary-label">Cartones</span>
+                    <!-- Hero Section para Mis Cartones -->
+                    <div class="cards-hero-section">
+                        <div class="hero-background">
+                            <div class="floating-balls">
+                                <div class="ball ball-1">🎲</div>
+                                <div class="ball ball-2">⭐</div>
+                                <div class="ball ball-3">🏆</div>
+                                <div class="ball ball-4">💎</div>
+                                <div class="ball ball-5">🎯</div>
                             </div>
-                            <div class="summary-item">
-                                <span class="summary-value" id="activeCards">2</span>
-                                <span class="summary-label">Activos</span>
+                        </div>
+                        <div class="hero-content">
+                            <div class="hero-title">
+                                <h1><i class="fas fa-ticket-alt"></i> Mis Cartones de Bingo</h1>
+                                <p class="hero-subtitle">¡Gestiona tus cartones y maximiza tus posibilidades de ganar!</p>
+                            </div>
+                            <div class="cards-stats-grid">
+                                <div class="stat-card-hero">
+                                    <div class="stat-icon-hero">
+                                        <i class="fas fa-ticket-alt"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="totalCardsHero">3</div>
+                                        <div class="stat-label-hero">Cartones Totales</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-hero">
+                                    <div class="stat-icon-hero">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="activeCardsHero">2</div>
+                                        <div class="stat-label-hero">En Juego</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-hero">
+                                    <div class="stat-icon-hero">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="winRateHero">67%</div>
+                                        <div class="stat-label-hero">Tasa de Victoria</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-hero">
+                                    <div class="stat-icon-hero">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="earningsHero">€150</div>
+                                        <div class="stat-label-hero">Ganancias</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="cards-list" id="myCardsList">
-                        <!-- Los cartones se mostrarán aquí -->
+
+                    <!-- Controles de Cartones -->
+                    <div class="cards-controls-section">
+                        <div class="controls-header">
+                            <h3><i class="fas fa-cogs"></i> Gestionar Cartones</h3>
+                            <div class="controls-actions">
+                                <button class="btn-action btn-select-all">
+                                    <i class="fas fa-check-double"></i>
+                                    Seleccionar Todos
+                                </button>
+                                <button class="btn-action btn-deselect-all">
+                                    <i class="fas fa-times"></i>
+                                    Deseleccionar
+                                </button>
+                                <button class="btn-action btn-favorites">
+                                    <i class="fas fa-heart"></i>
+                                    Favoritos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Cartones -->
+                    <div class="cards-grid-container">
+                        <div class="cards-grid" id="myCardsList">
+                            <!-- Los cartones se mostrarán aquí dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Sección de Acciones Rápidas -->
+                    <div class="quick-actions-section">
+                        <div class="actions-grid">
+                            <div class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Comprar Más</h4>
+                                    <p>Adquiere nuevos cartones para aumentar tus posibilidades</p>
+                                    <button class="btn-action-small">Comprar</button>
+                                </div>
+                            </div>
+                            <div class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-random"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Mezclar</h4>
+                                    <p>Cambia la disposición de tus cartones</p>
+                                    <button class="btn-action-small">Mezclar</button>
+                                </div>
+                            </div>
+                            <div class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Analytics</h4>
+                                    <p>Ver estadísticas detalladas de tus cartones</p>
+                                    <button class="btn-action-small">Ver</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1540,6 +1540,12 @@ class BingoPro {
         const selectedCardsElement = document.getElementById('selectedCardsCount');
         const joinGameBtn = document.getElementById('joinGameBtn');
         
+        // Elementos del hero de Mis Cartones
+        const totalCardsHero = document.getElementById('totalCardsHero');
+        const activeCardsHero = document.getElementById('activeCardsHero');
+        const winRateHero = document.getElementById('winRateHero');
+        const earningsHero = document.getElementById('earningsHero');
+        
         if (balanceElement) {
             balanceElement.textContent = `€${this.userBalance.toFixed(2)}`;
         }
@@ -1554,6 +1560,23 @@ class BingoPro {
         }
         if (joinGameBtn) {
             joinGameBtn.disabled = this.selectedCards.length === 0 || this.gameState === 'playing';
+        }
+        
+        // Actualizar elementos del hero
+        if (totalCardsHero) {
+            totalCardsHero.textContent = this.userCards.length;
+        }
+        if (activeCardsHero) {
+            activeCardsHero.textContent = this.userCards.filter(card => card.isActive).length;
+        }
+        if (winRateHero) {
+            const winRate = this.gameAnalytics.totalGamesPlayed > 0 
+                ? Math.round((this.gameAnalytics.totalWins / this.gameAnalytics.totalGamesPlayed) * 100)
+                : 67; // Valor por defecto atractivo
+            winRateHero.textContent = `${winRate}%`;
+        }
+        if (earningsHero) {
+            earningsHero.textContent = `€${this.gameAnalytics.totalMoneyWon.toFixed(0)}`;
         }
     }
 
