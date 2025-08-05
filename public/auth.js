@@ -397,19 +397,38 @@ class AuthManager {
      * Mostrar error general
      */
     showError(type, message) {
+        console.error(`❌ Error en ${type}:`, message);
+        
         const errorElement = document.getElementById(type + 'Error');
         if (errorElement) {
             errorElement.textContent = message;
             errorElement.style.display = 'block';
+            
+            // Scroll al error
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
+            console.error('Elemento de error no encontrado:', type + 'Error');
             alert(message);
         }
+    }
+
+    /**
+     * Limpiar errores generales
+     */
+    clearErrors() {
+        const errorElements = document.querySelectorAll('.form-error');
+        errorElements.forEach(element => {
+            element.style.display = 'none';
+        });
     }
 
     /**
      * Mostrar loading
      */
     showLoading(type) {
+        // Limpiar errores previos
+        this.clearErrors();
+        
         const button = document.getElementById(type + 'Btn');
         const spinner = document.getElementById(type + 'Spinner');
         
@@ -446,7 +465,7 @@ class AuthManager {
     async login(email, password) {
         try {
             console.log('🔐 Intentando login con URL:', `${this.apiBaseUrl}/api/login`);
-            console.log('📝 Datos enviados:', { email, password });
+            console.log('📝 Datos enviados:', { email, password: password ? '***' : 'missing' });
             
             const response = await fetch(`${this.apiBaseUrl}/api/login`, {
                 method: 'POST',
@@ -458,20 +477,28 @@ class AuthManager {
             
             console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
+            if (!response.ok) {
+                console.error('❌ Error HTTP:', response.status, response.statusText);
+                return { success: false, error: `Error del servidor: ${response.status}` };
+            }
+
             const data = await response.json();
+            console.log('📋 Datos de respuesta:', data);
             
             if (data.success) {
                 this.isAuthenticated = true;
                 this.currentUser = data.user;
                 this.sessionToken = data.token;
                 
+                console.log('✅ Login exitoso:', data.user);
                 return { success: true, user: this.currentUser };
             } else {
+                console.error('❌ Error en respuesta:', data.error);
                 return { success: false, error: data.error || 'Error de autenticación' };
             }
         } catch (error) {
-            console.error('Error en login:', error);
-            return { success: false, error: 'Error de conexión' };
+            console.error('❌ Error en login:', error);
+            return { success: false, error: 'Error de conexión: ' + error.message };
         }
     }
 

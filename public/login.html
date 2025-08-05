@@ -131,6 +131,12 @@
             font-size: 0.875rem;
             margin-top: 0.5rem;
             display: none;
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
 
         .form-checkbox {
@@ -360,6 +366,9 @@
                         <div class="loading-spinner" id="loginSpinner"></div>
                     </button>
 
+                    <!-- Error general para login -->
+                    <div class="form-error" id="loginError" style="display: none;"></div>
+
                     <div class="auth-divider">
                         <span>o continúa con</span>
                     </div>
@@ -454,6 +463,9 @@
                         Crear Cuenta
                         <div class="loading-spinner" id="registerSpinner"></div>
                     </button>
+
+                    <!-- Error general para registro -->
+                    <div class="form-error" id="registerError" style="display: none;"></div>
 
                     <div class="auth-divider">
                         <span>o regístrate con</span>
