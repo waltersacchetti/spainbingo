@@ -1,27 +1,61 @@
-/* Variables CSS */
+/* Variables CSS Unificadas - Inspiradas en YoBingo.es */
 :root {
-    --primary-color: #1a1a1a;
-    --secondary-color: #2d2d2d;
-    --accent-color: #00d4aa;
-    --accent-dark: #00b894;
-    --gold-color: #ffd700;
-    --red-color: #ff4757;
-    --blue-color: #3742fa;
-    --text-primary: #1a1a1a;
-    --text-secondary: #6c757d;
+    /* Colores principales */
+    --primary-color: #667eea;
+    --primary-dark: #5a67d8;
+    --accent-color: #764ba2;
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --danger-color: #f56565;
+    
+    /* Colores de texto */
+    --text-primary: #2d3748;
+    --text-secondary: #718096;
+    --text-muted: #a0aec0;
     --text-light: #ffffff;
+    
+    /* Colores de fondo */
     --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-dark: #1a1a1a;
-    --border-color: #e9ecef;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
-    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.25);
-    --gradient-primary: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    --gradient-accent: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
-    --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
-    --gradient-hero: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #00d4aa 100%);
+    --bg-secondary: #f7fafc;
+    --bg-tertiary: #edf2f7;
+    --bg-card: #ffffff;
+    
+    /* Bordes */
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+    
+    /* Espaciado */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Bordes redondeados */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color) 100%);
+    --gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    --gradient-success: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
 }
 
 /* Reset y Base */
@@ -44,51 +78,70 @@ body {
     padding: 0 2rem;
 }
 
-/* Header de Bienvenida */
+/* Header de Bienvenida - Estilo Unificado */
 .welcome-header {
-    background: var(--gradient-primary);
-    padding: 1rem 0;
+    background: var(--bg-card);
+    padding: var(--spacing-md) 0;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
     box-shadow: var(--shadow-lg);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
 }
 
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 var(--spacing-xl);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Logo Original */
+/* Logo Unificado - Estilo Profesional */
 .logo {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-md);
 }
 
 .logo-icon {
     position: relative;
     width: 60px;
     height: 60px;
-    background: var(--gradient-accent);
-    border-radius: 12px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     animation: logoGlow 3s ease-in-out infinite;
+    overflow: hidden;
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.logo-icon:hover::before {
+    left: 100%;
 }
 
 .logo-icon i {
     font-size: 2rem;
     color: white;
     animation: diceRoll 4s ease-in-out infinite;
+    z-index: 2;
 }
 
 .dice-dots {
@@ -152,87 +205,95 @@ body {
     margin-top: -0.25rem;
 }
 
-/* Navegación */
+/* Navegación Unificada */
 .welcome-nav {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: var(--spacing-xl);
 }
 
 .nav-link {
-    color: var(--text-light);
+    color: var(--text-primary);
     text-decoration: none;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     position: relative;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
 }
 
 .nav-link:hover {
-    color: var(--accent-color);
+    color: var(--primary-color);
+    background: var(--bg-secondary);
 }
 
 .nav-link::after {
     content: '';
     position: absolute;
-    bottom: -5px;
-    left: 0;
+    bottom: -2px;
+    left: 50%;
     width: 0;
-    height: 2px;
-    background: var(--accent-color);
-    transition: width 0.3s ease;
+    height: 3px;
+    background: var(--gradient-primary);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+    border-radius: var(--radius-sm);
 }
 
 .nav-link:hover::after {
-    width: 100%;
+    width: 80%;
 }
 
 .btn-login {
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
     color: white;
     border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-xl);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 212, 170, 0.3);
-    filter: brightness(1.1);
+    box-shadow: var(--shadow-lg);
+    background: var(--gradient-accent);
 }
 
 .btn-close-welcome {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-xl);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    backdrop-filter: blur(10px);
+    gap: var(--spacing-sm);
 }
 
 .btn-close-welcome:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-lg);
 }
 
-/* Hero Section */
+/* Hero Section Unificado */
 .hero-section {
     background: var(--gradient-hero);
     min-height: 100vh;
     display: flex;
     align-items: center;
-    padding-top: 80px;
+    padding-top: 100px;
     position: relative;
     overflow: hidden;
 }
@@ -245,21 +306,22 @@ body {
     right: 0;
     bottom: 0;
     background: 
-        radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     pointer-events: none;
 }
 
 .hero-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 var(--spacing-xl);
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4rem;
+    gap: var(--spacing-2xl);
     align-items: center;
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .hero-text h2 {
@@ -303,42 +365,44 @@ body {
 }
 
 .btn-primary, .btn-secondary {
-    padding: 1rem 2rem;
+    padding: var(--spacing-lg) var(--spacing-2xl);
     border: none;
-    border-radius: 50px;
+    border-radius: var(--radius-xl);
     font-weight: 700;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
 }
 
 .btn-primary {
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
     color: white;
-    box-shadow: var(--shadow-lg);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(0, 212, 170, 0.4);
-    filter: brightness(1.1);
+    box-shadow: var(--shadow-xl);
+    background: var(--gradient-accent);
 }
 
 .btn-secondary {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    border: 2px solid white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
     background: white;
     color: var(--text-primary);
     transform: translateY(-3px);
+    border-color: white;
 }
 
 /* Animación del Bingo */
@@ -458,13 +522,14 @@ body {
 }
 
 .game-card {
-    background: white;
-    border-radius: 15px;
-    padding: 2rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
     box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
 .game-card::before {
@@ -474,7 +539,9 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
 }
 
 .game-card.featured::before {
@@ -482,8 +549,13 @@ body {
 }
 
 .game-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
     box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
+}
+
+.game-card:hover::before {
+    transform: scaleX(1);
 }
 
 .game-badge {
@@ -549,22 +621,24 @@ body {
 
 .btn-game {
     width: 100%;
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
     color: white;
     border: none;
-    padding: 1rem;
-    border-radius: 8px;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
     font-weight: 700;
     cursor: pointer;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .btn-game:hover {
+    background: var(--gradient-accent);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 212, 170, 0.3);
-    filter: brightness(1.1);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Ofertas Especiales */
@@ -588,52 +662,54 @@ body {
 }
 
 .offer-card {
-    background: white;
-    border-radius: 15px;
-    padding: 2rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
     box-shadow: var(--shadow-lg);
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
     border: 2px solid var(--border-color);
 }
 
 .offer-card.welcome {
-    border-color: var(--accent-color);
+    border-color: var(--primary-color);
 }
 
 .offer-card.daily {
-    border-color: var(--blue-color);
+    border-color: var(--accent-color);
 }
 
 .offer-card.weekend {
-    border-color: var(--gold-color);
+    border-color: var(--warning-color);
 }
 
 .offer-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
     box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
 }
 
 .offer-badge {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-xl);
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
+    box-shadow: var(--shadow-md);
 }
 
 .offer-card.welcome .offer-badge {
-    background: var(--gradient-accent);
+    background: var(--gradient-primary);
 }
 
 .offer-card.daily .offer-badge {
-    background: var(--blue-color);
+    background: var(--gradient-accent);
 }
 
 .offer-card.weekend .offer-badge {
@@ -723,17 +799,36 @@ body {
 
 .stat-card {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 2rem;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
     text-align: center;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
     background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.stat-card:hover::before {
+    transform: scaleX(1);
 }
 
 .stat-icon {
