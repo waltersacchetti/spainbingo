@@ -449,7 +449,7 @@
                 this.clearErrors();
 
                 try {
-                    const response = await fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/verify-code', {
+                    const response = await fetch('/api/verify-code', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -490,7 +490,7 @@
                 this.disableResendButton();
 
                 try {
-                    const response = await fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/resend-code', {
+                    const response = await fetch('/api/resend-code', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

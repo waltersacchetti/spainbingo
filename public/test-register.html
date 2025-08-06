@@ -132,7 +132,7 @@
                 phone: '123456789'
             };
 
-            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/register', {
+            fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,7 +174,7 @@
                 confirmationMethod: method
             };
 
-            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/register-with-confirmation', {
+            fetch('/api/register-with-confirmation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -211,7 +211,7 @@
                 code: code
             };
 
-            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/verify-code', {
+            fetch('/api/verify-code', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -245,7 +245,7 @@
                 method: document.getElementById('confirmationMethod').value
             };
 
-            fetch('http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com/api/resend-code', {
+            fetch('/api/resend-code', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
