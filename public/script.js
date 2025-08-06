@@ -339,6 +339,11 @@ class BingoPro {
             `;
             cardsContainer.appendChild(cardElement);
         });
+        
+        // Si el modal está abierto, ajustar altura después de renderizar
+        if (document.getElementById('bingoCardsModal')?.style.display === 'flex') {
+            setTimeout(() => this.adjustModalHeight(), 100);
+        }
     }
 
     renderCardGrid(card) {
@@ -1845,6 +1850,13 @@ class BingoPro {
             });
         });
 
+        // Ajustar modal cuando cambie el tamaño de la ventana
+        window.addEventListener('resize', () => {
+            if (document.getElementById('bingoCardsModal')?.style.display === 'flex') {
+                this.adjustModalHeight();
+            }
+        });
+
         // Event delegation para todos los botones
         document.addEventListener('click', (e) => {
             // Botones del juego
@@ -2097,6 +2109,9 @@ class BingoPro {
         if (modal) {
             modal.style.display = 'flex';
             this.updateBingoCardsModal();
+            
+            // Ajustar altura del modal según el número de cartones
+            this.adjustModalHeight();
         }
     }
 
@@ -2129,6 +2144,35 @@ class BingoPro {
         
         // Renderizar cartones en el modal
         this.renderCards();
+    }
+
+    adjustModalHeight() {
+        const modal = document.getElementById('bingoCardsModal');
+        const modalContent = modal?.querySelector('.modal-content');
+        const cardsGrid = modal?.querySelector('.cards-modal-grid');
+        
+        if (!modal || !modalContent || !cardsGrid) return;
+        
+        // Calcular altura necesaria basada en el número de cartones
+        const cardCount = this.userCards.length;
+        const cardsPerRow = window.innerWidth > 1200 ? 3 : window.innerWidth > 768 ? 2 : 1;
+        const rowsNeeded = Math.ceil(cardCount / cardsPerRow);
+        
+        // Altura estimada por fila (cartón + gap + padding)
+        const rowHeight = 280; // altura aproximada de un cartón + espaciado
+        const summaryHeight = 80; // altura del header de estadísticas
+        const padding = 40; // padding adicional
+        
+        const estimatedHeight = summaryHeight + (rowsNeeded * rowHeight) + padding;
+        
+        // Limitar altura máxima al 90% de la ventana
+        const maxHeight = window.innerHeight * 0.9;
+        const finalHeight = Math.min(estimatedHeight, maxHeight);
+        
+        // Aplicar altura
+        modalContent.style.height = `${finalHeight}px`;
+        
+        console.log(`Modal ajustado: ${cardCount} cartones, ${rowsNeeded} filas, altura: ${finalHeight}px`);
     }
 
     updateCalledNumbersModal() {
