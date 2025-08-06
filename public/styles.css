@@ -2823,9 +2823,9 @@ body {
     max-width: 95vw;
     max-height: 95vh;
     width: 1400px;
-    height: auto;
-    min-height: 600px;
-    max-height: 90vh;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .bingo-cards-modal .modal-body {
@@ -2833,8 +2833,8 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: auto;
-    min-height: 500px;
+    height: 100%;
+    flex: 1;
 }
 
 .cards-modal-summary {
@@ -2846,14 +2846,15 @@ body {
 }
 
 .cards-modal-summary::after {
-    content: "Desliza para ver más cartones";
+    content: "⬇️ Desliza para ver más cartones ⬇️";
     position: absolute;
     bottom: 5px;
     right: var(--spacing-lg);
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    opacity: 0.8;
     animation: fadeInOut 2s ease-in-out infinite;
+    font-weight: 500;
 }
 
 @keyframes fadeInOut {
@@ -2918,8 +2919,7 @@ body {
     gap: var(--spacing-lg);
     padding: var(--spacing-lg);
     overflow-y: auto;
-    min-height: 400px;
-    max-height: 70vh;
+    height: 100%;
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) var(--bg-secondary);
 }
@@ -2965,7 +2965,7 @@ body {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
         padding: var(--spacing-md);
-        min-height: 300px;
+        height: 100%;
     }
     
     .cards-modal-grid .bingo-card {

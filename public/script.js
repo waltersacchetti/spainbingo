@@ -2283,9 +2283,9 @@ class BingoPro {
         const rowsNeeded = Math.ceil(cardCount / cardsPerRow);
         
         // Altura estimada por fila (cartón + gap + padding)
-        const rowHeight = 280; // altura aproximada de un cartón + espaciado
-        const summaryHeight = 80; // altura del header de estadísticas
-        const padding = 40; // padding adicional
+        const rowHeight = 320; // altura aproximada de un cartón + espaciado
+        const summaryHeight = 100; // altura del header de estadísticas
+        const padding = 60; // padding adicional
         
         const estimatedHeight = summaryHeight + (rowsNeeded * rowHeight) + padding;
         
@@ -2293,10 +2293,13 @@ class BingoPro {
         const maxHeight = window.innerHeight * 0.9;
         const finalHeight = Math.min(estimatedHeight, maxHeight);
         
-        // Aplicar altura
-        modalContent.style.height = `${finalHeight}px`;
+        // Aplicar altura fija para asegurar scroll
+        modalContent.style.height = `${maxHeight}px`;
         
-        console.log(`Modal ajustado: ${cardCount} cartones, ${rowsNeeded} filas, altura: ${finalHeight}px`);
+        // Asegurar que el grid tenga scroll
+        cardsGrid.style.height = `${maxHeight - summaryHeight - 40}px`;
+        
+        console.log(`Modal ajustado: ${cardCount} cartones, ${rowsNeeded} filas, altura: ${finalHeight}px, scroll habilitado`);
     }
 
     updateCalledNumbersModal() {
