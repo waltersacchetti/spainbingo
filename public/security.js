@@ -361,20 +361,57 @@ class SecurityManager {
         modal.className = 'age-verification-modal';
         modal.innerHTML = `
             <div class="age-verification-content">
-                <h3>Verificación de Edad</h3>
-                <p>Debe ser mayor de 18 años para jugar.</p>
-                <div class="age-input">
-                    <label>Fecha de nacimiento:</label>
-                    <input type="date" id="birthDate" required>
+                <div class="age-verification-icon">
+                    <i class="fas fa-user-shield"></i>
                 </div>
+                <h3>🔞 Verificación de Edad</h3>
+                <p>Para acceder a SpainBingo, debes confirmar que eres mayor de 18 años según la legislación española sobre juegos de azar.</p>
+                
+                <div class="age-input">
+                    <label for="birthDate">
+                        <i class="fas fa-calendar-alt"></i>
+                        Fecha de nacimiento:
+                    </label>
+                    <input type="date" id="birthDate" required max="${this.getMaxDate()}">
+                </div>
+                
+                <div class="age-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Importante:</strong> Solo se permite el acceso a usuarios mayores de 18 años. 
+                    El juego responsable es fundamental para una experiencia segura.
+                </div>
+                
                 <div class="age-buttons">
-                    <button onclick="securityManager.confirmAge()">Confirmar</button>
-                    <button onclick="securityManager.denyAccess()">Salir</button>
+                    <button onclick="securityManager.confirmAge()">
+                        <i class="fas fa-check"></i>
+                        Confirmar Edad
+                    </button>
+                    <button onclick="securityManager.denyAccess()">
+                        <i class="fas fa-times"></i>
+                        Salir
+                    </button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
+        
+        // Prevenir que se cierre con ESC o clic fuera
+        document.addEventListener('keydown', this.preventEscape);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+        
+        // Focus en el input de fecha
+        setTimeout(() => {
+            const dateInput = document.getElementById('birthDate');
+            if (dateInput) {
+                dateInput.focus();
+            }
+        }, 100);
     }
 
     /**
@@ -383,17 +420,80 @@ class SecurityManager {
     confirmAge() {
         const birthDate = document.getElementById('birthDate').value;
         if (!birthDate) {
-            alert('Por favor, ingrese su fecha de nacimiento');
+            this.showAgeError('Por favor, ingrese su fecha de nacimiento');
             return;
         }
 
         const age = this.calculateAge(birthDate);
         if (age >= this.securityConfig.validationRules.minAge) {
-            localStorage.setItem('user_age', age);
-            document.querySelector('.age-verification-modal').remove();
-            this.logEvent('age_verified', { age: age });
+            // Mostrar confirmación exitosa
+            this.showAgeSuccess(age);
+            
+            // Guardar edad y remover modal después de un delay
+            setTimeout(() => {
+                localStorage.setItem('user_age', age);
+                const modal = document.querySelector('.age-verification-modal');
+                if (modal) {
+                    modal.remove();
+                }
+                this.logSecurityEvent('age_verified', `Edad verificada: ${age} años`);
+                
+                // Recargar la página para continuar
+                window.location.reload();
+            }, 2000);
         } else {
             this.denyAccess();
+        }
+    }
+
+    /**
+     * Mostrar error en verificación de edad
+     */
+    showAgeError(message) {
+        const modal = document.querySelector('.age-verification-modal');
+        if (modal) {
+            const content = modal.querySelector('.age-verification-content');
+            const warning = content.querySelector('.age-warning');
+            if (warning) {
+                warning.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error:</strong> ${message}
+                `;
+                warning.style.display = 'block';
+                
+                // Ocultar después de 3 segundos
+                setTimeout(() => {
+                    warning.style.display = 'none';
+                }, 3000);
+            }
+        }
+    }
+
+    /**
+     * Mostrar confirmación exitosa
+     */
+    showAgeSuccess(age) {
+        const modal = document.querySelector('.age-verification-modal');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="age-verification-content">
+                    <div class="age-verification-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>✅ Verificación Exitosa</h3>
+                    <p>¡Bienvenido a SpainBingo! Tu edad ha sido verificada correctamente.</p>
+                    <div class="age-warning" style="background: rgba(78, 205, 196, 0.1); border-color: rgba(78, 205, 196, 0.3); color: #4ecdc4;">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Confirmado:</strong> Tienes ${age} años y cumples con los requisitos de edad.
+                    </div>
+                    <div class="age-buttons">
+                        <button style="background: linear-gradient(135deg, #4ecdc4, #44a08d);" disabled>
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Redirigiendo...
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     }
 
@@ -414,12 +514,56 @@ class SecurityManager {
     }
 
     /**
+     * Obtener fecha máxima permitida (18 años atrás)
+     */
+    getMaxDate() {
+        const today = new Date();
+        const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        return maxDate.toISOString().split('T')[0];
+    }
+
+    /**
+     * Prevenir escape del modal
+     */
+    preventEscape(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }
+
+    /**
      * Denegar acceso
      */
     denyAccess() {
         this.logSecurityEvent('access_denied', 'Acceso denegado por edad');
-        alert('Debe ser mayor de 18 años para acceder a este sitio.');
-        window.location.href = 'https://www.google.com';
+        
+        // Mostrar mensaje más profesional
+        const modal = document.querySelector('.age-verification-modal');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="age-verification-content">
+                    <div class="age-verification-icon">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <h3>🚫 Acceso Denegado</h3>
+                    <p>Lo sentimos, pero debes ser mayor de 18 años para acceder a SpainBingo.</p>
+                    <div class="age-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Información:</strong> Los juegos de azar están regulados en España y requieren mayoría de edad.
+                    </div>
+                    <div class="age-buttons">
+                        <button onclick="window.location.href='https://www.google.com'">
+                            <i class="fas fa-external-link-alt"></i>
+                            Salir
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            alert('Debe ser mayor de 18 años para acceder a este sitio.');
+            window.location.href = 'https://www.google.com';
+        }
     }
 
     /**
