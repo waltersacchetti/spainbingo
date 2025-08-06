@@ -560,13 +560,12 @@ body {
     gap: var(--spacing-lg);
     justify-content: flex-start;
     align-items: center;
-    min-height: 100%;
     padding: var(--spacing-md);
     background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     margin: var(--spacing-sm);
     overflow-y: auto;
-    max-height: 600px;
+    min-height: 400px;
 }
 
 /* Cartones de bingo */
@@ -580,16 +579,34 @@ body {
     position: relative;
     overflow: hidden;
     width: 100%;
-    max-width: 320px;
-    min-width: 280px;
+    max-width: 350px;
+    min-width: 300px;
     flex-shrink: 0;
     margin: 0;
+    margin-bottom: var(--spacing-md);
 }
 
 .bingo-card:hover {
     transform: scale(1.02);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-color);
+}
+
+/* Estilos específicos para diferentes colores de cartones */
+.bingo-card.card-red {
+    border-color: #ef4444;
+}
+
+.bingo-card.card-blue {
+    border-color: #3b82f6;
+}
+
+.bingo-card.card-green {
+    border-color: #10b981;
+}
+
+.bingo-card.card-purple {
+    border-color: #8b5cf6;
 }
 
 .card-header {
@@ -631,12 +648,24 @@ body {
     background: var(--text-muted);
 }
 
+/* Información del cartón */
+.card-info {
+    margin-top: var(--spacing-sm);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
 /* Grid del cartón */
 .bingo-card-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 2px;
+    gap: 3px;
     margin-top: var(--spacing-md);
+    width: 100%;
 }
 
 .bingo-cell {
@@ -648,13 +677,14 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     transition: var(--transition-fast);
     cursor: pointer;
     position: relative;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 2px;
 }
 
 .bingo-cell:hover {
