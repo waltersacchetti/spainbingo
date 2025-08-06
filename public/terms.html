@@ -8,50 +8,189 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .terms-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        body {
+            background: var(--gradient-hero);
+            min-height: 100vh;
+            padding: var(--spacing-xl);
+            position: relative;
+            overflow-x: hidden;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .terms-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--spacing-2xl);
+            background: var(--bg-card);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+        }
+
         .terms-header {
             text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #00d4aa;
+            margin-bottom: var(--spacing-2xl);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 3px solid var(--primary-color);
+            position: relative;
         }
+
+        .terms-header::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-sm);
+        }
+
+        .terms-header h1 {
+            color: var(--text-primary);
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .terms-header h1 i {
+            color: var(--primary-color);
+            margin-right: var(--spacing-sm);
+        }
+
+        .terms-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
         .terms-section {
-            margin-bottom: 2rem;
+            margin-bottom: var(--spacing-2xl);
+            padding: var(--spacing-xl);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            transition: var(--transition-normal);
         }
+
+        .terms-section:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
         .terms-section h3 {
-            color: #00d4aa;
-            margin-bottom: 1rem;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
+
+        .terms-section h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-sm);
+        }
+
         .terms-section p, .terms-section ul {
-            line-height: 1.6;
-            color: #333;
+            line-height: 1.8;
+            color: var(--text-primary);
+            font-size: 1rem;
         }
+
         .terms-section ul {
-            padding-left: 1.5rem;
+            padding-left: var(--spacing-xl);
         }
+
         .terms-section li {
-            margin-bottom: 0.5rem;
+            margin-bottom: var(--spacing-sm);
+            position: relative;
         }
+
+        .terms-section li::before {
+            content: '•';
+            color: var(--primary-color);
+            font-weight: bold;
+            position: absolute;
+            left: -20px;
+        }
+
         .warning-box {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+            border: 2px solid var(--warning-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+            position: relative;
+            overflow: hidden;
         }
+
+        .warning-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-gold);
+        }
+
+        .warning-box strong {
+            color: var(--warning-color);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .warning-box p {
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.6;
+        }
+
         .legal-notice {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            border-left: 4px solid #00d4aa;
+            background: var(--bg-secondary);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            margin-top: var(--spacing-lg);
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+        }
+
+        .legal-notice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-sm);
         }
     </style>
 </head>
