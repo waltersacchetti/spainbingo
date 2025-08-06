@@ -341,6 +341,9 @@ class BingoPro {
         const logos = ['🎯', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
         let logoIndex = 0;
         
+        console.log(`Renderizando cartón ${card.id}:`, card.numbers);
+        console.log('Números llamados:', Array.from(this.calledNumbers));
+        
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 9; col++) {
                 const number = card.numbers[col][row];
@@ -360,9 +363,14 @@ class BingoPro {
                     displayContent = number.toString();
                 }
                 
+                // Debug: mostrar si el número está marcado
+                if (number && isMarked) {
+                    console.log(`Número ${number} marcado en cartón ${card.id}`);
+                }
+                
                 html += `
                     <div class="bingo-cell ${isMarked ? 'marked' : ''} ${isEmpty ? 'empty' : ''} ${logoClass}" 
-                         data-card-id="${card.id}" data-row="${row}" data-col="${col}">
+                         data-card-id="${card.id}" data-row="${row}" data-col="${col}" data-number="${number || ''}">
                         ${displayContent}
                     </div>
                 `;
@@ -378,6 +386,8 @@ class BingoPro {
             return;
         }
         
+        console.log('Renderizando números llamados:', Array.from(this.calledNumbers));
+        
         container.innerHTML = '';
 
         for (let i = 1; i <= 90; i++) {
@@ -387,6 +397,7 @@ class BingoPro {
             
             if (this.calledNumbers.has(i)) {
                 numberDiv.classList.add('called');
+                console.log(`Número ${i} marcado como llamado`);
             }
             
             container.appendChild(numberDiv);
@@ -502,7 +513,7 @@ class BingoPro {
     }
 
     callNumber() {
-        // Validaciones de seguridad
+        // Validaciones básicas
         if (this.gameState === 'finished') {
             console.log('Juego terminado');
             return;
@@ -513,17 +524,10 @@ class BingoPro {
             return;
         }
 
-        // Validar límite de velocidad
-        if (!securityManager.validateRateLimit('calls')) {
-            alert('Demasiadas llamadas rápidas. Espere un momento.');
-            return;
-        }
-
-        // Anti-spam protection
+        // Anti-spam protection básica
         const now = Date.now();
         if (this.lastCallTime && (now - this.lastCallTime) < this.securitySettings.minCallInterval) {
             console.log('Llamada demasiado rápida');
-            securityManager.logSecurityEvent('spam_detected', 'Llamadas demasiado rápidas');
             return;
         }
 
@@ -534,15 +538,10 @@ class BingoPro {
             return;
         }
 
-        // Algoritmo mejorado para hacer el juego más desafiante
-        const number = this.selectNextNumber(availableNumbers);
+        // Seleccionar número aleatorio
+        const number = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
         
-        // Validar número antes de agregarlo
-        if (!securityManager.validateBingoNumbers([number])) {
-            securityManager.logSecurityEvent('invalid_number', `Número inválido: ${number}`);
-            return;
-        }
-        
+        // Agregar número a los llamados
         this.calledNumbers.add(number);
         this.lastNumberCalled = number;
         this.lastCallTime = now;
@@ -551,9 +550,6 @@ class BingoPro {
             timestamp: new Date(),
             gameId: this.currentGameId
         });
-
-        // Registrar evento de auditoría
-        securityManager.logEvent('number_called', { number: number, gameId: this.currentGameId });
 
         // Update analytics
         this.updateAnalytics('number_called', { number });
@@ -1484,14 +1480,20 @@ class BingoPro {
             clearInterval(this.autoPlayInterval);
         }
         
+        console.log('Iniciando llamada automática de números...');
+        
         this.autoPlayInterval = setInterval(() => {
-            if (this.gameState === 'playing') {
+            if (this.gameState === 'playing' && this.calledNumbers.size < 90) {
+                console.log('Llamando número automáticamente...');
                 this.callNumber();
                 
                 // Verificar si alguien ganó
                 if (this.checkWin()) {
                     this.endGame();
                 }
+            } else if (this.calledNumbers.size >= 90) {
+                console.log('Todos los números han sido llamados');
+                this.endGame();
             }
         }, 3000); // Llamar número cada 3 segundos
     }
@@ -1553,10 +1555,16 @@ class BingoPro {
     }
 
     updateDisplay() {
+        console.log('Actualizando display...');
+        console.log('Números llamados:', Array.from(this.calledNumbers));
+        console.log('Cartones del usuario:', this.userCards.length);
+        
         this.renderCards();
         this.renderCalledNumbers();
         this.updateLastNumber();
         this.updateStats();
+        
+        console.log('Display actualizado');
     }
 
     updateUI() {
