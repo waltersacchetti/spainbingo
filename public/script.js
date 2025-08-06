@@ -381,6 +381,9 @@ class BingoPro {
                 `;
             }
         }
+        
+        console.log(`Cartón ${card.id} renderizado con ${Array.from(this.calledNumbers).filter(num => 
+            card.numbers.flat().includes(num)).length} números marcados`);
         return html;
     }
 
@@ -403,16 +406,19 @@ class BingoPro {
                     const numberDiv = document.createElement('div');
                     numberDiv.className = 'called-number';
                     numberDiv.textContent = number;
+                    numberDiv.setAttribute('data-number', number);
                     
                     if (this.calledNumbers.has(number)) {
                         numberDiv.classList.add('called');
-                        console.log(`Número ${number} marcado como llamado`);
+                        console.log(`Número ${number} marcado como llamado en el panel`);
                     }
                     
                     container.appendChild(numberDiv);
                 }
             }
         }
+        
+        console.log('Panel de números llamados actualizado');
     }
 
     updateLastNumber() {
@@ -525,12 +531,13 @@ class BingoPro {
 
     callNumber() {
         // Validaciones básicas
-        if (this.gameState === 'finished') {
-            console.log('Juego terminado');
+        if (this.gameState !== 'playing') {
+            console.log('Juego no está en estado playing:', this.gameState);
             return;
         }
 
         if (this.calledNumbers.size >= 90) {
+            console.log('Todos los números han sido llamados');
             this.endGame();
             return;
         }
@@ -545,12 +552,16 @@ class BingoPro {
         const availableNumbers = this.availableNumbers.filter(num => !this.calledNumbers.has(num));
         
         if (availableNumbers.length === 0) {
+            console.log('No hay números disponibles');
             this.endGame();
             return;
         }
 
         // Seleccionar número aleatorio
         const number = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+        
+        console.log(`Llamando número: ${number}`);
+        console.log('Números disponibles restantes:', availableNumbers.length);
         
         // Agregar número a los llamados
         this.calledNumbers.add(number);
@@ -561,6 +572,8 @@ class BingoPro {
             timestamp: new Date(),
             gameId: this.currentGameId
         });
+
+        console.log(`Número ${number} agregado a calledNumbers. Total llamados: ${this.calledNumbers.size}`);
 
         // Update analytics
         this.updateAnalytics('number_called', { number });
