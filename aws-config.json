@@ -57,7 +57,7 @@
           "enabled": false,
           "defaultRootObject": "entrada.html",
           "aliases": ["spain-bingo.es", "www.spain-bingo.es"],
-          "sslCertificate": "arn:aws:acm:us-east-1:ACCOUNT:certificate/CERTIFICATE-ID"
+          "sslCertificate": "arn:aws:acm:eu-west-1:426448793571:certificate/e205aca5-0511-463c-a94f-649752ef4791"
         }
       },
       "waf": {

@@ -34,6 +34,7 @@ DOMAIN="spain-bingo.es"
 WWW_DOMAIN="www.spain-bingo.es"
 REGION="eu-west-1"
 ALB_DNS="spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
+CERT_ARN="arn:aws:acm:eu-west-1:426448793571:certificate/e205aca5-0511-463c-a94f-649752ef4791"
 
 # Verificar AWS CLI
 check_aws_cli() {
@@ -64,32 +65,22 @@ get_alb_info() {
     show_success "ALB encontrado: $ALB_ARN"
 }
 
-# Crear certificado SSL
-create_ssl_certificate() {
-    show_info "Creando certificado SSL para $DOMAIN y $WWW_DOMAIN..."
+# Verificar certificado SSL
+verify_ssl_certificate() {
+    show_info "Verificando certificado SSL para $DOMAIN y $WWW_DOMAIN..."
     
-    # Verificar si ya existe un certificado
-    EXISTING_CERT=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='$DOMAIN'].CertificateArn" --output text 2>/dev/null || echo "")
+    # Verificar el certificado existente
+    CERT_STATUS=$(aws acm describe-certificate --certificate-arn $CERT_ARN --query 'Certificate.Status' --output text 2>/dev/null || echo "")
     
-    if [ -n "$EXISTING_CERT" ]; then
-        show_warning "Certificado SSL ya existe: $EXISTING_CERT"
-        CERT_ARN=$EXISTING_CERT
+    if [ "$CERT_STATUS" = "ISSUED" ]; then
+        show_success "Certificado SSL válido y activo: $CERT_ARN"
+    elif [ "$CERT_STATUS" = "PENDING_VALIDATION" ]; then
+        show_warning "Certificado SSL pendiente de validación: $CERT_ARN"
+        show_info "⚠️  IMPORTANTE: Debes validar el certificado antes de continuar"
+        show_info "   Puedes validarlo en AWS Console → Certificate Manager"
     else
-        # Crear nuevo certificado
-        CERT_ARN=$(aws acm request-certificate \
-            --domain-name $DOMAIN \
-            --subject-alternative-names $WWW_DOMAIN \
-            --validation-method DNS \
-            --query 'CertificateArn' \
-            --output text 2>/dev/null || echo "")
-        
-        if [ -n "$CERT_ARN" ]; then
-            show_success "Certificado SSL creado: $CERT_ARN"
-            show_info "⚠️  IMPORTANTE: Debes validar el certificado en Route 53 o manualmente"
-        else
-            show_error "No se pudo crear el certificado SSL"
-            exit 1
-        fi
+        show_error "Certificado SSL no válido. Estado: $CERT_STATUS"
+        show_info "Verifica el certificado en AWS Console → Certificate Manager"
     fi
 }
 
@@ -179,11 +170,11 @@ EOF
 setup_https() {
     show_info "Configurando HTTPS en el ALB..."
     
-    # Obtener ARN del certificado
-    CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='$DOMAIN'].CertificateArn" --output text 2>/dev/null || echo "")
+    # Verificar si ya existe un listener HTTPS
+    EXISTING_HTTPS_LISTENER=$(aws elbv2 describe-listeners --load-balancer-arn $ALB_ARN --query 'Listeners[?Port==`443`].ListenerArn' --output text 2>/dev/null || echo "")
     
-    if [ -z "$CERT_ARN" ]; then
-        show_warning "No se encontró certificado SSL. Configurando solo HTTP por ahora."
+    if [ -n "$EXISTING_HTTPS_LISTENER" ]; then
+        show_warning "Listener HTTPS ya existe: $EXISTING_HTTPS_LISTENER"
         return
     fi
     
@@ -191,7 +182,15 @@ setup_https() {
     HTTP_LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn $ALB_ARN --query 'Listeners[?Port==`80`].ListenerArn' --output text 2>/dev/null || echo "")
     
     if [ -n "$HTTP_LISTENER_ARN" ]; then
-        show_info "Configurando redirección HTTP a HTTPS..."
+        show_info "Creando listener HTTPS..."
+        
+        # Obtener target group ARN
+        TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups --names spainbingo-ec2-tg --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
+        
+        if [ -z "$TARGET_GROUP_ARN" ]; then
+            show_error "No se pudo encontrar el target group 'spainbingo-ec2-tg'"
+            return
+        fi
         
         # Crear listener HTTPS
         HTTPS_LISTENER_ARN=$(aws elbv2 create-listener \
@@ -199,7 +198,7 @@ setup_https() {
             --protocol HTTPS \
             --port 443 \
             --certificates CertificateArn=$CERT_ARN \
-            --default-actions Type=forward,TargetGroupArn=$(aws elbv2 describe-target-groups --names spainbingo-ec2-tg --query 'TargetGroups[0].TargetGroupArn' --output text) \
+            --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN \
             --query 'Listeners[0].ListenerArn' \
             --output text 2>/dev/null || echo "")
         
@@ -212,7 +211,11 @@ setup_https() {
                 --default-actions Type=redirect,RedirectConfig='{Protocol=HTTPS,Port=443,StatusCode=HTTP_301}'
             
             show_success "Redirección HTTP a HTTPS configurada"
+        else
+            show_error "No se pudo crear el listener HTTPS"
         fi
+    else
+        show_error "No se encontró listener HTTP en el puerto 80"
     fi
 }
 
@@ -248,7 +251,7 @@ main() {
     
     check_aws_cli
     get_alb_info
-    create_ssl_certificate
+    verify_ssl_certificate
     setup_route53
     setup_https
     show_final_info
