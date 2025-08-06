@@ -552,6 +552,7 @@ body {
     min-height: 400px;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .cards-grid {
@@ -566,6 +567,19 @@ body {
     margin: var(--spacing-sm);
     overflow-y: auto;
     min-height: 400px;
+}
+
+/* Mensaje cuando no hay cartones */
+.cards-grid:empty::before {
+    content: "No tienes cartones. Compra algunos para comenzar a jugar!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-lg);
 }
 
 /* Cartones de bingo */
@@ -2712,6 +2726,24 @@ body {
         right: var(--spacing-md);
         width: calc(100vw - 2rem);
         max-width: 350px;
+    }
+    
+    /* Responsive para cartones de bingo */
+    .bingo-card {
+        max-width: 100%;
+        min-width: auto;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .cards-grid {
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+    
+    .bingo-cell {
+        font-size: 0.7rem;
+        min-width: 20px;
+        min-height: 20px;
     }
 }
 
