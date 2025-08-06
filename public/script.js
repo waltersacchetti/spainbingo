@@ -149,11 +149,10 @@ class BingoPro {
         this.updateAnalyticsDisplay();
         this.saveAnalytics(); // Save analytics data after each update
         
-        // Iniciar bingo automático después de 3 segundos
-        setTimeout(() => {
-            console.log('Iniciando bingo automático...');
-            this.startNewGame();
-        }, 3000);
+        // Iniciar el scheduler de partidas
+        this.startGameScheduler();
+        
+        console.log('Juego inicializado correctamente');
     }
 
     startGameScheduler() {
@@ -174,12 +173,18 @@ class BingoPro {
     }
 
     updateGameCountdown() {
-        if (!this.nextGameStartTime) return;
+        if (!this.nextGameStartTime) {
+            console.log('No hay próxima partida programada');
+            return;
+        }
         
         const now = new Date();
         const timeLeft = this.nextGameStartTime.getTime() - now.getTime();
         
+        console.log('Countdown - Tiempo restante:', timeLeft, 'ms, Estado del juego:', this.gameState);
+        
         if (timeLeft <= 0) {
+            console.log('¡Tiempo agotado! Iniciando nueva partida...');
             this.startNewGame();
         } else {
             const minutes = Math.floor(timeLeft / 60000);
@@ -836,7 +841,8 @@ class BingoPro {
     }
 
     endGame() {
-        this.gameState = 'finished';
+        console.log('Terminando partida...');
+        this.gameState = 'waiting'; // Cambiar a 'waiting' en lugar de 'finished'
         this.stopAutoPlay();
         
         // Update analytics
@@ -856,8 +862,12 @@ class BingoPro {
         this.isPlayerJoined = false;
         this.selectedCards = [];
         
+        // Actualizar interfaz
+        this.updateDisplay();
+        this.updateUI();
+        
         this.addChatMessage('system', '¡Partida terminada! La próxima partida comenzará en 2 minutos.');
-        console.log('Juego terminado');
+        console.log('Juego terminado, estado cambiado a waiting');
     }
 
     joinGame() {
@@ -880,13 +890,16 @@ class BingoPro {
     buyCards(quantity) {
         const totalCost = quantity * this.cardPrice;
         
+        console.log('Intentando comprar cartones:', quantity, 'Estado del juego:', this.gameState);
+        
         if (this.userBalance < totalCost) {
             alert('Saldo insuficiente para comprar estos cartones');
             return false;
         }
 
+        // Permitir comprar cartones solo cuando el juego está esperando o terminado
         if (this.gameState === 'playing') {
-            alert('No puedes comprar cartones durante una partida en curso');
+            alert('No puedes comprar cartones durante una partida en curso. Espera a que termine.');
             return false;
         }
 
