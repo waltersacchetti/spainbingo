@@ -144,31 +144,35 @@ function validateInput(data, rules) {
 app.use('/api/', rateLimitMiddleware(apiLimiter));
 
 // API endpoints para autenticación
-app.post('/api/login', rateLimitMiddleware(loginLimiter), (req, res) => {
+app.post('/api/login', (req, res) => {
     try {
         const { email, password } = req.body;
         
-        // Validación de entrada estricta
-        const validation = validateInput(req.body, {
-            email: {
-                required: true,
-                type: 'string',
-                maxLength: 254,
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            },
-            password: {
-                required: true,
-                type: 'string',
-                minLength: 8,
-                maxLength: 128
-            }
-        });
-        
-        if (!validation.valid) {
-            console.warn('⚠️ Intento de login con datos inválidos:', validation.error);
+        // Validación básica para login (más permisiva)
+        if (!email || !password) {
+            console.warn('⚠️ Intento de login con datos faltantes');
             return res.status(400).json({
                 success: false,
-                error: validation.error
+                error: 'Email y contraseña son requeridos'
+            });
+        }
+
+        // Validación de email básica
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.warn('⚠️ Intento de login con email inválido:', email);
+            return res.status(400).json({
+                success: false,
+                error: 'Formato de email inválido'
+            });
+        }
+
+        // Validación de contraseña básica (mínimo 1 carácter)
+        if (password.length < 1) {
+            console.warn('⚠️ Intento de login con contraseña vacía');
+            return res.status(400).json({
+                success: false,
+                error: 'La contraseña es requerida'
             });
         }
         
