@@ -390,17 +390,23 @@ class BingoPro {
         
         container.innerHTML = '';
 
-        for (let i = 1; i <= 90; i++) {
-            const numberDiv = document.createElement('div');
-            numberDiv.className = 'called-number';
-            numberDiv.textContent = i;
-            
-            if (this.calledNumbers.has(i)) {
-                numberDiv.classList.add('called');
-                console.log(`Número ${i} marcado como llamado`);
+        // Crear grid de 9x10 para los números del 1-90
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 10; col++) {
+                const number = row * 10 + col + 1;
+                if (number <= 90) {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'called-number';
+                    numberDiv.textContent = number;
+                    
+                    if (this.calledNumbers.has(number)) {
+                        numberDiv.classList.add('called');
+                        console.log(`Número ${number} marcado como llamado`);
+                    }
+                    
+                    container.appendChild(numberDiv);
+                }
             }
-            
-            container.appendChild(numberDiv);
         }
     }
 
@@ -2009,8 +2015,34 @@ class BingoPro {
         if (modal) {
             modal.style.display = 'block';
             this.updateCalledNumbersModal();
+            
+            // Configurar botón de cerrar
+            const closeBtn = modal.querySelector('.modal-close');
+            if (closeBtn) {
+                closeBtn.onclick = () => this.closeCalledNumbersModal();
+            }
+            
+            // Configurar botón de confirmar
+            const confirmBtn = modal.querySelector('.btn-confirm');
+            if (confirmBtn) {
+                confirmBtn.onclick = () => this.closeCalledNumbersModal();
+            }
+            
+            // Cerrar al hacer clic fuera del modal
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeCalledNumbersModal();
+                }
+            };
         } else {
             console.log('Modal de números llamados no encontrado');
+        }
+    }
+    
+    closeCalledNumbersModal() {
+        const modal = document.getElementById('calledNumbersModal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
 
