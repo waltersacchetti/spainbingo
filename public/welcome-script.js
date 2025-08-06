@@ -185,7 +185,8 @@ function setupButtons() {
     const loginBtn = document.querySelector('.btn-login');
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            showLoginModal();
+            // Redirigir directamente a la página de login
+            window.location.href = 'login.html';
         });
     }
     
@@ -207,95 +208,15 @@ function setupButtons() {
     }
 }
 
-// Mostrar modal de login
-function showLoginModal() {
-    const modal = createModal('Iniciar Sesión', `
-        <div class="login-form">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="login-email" placeholder="tu@email.com" required>
-            </div>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="login-password" placeholder="••••••••" required>
-            </div>
-            <button class="btn-primary" onclick="handleLogin()">Iniciar Sesión</button>
-            <p class="form-footer">
-                ¿No tienes cuenta? <a href="#" onclick="showRegisterModal()">Regístrate aquí</a>
-            </p>
-        </div>
-    `);
-    
-    document.body.appendChild(modal);
-    
-    // Agregar funcionalidad de enter para enviar
-    const emailInput = modal.querySelector('#login-email');
-    const passwordInput = modal.querySelector('#login-password');
-    
-    [emailInput, passwordInput].forEach(input => {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleLogin();
-            }
-        });
-    });
+// Función para redirigir al login (ya no necesitamos modal)
+function redirectToLogin() {
+    window.location.href = 'login.html';
 }
 
-// Manejar el login
-function handleLogin() {
-    const email = document.getElementById('login-email')?.value;
-    const password = document.getElementById('login-password')?.value;
-    
-    if (!email || !password) {
-        alert('Por favor, completa todos los campos');
-        return;
-    }
-    
-    // Simular proceso de login
-    console.log('Intentando login con:', email);
-    
-    // Mostrar loading
-    const loginBtn = document.querySelector('.btn-primary');
-    if (loginBtn) {
-        loginBtn.textContent = 'Iniciando sesión...';
-        loginBtn.disabled = true;
-    }
-    
-    // Simular delay de login
-    setTimeout(() => {
-        // Redirigir al juego principal
-        window.location.href = 'index.html';
-    }, 1500);
-}
-
-// Mostrar modal de registro
-function showRegisterModal() {
-    const modal = createModal('Crear Cuenta', `
-        <div class="register-form">
-            <div class="form-group">
-                <label>Nombre completo</label>
-                <input type="text" placeholder="Tu nombre completo" required>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" placeholder="tu@email.com" required>
-            </div>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" required>
-            </div>
-            <div class="form-group">
-                <label>Confirmar contraseña</label>
-                <input type="password" placeholder="••••••••" required>
-            </div>
-            <button class="btn-primary">Crear Cuenta</button>
-            <p class="form-footer">
-                ¿Ya tienes cuenta? <a href="#" onclick="showLoginModal()">Inicia sesión aquí</a>
-            </p>
-        </div>
-    `);
-    
-    document.body.appendChild(modal);
+// Función para redirigir al registro (ya no necesitamos modal)
+function redirectToRegister() {
+    // Redirigir a la página de login que tiene opción de registro
+    window.location.href = 'login.html';
 }
 
 // Mostrar modal de oferta
@@ -423,7 +344,7 @@ function addScrollEffects() {
 // Inicializar efectos adicionales
 addScrollEffects();
 
-// Agregar estilos CSS para modales
+// Agregar estilos CSS para modales (solo para ofertas y bonos)
 const modalStyles = `
 <style>
 .modal-overlay {
@@ -491,71 +412,6 @@ const modalStyles = `
 
 .modal-body {
     padding: 2rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 0.9rem;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-footer {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: #718096;
-    font-size: 0.9rem;
-}
-
-.form-footer a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
-
-.form-footer a:hover {
-    color: #764ba2;
-}
-
-.btn-primary {
-    width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 1rem;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 1rem;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
 .offer-details, .bonus-details {
