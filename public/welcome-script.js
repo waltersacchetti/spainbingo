@@ -213,13 +213,13 @@ function showLoginModal() {
         <div class="login-form">
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" placeholder="tu@email.com" required>
+                <input type="email" id="login-email" placeholder="tu@email.com" required>
             </div>
             <div class="form-group">
                 <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" required>
+                <input type="password" id="login-password" placeholder="••••••••" required>
             </div>
-            <button class="btn-primary">Iniciar Sesión</button>
+            <button class="btn-primary" onclick="handleLogin()">Iniciar Sesión</button>
             <p class="form-footer">
                 ¿No tienes cuenta? <a href="#" onclick="showRegisterModal()">Regístrate aquí</a>
             </p>
@@ -227,6 +227,45 @@ function showLoginModal() {
     `);
     
     document.body.appendChild(modal);
+    
+    // Agregar funcionalidad de enter para enviar
+    const emailInput = modal.querySelector('#login-email');
+    const passwordInput = modal.querySelector('#login-password');
+    
+    [emailInput, passwordInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    });
+}
+
+// Manejar el login
+function handleLogin() {
+    const email = document.getElementById('login-email')?.value;
+    const password = document.getElementById('login-password')?.value;
+    
+    if (!email || !password) {
+        alert('Por favor, completa todos los campos');
+        return;
+    }
+    
+    // Simular proceso de login
+    console.log('Intentando login con:', email);
+    
+    // Mostrar loading
+    const loginBtn = document.querySelector('.btn-primary');
+    if (loginBtn) {
+        loginBtn.textContent = 'Iniciando sesión...';
+        loginBtn.disabled = true;
+    }
+    
+    // Simular delay de login
+    setTimeout(() => {
+        // Redirigir al juego principal
+        window.location.href = 'index.html';
+    }, 1500);
 }
 
 // Mostrar modal de registro
@@ -409,6 +448,7 @@ const modalStyles = `
     max-height: 80vh;
     overflow-y: auto;
     animation: slideIn 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -417,12 +457,16 @@ const modalStyles = `
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
 }
 
 .modal-header h3 {
     margin: 0;
-    color: var(--text-primary);
+    color: white;
     font-weight: 700;
+    font-size: 1.5rem;
 }
 
 .modal-close {
@@ -430,12 +474,19 @@ const modalStyles = `
     border: none;
     font-size: 2rem;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: white;
     transition: color 0.3s ease;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-close:hover {
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .modal-body {
@@ -450,33 +501,61 @@ const modalStyles = `
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #2d3748;
+    font-size: 0.9rem;
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.75rem;
-    border: 2px solid var(--border-color);
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: var(--accent-color);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-footer {
     text-align: center;
-    margin-top: 1rem;
-    color: var(--text-secondary);
+    margin-top: 1.5rem;
+    color: #718096;
+    font-size: 0.9rem;
 }
 
 .form-footer a {
-    color: var(--accent-color);
+    color: #667eea;
     text-decoration: none;
     font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.form-footer a:hover {
+    color: #764ba2;
+}
+
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
 .offer-details, .bonus-details {
@@ -489,7 +568,7 @@ const modalStyles = `
 
 .offer-highlight h3, .bonus-highlight h3 {
     font-size: 2.5rem;
-    color: var(--accent-color);
+    color: #667eea;
     margin-bottom: 0.5rem;
 }
 
@@ -500,7 +579,7 @@ const modalStyles = `
 
 .offer-terms h4, .bonus-features h4 {
     margin-bottom: 1rem;
-    color: var(--text-primary);
+    color: #2d3748;
 }
 
 .offer-terms ul, .bonus-features ul {
@@ -510,13 +589,13 @@ const modalStyles = `
 
 .offer-terms li, .bonus-features li {
     padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
+    border-bottom: 1px solid #e2e8f0;
+    color: #718096;
 }
 
 .offer-terms li:before, .bonus-features li:before {
     content: '✓';
-    color: var(--accent-color);
+    color: #667eea;
     font-weight: bold;
     margin-right: 0.5rem;
 }
