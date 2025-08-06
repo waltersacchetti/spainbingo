@@ -205,11 +205,11 @@ check_status() {
 show_urls() {
     show_info "🌐 URLs de la aplicación:"
     echo ""
-    echo "ALB (HTTP): http://$PUBLIC_IP/game"
-    echo "EC2 Directo: http://$PUBLIC_IP:3000/game"
+    echo "ALB (HTTP): http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
+    echo "EC2 Directo: http://$PUBLIC_IP:3000"
     echo ""
     show_info "Para verificar cambios, visita:"
-    echo "http://$PUBLIC_IP/game"
+    echo "http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
 }
 
 # Función para mostrar ayuda
