@@ -56,7 +56,7 @@
         "distribution": {
           "enabled": false,
           "defaultRootObject": "entrada.html",
-          "aliases": ["spainbingo.es", "www.spainbingo.es"],
+          "aliases": ["spain-bingo.es", "www.spain-bingo.es"],
           "sslCertificate": "arn:aws:acm:us-east-1:ACCOUNT:certificate/CERTIFICATE-ID"
         }
       },

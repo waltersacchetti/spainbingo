@@ -79,17 +79,39 @@ app.use((req, res, next) => {
     console.log('🏠 Host recibido:', host);
     console.log('📄 Referer recibido:', referer);
     
+    // Lista de dominios permitidos
+    const allowedDomains = [
+        'spain-bingo.es',
+        'www.spain-bingo.es',
+        'spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com',
+        'localhost',
+        '127.0.0.1'
+    ];
+    
     // Para ALB, siempre permitir el origen
     if (origin) {
-        res.header('Access-Control-Allow-Origin', origin);
-        console.log('✅ CORS permitido para:', origin);
+        const originHost = new URL(origin).hostname;
+        if (allowedDomains.includes(originHost) || originHost.includes('localhost') || originHost.includes('127.0.0.1')) {
+            res.header('Access-Control-Allow-Origin', origin);
+            console.log('✅ CORS permitido para:', origin);
+        } else {
+            res.header('Access-Control-Allow-Origin', '*');
+            console.log('⚠️ CORS permitido para dominio no listado:', origin);
+        }
     } else if (referer) {
         // Si no hay origin pero hay referer, extraer el origen del referer
         try {
             const refererUrl = new URL(referer);
             const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
-            res.header('Access-Control-Allow-Origin', refererOrigin);
-            console.log('✅ CORS permitido para referer:', refererOrigin);
+            const refererHost = refererUrl.hostname;
+            
+            if (allowedDomains.includes(refererHost) || refererHost.includes('localhost') || refererHost.includes('127.0.0.1')) {
+                res.header('Access-Control-Allow-Origin', refererOrigin);
+                console.log('✅ CORS permitido para referer:', refererOrigin);
+            } else {
+                res.header('Access-Control-Allow-Origin', '*');
+                console.log('⚠️ CORS permitido para referer no listado:', refererOrigin);
+            }
         } catch (e) {
             res.header('Access-Control-Allow-Origin', '*');
             console.log('✅ CORS permitido para todos los orígenes (fallback)');
