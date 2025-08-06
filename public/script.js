@@ -1606,6 +1606,10 @@ class BingoPro {
         const selectedCardsElement = document.getElementById('selectedCardsCount');
         const joinGameBtn = document.getElementById('joinGameBtn');
         
+        // Elementos del preview de cartones
+        const cardsCountElement = document.getElementById('cardsCount');
+        const activeCardsCountElement = document.getElementById('activeCardsCount');
+        
         // Elementos del hero de Mis Cartones
         const totalCardsHero = document.getElementById('totalCardsHero');
         const activeCardsHero = document.getElementById('activeCardsHero');
@@ -1626,6 +1630,14 @@ class BingoPro {
         }
         if (joinGameBtn) {
             joinGameBtn.disabled = this.selectedCards.length === 0 || this.gameState === 'playing';
+        }
+        
+        // Actualizar preview de cartones
+        if (cardsCountElement) {
+            cardsCountElement.textContent = this.userCards.length;
+        }
+        if (activeCardsCountElement) {
+            activeCardsCountElement.textContent = this.userCards.filter(card => card.isActive).length;
         }
         
         // Actualizar elementos del hero
@@ -1869,6 +1881,12 @@ class BingoPro {
                 this.showCalledNumbersModal();
             }
             
+            // Botón ver cartones
+            else if (e.target.closest('#viewCardsBtn')) {
+                console.log('Botón ver cartones clickeado');
+                this.showBingoCardsModal();
+            }
+            
             // Botones de monto
             else if (e.target.classList.contains('amount-btn')) {
                 document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
@@ -1895,6 +1913,8 @@ class BingoPro {
                 this.closeModal('winModal');
             } else if (e.target.closest('#calledNumbersModal .btn-confirm')) {
                 this.closeModal('calledNumbersModal');
+            } else if (e.target.closest('#bingoCardsModal .btn-confirm')) {
+                this.closeBingoCardsModal();
             }
             
             // Botones de cerrar modal (X)
@@ -2070,6 +2090,45 @@ class BingoPro {
         if (modal) {
             modal.style.display = 'none';
         }
+    }
+
+    showBingoCardsModal() {
+        const modal = document.getElementById('bingoCardsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.updateBingoCardsModal();
+        }
+    }
+
+    closeBingoCardsModal() {
+        const modal = document.getElementById('bingoCardsModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    updateBingoCardsModal() {
+        // Actualizar estadísticas del modal
+        const totalCardsElement = document.getElementById('modalTotalCards');
+        const activeCardsElement = document.getElementById('modalActiveCards');
+        const markedNumbersElement = document.getElementById('modalMarkedNumbers');
+        
+        if (totalCardsElement) {
+            totalCardsElement.textContent = this.userCards.length;
+        }
+        if (activeCardsElement) {
+            activeCardsElement.textContent = this.userCards.filter(card => card.isActive).length;
+        }
+        if (markedNumbersElement) {
+            let totalMarked = 0;
+            this.userCards.forEach(card => {
+                totalMarked += this.countMarkedNumbers(card);
+            });
+            markedNumbersElement.textContent = totalMarked;
+        }
+        
+        // Renderizar cartones en el modal
+        this.renderCards();
     }
 
     updateCalledNumbersModal() {
@@ -2463,6 +2522,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Función para actualizar información del usuario en la UI
+function closeBingoCardsModal() {
+    if (window.bingoGame) {
+        window.bingoGame.closeBingoCardsModal();
+    }
+}
+
 function updateUserInfo(user) {
     // Actualizar nombre de usuario
     const usernameElement = document.querySelector('.username');

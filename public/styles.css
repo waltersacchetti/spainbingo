@@ -547,12 +547,78 @@ body {
 .cards-container {
     flex: 1;
     padding: var(--spacing-lg);
-    overflow-y: auto;
     background: var(--bg-tertiary);
     min-height: 400px;
     display: flex;
     flex-direction: column;
     position: relative;
+}
+
+/* Vista previa de cartones */
+.cards-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+}
+
+.cards-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-align: center;
+}
+
+.cards-count {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.cards-count i {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+}
+
+.cards-status {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.btn-view-cards {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-view-cards:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+.btn-view-cards i {
+    font-size: 1.2rem;
 }
 
 .cards-grid {
@@ -2744,6 +2810,64 @@ body {
         font-size: 0.7rem;
         min-width: 20px;
         min-height: 20px;
+    }
+    
+    .btn-view-cards {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        font-size: 1rem;
+    }
+}
+
+/* Modal de Cartones de Bingo */
+.bingo-cards-modal .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 1200px;
+    height: 800px;
+}
+
+.bingo-cards-modal .modal-body {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.cards-modal-summary {
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cards-modal-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.cards-modal-grid .bingo-card {
+    max-width: none;
+    min-width: auto;
+    margin: 0;
+    height: fit-content;
+}
+
+@media (max-width: 768px) {
+    .bingo-cards-modal .modal-content {
+        max-width: 95vw;
+        max-height: 95vh;
+        width: 95vw;
+        height: 90vh;
+    }
+    
+    .cards-modal-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
     }
 }
 
