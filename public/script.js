@@ -149,6 +149,246 @@ class BingoPro {
         this.startGameScheduler();
         
         console.log('Juego inicializado correctamente');
+        
+        // Inicializar características de producción
+        if (securityManager.isProduction()) {
+            this.setupProductionFeatures();
+        }
+    }
+
+    /**
+     * Configurar características de producción
+     */
+    setupProductionFeatures() {
+        // Configurar límites más estrictos
+        this.maxCardsPerGame = 30;
+        this.maxBalance = 5000;
+        this.maxAutoPlayDuration = 3 * 60 * 1000; // 3 minutos
+        
+        // Configurar auditoría
+        this.enableAuditLogging = true;
+        this.sessionStartTime = Date.now();
+        
+        // Configurar monitoreo de tiempo
+        this.setupTimeMonitoring();
+        
+        // Configurar alertas de gasto
+        this.setupSpendingAlerts();
+        
+        // Inicializar sistema de juego responsable
+        this.initializeResponsibleGaming();
+        
+        console.log('🔒 Características de producción configuradas');
+    }
+
+    /**
+     * Configurar monitoreo de tiempo
+     */
+    setupTimeMonitoring() {
+        this.timeAlertShown = {};
+        this.sessionStartTime = Date.now();
+        
+        // Monitorear tiempo cada minuto
+        setInterval(() => {
+            const sessionTime = Date.now() - this.sessionStartTime;
+            const minutes = Math.floor(sessionTime / 60000);
+            
+            // Alertas de tiempo: 30, 60, 120 minutos
+            [30, 60, 120].forEach(alertTime => {
+                if (minutes === alertTime && !this.timeAlertShown[alertTime]) {
+                    this.showTimeAlert(minutes);
+                    this.timeAlertShown[alertTime] = true;
+                }
+            });
+        }, 60000);
+    }
+
+    /**
+     * Configurar alertas de gasto
+     */
+    setupSpendingAlerts() {
+        this.spendingAlertShown = {};
+        this.totalSpent = 0;
+        
+        // Interceptar compras para monitorear gasto
+        const originalBuyCards = this.buyCards;
+        this.buyCards = function(quantity) {
+            const result = originalBuyCards.call(this, quantity);
+            if (result) {
+                this.totalSpent += quantity * this.cardPrice;
+                this.checkSpendingAlerts(this.totalSpent);
+            }
+            return result;
+        };
+    }
+
+    /**
+     * Inicializar sistema de juego responsable
+     */
+    initializeResponsibleGaming() {
+        this.responsibleGaming = {
+            sessionStartTime: Date.now(),
+            totalPlayTime: 0,
+            totalSpent: 0,
+            breaks: [],
+            alerts: {
+                time: [30, 60, 120], // minutos
+                spending: [50, 100, 200] // euros
+            },
+            
+            // Monitorear tiempo de juego
+            updatePlayTime: () => {
+                const currentTime = Date.now();
+                const sessionTime = currentTime - this.responsibleGaming.sessionStartTime;
+                this.responsibleGaming.totalPlayTime = sessionTime;
+                
+                // Verificar alertas de tiempo
+                this.checkTimeAlerts(sessionTime);
+            },
+            
+            // Monitorear gasto
+            updateSpending: (amount) => {
+                this.responsibleGaming.totalSpent += amount;
+                this.checkSpendingAlerts(this.responsibleGaming.totalSpent);
+            },
+            
+            // Tomar descanso
+            takeBreak: () => {
+                this.responsibleGaming.breaks.push({
+                    startTime: Date.now(),
+                    duration: 15 * 60 * 1000 // 15 minutos
+                });
+                this.showBreakReminder();
+            },
+            
+            // Auto-exclusión
+            selfExclude: (days) => {
+                const exclusionData = {
+                    startDate: Date.now(),
+                    duration: days * 24 * 60 * 60 * 1000,
+                    reason: 'user_request'
+                };
+                localStorage.setItem('self_exclusion', JSON.stringify(exclusionData));
+                this.forceLogout('Auto-exclusión activada');
+            }
+        };
+        
+        console.log('🎯 Sistema de juego responsable inicializado');
+    }
+
+    /**
+     * Verificar alertas de tiempo
+     */
+    checkTimeAlerts(sessionTime) {
+        const minutes = Math.floor(sessionTime / 60000);
+        
+        this.responsibleGaming.alerts.time.forEach(alertTime => {
+            if (minutes === alertTime && !this.timeAlertShown[alertTime]) {
+                this.showTimeAlert(minutes);
+                this.timeAlertShown[alertTime] = true;
+            }
+        });
+    }
+
+    /**
+     * Verificar alertas de gasto
+     */
+    checkSpendingAlerts(totalSpent) {
+        this.responsibleGaming.alerts.spending.forEach(alertAmount => {
+            if (totalSpent >= alertAmount && !this.spendingAlertShown[alertAmount]) {
+                this.showSpendingAlert(totalSpent);
+                this.spendingAlertShown[alertAmount] = true;
+            }
+        });
+    }
+
+    /**
+     * Mostrar alerta de tiempo
+     */
+    showTimeAlert(minutes) {
+        const alert = document.createElement('div');
+        alert.className = 'responsible-gaming-alert time-alert';
+        alert.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-clock"></i>
+                <div class="alert-text">
+                    <h4>⏰ Recordatorio de Tiempo</h4>
+                    <p>Has jugado ${minutes} minutos. Recuerda tomar descansos regulares.</p>
+                </div>
+                <div class="alert-actions">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()">Continuar</button>
+                    <button onclick="bingoGame.responsibleGaming.takeBreak()">Tomar Descanso</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Auto-remover después de 30 segundos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 30000);
+    }
+
+    /**
+     * Mostrar alerta de gasto
+     */
+    showSpendingAlert(totalSpent) {
+        const alert = document.createElement('div');
+        alert.className = 'responsible-gaming-alert spending-alert';
+        alert.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-euro-sign"></i>
+                <div class="alert-text">
+                    <h4>💰 Control de Gasto</h4>
+                    <p>Has gastado €${totalSpent.toFixed(2)} en esta sesión. Controla tu presupuesto.</p>
+                </div>
+                <div class="alert-actions">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()">Entendido</button>
+                    <button onclick="bingoGame.responsibleGaming.selfExclude(1)">Auto-exclusión</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Auto-remover después de 30 segundos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 30000);
+    }
+
+    /**
+     * Mostrar recordatorio de descanso
+     */
+    showBreakReminder() {
+        const alert = document.createElement('div');
+        alert.className = 'responsible-gaming-alert break-alert';
+        alert.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-coffee"></i>
+                <div class="alert-text">
+                    <h4>☕ Tiempo de Descanso</h4>
+                    <p>Es recomendable tomar un descanso de 15 minutos. El juego estará disponible cuando regreses.</p>
+                </div>
+                <div class="alert-actions">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()">Continuar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Auto-remover después de 15 minutos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 15 * 60 * 1000);
     }
 
     startGameScheduler() {

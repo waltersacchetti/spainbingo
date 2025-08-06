@@ -702,19 +702,248 @@ class SecurityManager {
     }
 
     /**
+     * Configuración de producción
+     */
+    getProductionConfig() {
+        return {
+            // Configuración estricta para producción
+            maxSessionTime: 2 * 60 * 60 * 1000, // 2 horas máximo
+            maxDailyPlayTime: 4 * 60 * 60 * 1000, // 4 horas máximo
+            maxConcurrentSessions: 1,
+            rateLimit: {
+                calls: 50, // máximo 50 llamadas por minuto
+                purchases: 10, // máximo 10 compras por hora
+                deposits: 5 // máximo 5 depósitos por día
+            },
+            validationRules: {
+                minAge: 18,
+                maxBalance: 5000, // Límite más conservador
+                maxCardsPerGame: 30, // Límite más conservador
+                maxAutoPlayDuration: 3 * 60 * 1000 // 3 minutos máximo
+            },
+            // Configuración de auditoría estricta
+            auditLog: [],
+            securityEvents: [],
+            // Configuración de cumplimiento RGPD
+            gdprCompliance: true,
+            dataRetention: 30 * 24 * 60 * 60 * 1000, // 30 días
+            // Configuración de juego responsable
+            responsibleGaming: {
+                timeAlerts: [30, 60, 120], // minutos
+                spendingAlerts: [50, 100, 200], // euros
+                breakReminders: true,
+                selfExclusion: true
+            }
+        };
+    }
+
+    /**
+     * Aplicar configuración de producción
+     */
+    applyProductionConfig() {
+        if (this.isProduction()) {
+            const prodConfig = this.getProductionConfig();
+            
+            // Aplicar límites más estrictos
+            this.securityConfig.maxSessionTime = prodConfig.maxSessionTime;
+            this.securityConfig.maxDailyPlayTime = prodConfig.maxDailyPlayTime;
+            this.securityConfig.rateLimit = prodConfig.rateLimit;
+            this.securityConfig.validationRules = prodConfig.validationRules;
+            
+            // Habilitar auditoría estricta
+            this.securityConfig.auditLog = prodConfig.auditLog;
+            this.securityConfig.securityEvents = prodConfig.securityEvents;
+            
+            console.log('🔒 Configuración de producción aplicada');
+            console.log('📊 Límites estrictos habilitados');
+            console.log('🛡️ Auditoría completa activada');
+        }
+    }
+
+    /**
      * Enviar log de auditoría al servidor
      */
     sendAuditLog(logEntry) {
         // En producción, enviar a servidor de auditoría
-        fetch('/api/audit-log', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(logEntry)
-        }).catch(error => {
-            console.error('Error enviando log de auditoría:', error);
-        });
+        if (this.isProduction()) {
+            const auditData = {
+                ...logEntry,
+                timestamp: new Date().toISOString(),
+                sessionId: this.getSessionId(),
+                userAgent: navigator.userAgent,
+                ip: this.getClientIP(),
+                environment: 'production'
+            };
+
+            fetch('/api/audit-log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Audit-Token': this.generateAuditToken()
+                },
+                body: JSON.stringify(auditData)
+            }).catch(error => {
+                console.error('Error enviando log de auditoría:', error);
+                // Fallback: guardar localmente
+                this.saveAuditLogLocally(auditData);
+            });
+        } else {
+            // En desarrollo, solo log local
+            console.log('📋 Log de auditoría:', logEntry);
+        }
+    }
+
+    /**
+     * Generar token de auditoría
+     */
+    generateAuditToken() {
+        const timestamp = Date.now();
+        const sessionId = this.getSessionId();
+        return btoa(`${timestamp}:${sessionId}:audit`);
+    }
+
+    /**
+     * Guardar log de auditoría localmente
+     */
+    saveAuditLogLocally(auditData) {
+        const logs = JSON.parse(localStorage.getItem('audit_logs') || '[]');
+        logs.push(auditData);
+        
+        // Mantener solo los últimos 100 logs
+        if (logs.length > 100) {
+            logs.splice(0, logs.length - 100);
+        }
+        
+        localStorage.setItem('audit_logs', JSON.stringify(logs));
+    }
+
+    /**
+     * Cumplimiento RGPD
+     */
+    setupGDPRCompliance() {
+        if (this.isProduction()) {
+            // Limpiar datos antiguos según retención
+            this.cleanupOldData();
+            
+            // Configurar consentimiento
+            this.setupConsentManagement();
+            
+            // Configurar derechos del usuario
+            this.setupUserRights();
+        }
+    }
+
+    /**
+     * Limpiar datos antiguos
+     */
+    cleanupOldData() {
+        const retentionPeriod = 30 * 24 * 60 * 60 * 1000; // 30 días
+        const cutoffDate = Date.now() - retentionPeriod;
+        
+        // Limpiar logs antiguos
+        const logs = JSON.parse(localStorage.getItem('audit_logs') || '[]');
+        const filteredLogs = logs.filter(log => new Date(log.timestamp).getTime() > cutoffDate);
+        localStorage.setItem('audit_logs', JSON.stringify(filteredLogs));
+        
+        // Limpiar datos de sesión antiguos
+        const sessionData = JSON.parse(localStorage.getItem('session_data') || '{}');
+        if (sessionData.lastActivity && sessionData.lastActivity < cutoffDate) {
+            localStorage.removeItem('session_data');
+        }
+    }
+
+    /**
+     * Configurar gestión de consentimiento
+     */
+    setupConsentManagement() {
+        const consent = localStorage.getItem('gdpr_consent');
+        if (!consent) {
+            this.showConsentModal();
+        }
+    }
+
+    /**
+     * Mostrar modal de consentimiento RGPD
+     */
+    showConsentModal() {
+        const modal = document.createElement('div');
+        modal.className = 'gdpr-consent-modal';
+        modal.innerHTML = `
+            <div class="gdpr-consent-content">
+                <h3>🍪 Política de Cookies y Privacidad</h3>
+                <p>SpainBingo utiliza cookies y almacena datos para mejorar tu experiencia de juego y cumplir con las regulaciones españolas de juegos de azar.</p>
+                
+                <div class="consent-options">
+                    <label>
+                        <input type="checkbox" id="consent-necessary" checked disabled>
+                        Cookies necesarias (siempre activas)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="consent-analytics">
+                        Cookies analíticas
+                    </label>
+                    <label>
+                        <input type="checkbox" id="consent-marketing">
+                        Cookies de marketing
+                    </label>
+                </div>
+                
+                <div class="consent-buttons">
+                    <button onclick="securityManager.acceptAllConsent()">Aceptar Todo</button>
+                    <button onclick="securityManager.acceptSelectedConsent()">Aceptar Seleccionadas</button>
+                    <button onclick="securityManager.rejectConsent()">Rechazar</button>
+                </div>
+                
+                <p class="consent-info">
+                    <a href="privacy-policy.html" target="_blank">Política de Privacidad</a> | 
+                    <a href="terms.html" target="_blank">Términos y Condiciones</a>
+                </p>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+
+    /**
+     * Aceptar todo el consentimiento
+     */
+    acceptAllConsent() {
+        const consent = {
+            necessary: true,
+            analytics: true,
+            marketing: true,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('gdpr_consent', JSON.stringify(consent));
+        document.querySelector('.gdpr-consent-modal').remove();
+    }
+
+    /**
+     * Aceptar consentimiento seleccionado
+     */
+    acceptSelectedConsent() {
+        const consent = {
+            necessary: true,
+            analytics: document.getElementById('consent-analytics').checked,
+            marketing: document.getElementById('consent-marketing').checked,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('gdpr_consent', JSON.stringify(consent));
+        document.querySelector('.gdpr-consent-modal').remove();
+    }
+
+    /**
+     * Rechazar consentimiento
+     */
+    rejectConsent() {
+        const consent = {
+            necessary: true,
+            analytics: false,
+            marketing: false,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('gdpr_consent', JSON.stringify(consent));
+        document.querySelector('.gdpr-consent-modal').remove();
     }
 }
 
