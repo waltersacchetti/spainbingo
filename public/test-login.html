@@ -7,20 +7,19 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 600px;
+            margin: 50px auto;
             padding: 20px;
             background: #f5f5f5;
         }
-        .test-container {
+        .test-form {
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         label {
             display: block;
@@ -32,19 +31,19 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            box-sizing: border-box;
+            font-size: 16px;
         }
         button {
-            background: #00d4aa;
+            background: #007bff;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-right: 10px;
+            font-size: 16px;
         }
         button:hover {
-            background: #00b894;
+            background: #0056b3;
         }
         .result {
             margin-top: 20px;
@@ -62,68 +61,42 @@
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
-        .info {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
     </style>
 </head>
 <body>
-    <h1>🧪 Test de Login - SpainBingo</h1>
-    
-    <div class="test-container">
-        <h2>🔐 Test de Login</h2>
-        <div class="form-group">
-            <label for="testEmail">Email:</label>
-            <input type="email" id="testEmail" value="test@example.com">
-        </div>
-        <div class="form-group">
-            <label for="testPassword">Contraseña:</label>
-            <input type="password" id="testPassword" value="password123">
-        </div>
-        <button onclick="testLogin()">Probar Login</button>
-        <button onclick="testRegister()">Probar Registro</button>
-        <button onclick="clearResults()">Limpiar</button>
+    <div class="test-form">
+        <h1>🧪 Test de Login - SpainBingo</h1>
         
-        <div id="testResult" class="result" style="display: none;"></div>
-    </div>
-
-    <div class="test-container">
-        <h2>📊 Estado del Sistema</h2>
-        <div id="systemStatus" class="result info">
-            Cargando estado del sistema...
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="test@example.com" placeholder="test@example.com">
         </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" value="password123" placeholder="password123">
+        </div>
+        
+        <button onclick="testLogin()">🔐 Probar Login</button>
+        <button onclick="testDirectAPI()">🌐 Probar API Directa</button>
+        <button onclick="clearResults()">🗑️ Limpiar Resultados</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
     </div>
 
     <script>
-        // Función para mostrar resultados
-        function showResult(message, type = 'info') {
-            const resultDiv = document.getElementById('testResult');
-            resultDiv.textContent = message;
-            resultDiv.className = `result ${type}`;
-            resultDiv.style.display = 'block';
-        }
-
-        // Función para limpiar resultados
-        function clearResults() {
-            document.getElementById('testResult').style.display = 'none';
-        }
-
-        // Función para probar login
         async function testLogin() {
-            const email = document.getElementById('testEmail').value;
-            const password = document.getElementById('testPassword').value;
-
-            if (!email || !password) {
-                showResult('❌ Por favor completa todos los campos', 'error');
-                return;
-            }
-
-            showResult('🔄 Probando login...', 'info');
-
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 Probando login...';
+            
             try {
                 console.log('🔐 Iniciando test de login...');
+                console.log('📝 Datos:', { email, password: password ? '***' : 'missing' });
                 
                 const response = await fetch('/api/login', {
                     method: 'POST',
@@ -132,90 +105,120 @@
                     },
                     body: JSON.stringify({ email, password })
                 });
-
-                console.log('📡 Respuesta recibida:', response.status, response.statusText);
-
+                
+                console.log('📡 Respuesta HTTP:', response.status, response.statusText);
+                
                 const data = await response.json();
                 console.log('📋 Datos de respuesta:', data);
-
+                
                 if (data.success) {
-                    showResult(`✅ Login exitoso!\n\nUsuario: ${data.user.username}\nEmail: ${data.user.email}\nBalance: €${data.user.balance}\nToken: ${data.token.substring(0, 20)}...`, 'success');
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ LOGIN EXITOSO!\n\nUsuario: ${data.user.username}\nEmail: ${data.user.email}\nBalance: €${data.user.balance}\nToken: ${data.token.substring(0, 20)}...\n\nRedirigiendo al juego en 3 segundos...`;
+                    
+                    // Guardar sesión
+                    localStorage.setItem('spainbingo_session', JSON.stringify({
+                        user: data.user,
+                        token: data.token,
+                        timestamp: Date.now()
+                    }));
+                    
+                    // Redirigir después de 3 segundos
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
                 } else {
-                    showResult(`❌ Error en login: ${data.error}`, 'error');
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ ERROR DE LOGIN:\n\n${data.error}`;
                 }
             } catch (error) {
                 console.error('❌ Error en test:', error);
-                showResult(`❌ Error de conexión: ${error.message}`, 'error');
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR DE CONEXIÓN:\n\n${error.message}`;
             }
         }
-
-        // Función para probar registro
-        async function testRegister() {
-            const email = document.getElementById('testEmail').value;
-            const password = document.getElementById('testPassword').value;
-
-            if (!email || !password) {
-                showResult('❌ Por favor completa todos los campos', 'error');
-                return;
-            }
-
-            showResult('🔄 Probando registro...', 'info');
-
+        
+        async function testDirectAPI() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 Probando API directa...';
+            
             try {
-                console.log('📝 Iniciando test de registro...');
+                // Probar diferentes URLs
+                const urls = [
+                    '/api/login',
+                    'http://localhost:3000/api/login',
+                    'http://52.212.178.26:3000/api/login'
+                ];
                 
-                const userData = {
-                    username: email.split('@')[0] + '_' + Date.now(),
-                    email: email,
-                    password: password,
-                    firstName: 'Test',
-                    lastName: 'Usuario',
-                    dateOfBirth: '1990-01-01',
-                    phone: '123456789'
-                };
-
-                const response = await fetch('/api/register', {
+                for (const url of urls) {
+                    try {
+                        console.log(`🌐 Probando URL: ${url}`);
+                        
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ email, password })
+                        });
+                        
+                        console.log(`📡 Respuesta de ${url}:`, response.status, response.statusText);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            resultDiv.className = 'result success';
+                            resultDiv.textContent = `✅ API FUNCIONA en ${url}!\n\nRespuesta: ${JSON.stringify(data, null, 2)}`;
+                            return;
+                        }
+                    } catch (urlError) {
+                        console.log(`❌ Error con ${url}:`, urlError.message);
+                    }
+                }
+                
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Ninguna URL funcionó. Verificar servidor.';
+                
+            } catch (error) {
+                console.error('❌ Error en test directo:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n\n${error.message}`;
+            }
+        }
+        
+        function clearResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+        }
+        
+        // Verificar estado del servidor al cargar
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify({ 
+                        email: 'test@example.com', 
+                        password: 'password123' 
+                    })
                 });
-
-                console.log('📡 Respuesta recibida:', response.status, response.statusText);
-
-                const data = await response.json();
-                console.log('📋 Datos de respuesta:', data);
-
-                if (data.success) {
-                    showResult(`✅ Registro exitoso!\n\nUsuario: ${data.user.username}\nEmail: ${data.user.email}\nBalance: €${data.user.balance}\nToken: ${data.token.substring(0, 20)}...`, 'success');
+                
+                console.log('🏥 Estado del servidor:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    console.log('✅ Servidor funcionando correctamente');
                 } else {
-                    showResult(`❌ Error en registro: ${data.error}`, 'error');
+                    console.log('⚠️ Servidor responde pero con error:', response.status);
                 }
             } catch (error) {
-                console.error('❌ Error en test:', error);
-                showResult(`❌ Error de conexión: ${error.message}`, 'error');
+                console.error('❌ Servidor no responde:', error.message);
             }
-        }
-
-        // Función para verificar estado del sistema
-        async function checkSystemStatus() {
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                
-                document.getElementById('systemStatus').textContent = 
-                    `✅ Servidor funcionando correctamente\n` +
-                    `📅 Timestamp: ${data.timestamp}\n` +
-                    `🌐 Endpoints disponibles: ${data.endpoints.join(', ')}`;
-            } catch (error) {
-                document.getElementById('systemStatus').textContent = 
-                    `❌ Error conectando al servidor: ${error.message}`;
-            }
-        }
-
-        // Verificar estado del sistema al cargar
-        window.addEventListener('load', checkSystemStatus);
+        });
     </script>
 </body>
 </html> 
