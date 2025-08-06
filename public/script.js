@@ -1,6 +1,3 @@
-// Variable global para el juego
-let game;
-
 // Clase principal del juego
 class BingoPro {
     constructor() {
@@ -58,13 +55,29 @@ class BingoPro {
             premium: { price: 8.00, cards: 5, validity: '7 días', bonus: 20, maxCards: 20 },
             vip: { price: 15.00, cards: 12, validity: '30 días', bonus: 50, maxCards: 50 }
         };
-        this.securitySettings = {
+        // Configuración de seguridad privada
+        this._securitySettings = {
             maxCardsPerGame: 50,
             maxBalance: 10000,
             minCallInterval: 1000, // 1 segundo mínimo entre llamadas
             maxAutoPlayDuration: 300000, // 5 minutos máximo
             antiSpamDelay: 500
         };
+
+        // Configuración pública (solo lectura)
+        this.securitySettings = new Proxy(this._securitySettings, {
+            get: (target, prop) => {
+                // Permitir solo lectura de configuraciones no sensibles
+                if (prop === 'minCallInterval' || prop === 'antiSpamDelay') {
+                    return target[prop];
+                }
+                return undefined; // Ocultar configuraciones sensibles
+            },
+            set: () => {
+                console.warn('⚠️ Intento de modificación de configuración de seguridad bloqueado');
+                return false;
+            }
+        });
         // Variables para chat en vivo
         this.chatApiUrl = '/api/chat';
         this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -1161,31 +1174,57 @@ class BingoPro {
     }
 
     buyCards(quantity) {
+        // Validación de entrada estricta
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            console.warn('⚠️ Intento de compra con cantidad inválida:', quantity);
+            alert('❌ Cantidad inválida. Debe ser un número entero positivo.');
+            return false;
+        }
+
+        // Validación de tipo de datos
+        if (typeof quantity !== 'number' || isNaN(quantity)) {
+            console.warn('⚠️ Intento de compra con tipo de datos inválido:', typeof quantity);
+            alert('❌ Tipo de datos inválido para la cantidad.');
+            return false;
+        }
+
         const totalCost = quantity * this.cardPrice;
         
         console.log('Intentando comprar cartones:', quantity, 'Estado del juego:', this.gameState);
         
-        // Validaciones profesionales
-        if (quantity <= 0 || quantity > 20) {
+        // Validaciones profesionales con límites estrictos
+        if (quantity > 20) {
+            console.warn('⚠️ Intento de compra excesiva:', quantity);
             alert('❌ Cantidad inválida. Puedes comprar entre 1 y 20 cartones por transacción.');
             return false;
         }
         
+        // Validación de saldo con precisión decimal
         if (this.userBalance < totalCost) {
+            console.warn('⚠️ Intento de compra con saldo insuficiente:', this.userBalance, '<', totalCost);
             alert(`❌ Saldo insuficiente.\n💰 Necesitas: €${totalCost.toFixed(2)}\n💳 Tienes: €${this.userBalance.toFixed(2)}`);
             return false;
         }
 
         // Validar estado del juego
         if (this.gameState === 'playing') {
+            console.warn('⚠️ Intento de compra durante partida en curso');
             alert('❌ No puedes comprar cartones durante una partida en curso.\n⏰ Espera a que termine la partida actual.');
             return false;
         }
         
-        // Validar límite de cartones por juego
-        const maxCardsPerGame = 50;
+        // Validar límite de cartones por juego con configuración de seguridad
+        const maxCardsPerGame = this._securitySettings ? this._securitySettings.maxCardsPerGame : 50;
         if (this.userCards.length + quantity > maxCardsPerGame) {
+            console.warn('⚠️ Intento de compra excediendo límite:', this.userCards.length + quantity, '>', maxCardsPerGame);
             alert(`❌ Límite de cartones alcanzado.\n📊 Máximo ${maxCardsPerGame} cartones por juego.\n🎯 Ya tienes ${this.userCards.length} cartones.`);
+            return false;
+        }
+
+        // Validación adicional de seguridad
+        if (this.userBalance < 0 || totalCost < 0) {
+            console.error('🚨 Valores negativos detectados en compra:', { balance: this.userBalance, cost: totalCost });
+            alert('❌ Error de seguridad detectado. Contacta al soporte.');
             return false;
         }
 

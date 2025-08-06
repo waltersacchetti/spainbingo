@@ -4,15 +4,63 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting
+const rateLimit = require('express-rate-limit');
+
+// Configurar rate limiting
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 5, // máximo 5 intentos
+    message: {
+        success: false,
+        error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // máximo 100 requests
+    message: {
+        success: false,
+        error: 'Demasiadas peticiones. Intenta de nuevo en 15 minutos.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// CORS configuration
+// Configuración de seguridad
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    // Headers de seguridad
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'DENY');
+    res.header('X-XSS-Protection', '1; mode=block');
+    res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;");
+    res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    
+    // CORS configuration segura
+    const allowedOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://dgxsjud1r60fi.cloudfront.net',
+        'http://52.212.178.26:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Audit-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
     
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
@@ -38,19 +86,68 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Función de validación de entrada
+function validateInput(data, rules) {
+    for (const [field, rule] of Object.entries(rules)) {
+        const value = data[field];
+        
+        if (rule.required && (!value || value.trim() === '')) {
+            return { valid: false, error: `${field} es requerido` };
+        }
+        
+        if (value && rule.type && typeof value !== rule.type) {
+            return { valid: false, error: `${field} debe ser de tipo ${rule.type}` };
+        }
+        
+        if (value && rule.minLength && value.length < rule.minLength) {
+            return { valid: false, error: `${field} debe tener al menos ${rule.minLength} caracteres` };
+        }
+        
+        if (value && rule.maxLength && value.length > rule.maxLength) {
+            return { valid: false, error: `${field} no puede exceder ${rule.maxLength} caracteres` };
+        }
+        
+        if (value && rule.pattern && !rule.pattern.test(value)) {
+            return { valid: false, error: `${field} tiene formato inválido` };
+        }
+    }
+    
+    return { valid: true };
+}
+
+// Aplicar rate limiting
+app.use('/api/', apiLimiter);
+
 // API endpoints para autenticación
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
     try {
         const { email, password } = req.body;
         
-        console.log('🔐 Login attempt:', { email, password: password ? '***' : 'missing' });
+        // Validación de entrada estricta
+        const validation = validateInput(req.body, {
+            email: {
+                required: true,
+                type: 'string',
+                maxLength: 254,
+                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            },
+            password: {
+                required: true,
+                type: 'string',
+                minLength: 8,
+                maxLength: 128
+            }
+        });
         
-        if (!email || !password) {
+        if (!validation.valid) {
+            console.warn('⚠️ Intento de login con datos inválidos:', validation.error);
             return res.status(400).json({
                 success: false,
-                error: 'Email y contraseña son requeridos'
+                error: validation.error
             });
         }
+        
+        console.log('🔐 Login attempt:', { email, password: password ? '***' : 'missing' });
         
         // Simular autenticación exitosa (en producción esto verificaría contra la base de datos)
         const user = {

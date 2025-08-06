@@ -30,33 +30,66 @@ class AuthManager {
     }
 
     /**
-     * Cargar sesión desde localStorage
+     * Cargar sesión desde localStorage con validación de seguridad
      */
     loadSession() {
         const session = localStorage.getItem('spainbingo_session');
         if (session) {
             try {
                 const sessionData = JSON.parse(session);
+                
+                // Validación de estructura de datos
+                if (!sessionData || typeof sessionData !== 'object') {
+                    console.warn('⚠️ Estructura de sesión inválida');
+                    this.logout();
+                    return;
+                }
+
+                // Validación de campos requeridos
+                if (!sessionData.timestamp || !sessionData.user || !sessionData.token) {
+                    console.warn('⚠️ Datos de sesión incompletos');
+                    this.logout();
+                    return;
+                }
+
+                // Validación de tipos de datos
+                if (typeof sessionData.timestamp !== 'number' || 
+                    typeof sessionData.user !== 'object' || 
+                    typeof sessionData.token !== 'string') {
+                    console.warn('⚠️ Tipos de datos de sesión inválidos');
+                    this.logout();
+                    return;
+                }
+
                 const now = Date.now();
                 const sessionAge = now - sessionData.timestamp;
                 const maxAge = 24 * 60 * 60 * 1000; // 24 horas
 
-                if (sessionAge < maxAge) {
-                    this.isAuthenticated = true;
-                    this.currentUser = sessionData.user;
-                    this.sessionToken = sessionData.token;
-                    console.log('✅ Sesión existente encontrada');
-                    
-                    // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
-                    if (window.location.pathname.includes('login.html')) {
-                        this.redirectToGame();
-                    }
-                } else {
-                    // Sesión expirada
+                // Validación de tiempo de sesión
+                if (sessionAge < 0 || sessionAge > maxAge) {
+                    console.warn('⚠️ Sesión expirada o tiempo inválido');
                     this.logout();
+                    return;
+                }
+
+                // Validación de token
+                if (sessionData.token.length < 32) {
+                    console.warn('⚠️ Token de sesión inválido');
+                    this.logout();
+                    return;
+                }
+
+                this.isAuthenticated = true;
+                this.currentUser = sessionData.user;
+                this.sessionToken = sessionData.token;
+                console.log('✅ Sesión existente validada y cargada');
+                
+                // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
+                if (window.location.pathname.includes('login.html')) {
+                    this.redirectToGame();
                 }
             } catch (error) {
-                console.error('Error cargando sesión:', error);
+                console.error('🚨 Error cargando sesión:', error);
                 this.logout();
             }
         }
@@ -320,7 +353,7 @@ class AuthManager {
     }
 
     /**
-     * Validar contraseña
+     * Validar contraseña con criterios de seguridad estrictos
      */
     validatePassword(password, fieldId) {
         if (!password) {
@@ -328,14 +361,80 @@ class AuthManager {
             return false;
         }
 
+        // Validación de tipo de datos
+        if (typeof password !== 'string') {
+            this.showFieldError(fieldId, 'Tipo de datos inválido para contraseña');
+            return false;
+        }
+
+        // Validación de longitud mínima y máxima
         if (password.length < 8) {
             this.showFieldError(fieldId, 'La contraseña debe tener al menos 8 caracteres');
             return false;
         }
 
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-            this.showFieldError(fieldId, 'La contraseña debe contener mayúsculas, minúsculas y números');
+        if (password.length > 128) {
+            this.showFieldError(fieldId, 'La contraseña no puede exceder 128 caracteres');
             return false;
+        }
+
+        // Validación de caracteres permitidos (lista blanca)
+        const allowedChars = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]+$/;
+        if (!allowedChars.test(password)) {
+            this.showFieldError(fieldId, 'La contraseña contiene caracteres no permitidos');
+            return false;
+        }
+
+        // Validación de complejidad
+        const hasLowercase = /[a-z]/.test(password);
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
+
+        let complexityScore = 0;
+        if (hasLowercase) complexityScore++;
+        if (hasUppercase) complexityScore++;
+        if (hasNumbers) complexityScore++;
+        if (hasSpecialChars) complexityScore++;
+
+        if (complexityScore < 3) {
+            this.showFieldError(fieldId, 'La contraseña debe contener al menos 3 de: mayúsculas, minúsculas, números y caracteres especiales');
+            return false;
+        }
+
+        // Validación de patrones comunes débiles
+        const weakPatterns = [
+            /123456/,
+            /password/,
+            /qwerty/,
+            /abc123/,
+            /111111/,
+            /000000/,
+            /admin/,
+            /user/,
+            /test/
+        ];
+
+        for (const pattern of weakPatterns) {
+            if (pattern.test(password.toLowerCase())) {
+                this.showFieldError(fieldId, 'La contraseña contiene patrones comunes débiles');
+                return false;
+            }
+        }
+
+        // Validación de repetición de caracteres
+        if (/(.)\1{3,}/.test(password)) {
+            this.showFieldError(fieldId, 'La contraseña no puede contener más de 3 caracteres repetidos consecutivos');
+            return false;
+        }
+
+        // Validación de secuencias
+        const sequences = ['abcdef', '123456', 'qwerty', 'asdfgh', 'zxcvbn'];
+        for (const seq of sequences) {
+            if (password.toLowerCase().includes(seq)) {
+                this.showFieldError(fieldId, 'La contraseña no puede contener secuencias de caracteres');
+                return false;
+            }
         }
 
         this.clearFieldError(fieldId);

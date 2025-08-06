@@ -5,7 +5,8 @@
 
 class SecurityManager {
     constructor() {
-        this.securityConfig = {
+        // Configuración privada - no accesible desde fuera
+        this._securityConfig = {
             // Configuración de seguridad
             maxSessionTime: 4 * 60 * 60 * 1000, // 4 horas
             maxDailyPlayTime: 8 * 60 * 60 * 1000, // 8 horas
@@ -26,6 +27,21 @@ class SecurityManager {
             auditLog: [],
             securityEvents: []
         };
+
+        // Configuración pública (solo lectura)
+        this.securityConfig = new Proxy(this._securityConfig, {
+            get: (target, prop) => {
+                // Permitir solo lectura de configuraciones no sensibles
+                if (prop === 'validationRules' || prop === 'rateLimit') {
+                    return { ...target[prop] }; // Devolver copia, no referencia
+                }
+                return target[prop];
+            },
+            set: () => {
+                console.warn('⚠️ Intento de modificación de configuración de seguridad bloqueado');
+                return false;
+            }
+        });
         
         this.sessionData = {
             startTime: Date.now(),
@@ -168,16 +184,44 @@ class SecurityManager {
     }
 
     /**
-     * Sanitizar string
+     * Sanitizar string con validación estricta
      */
     sanitizeString(str) {
         if (typeof str !== 'string') return str;
         
-        return str
+        // Lista blanca de caracteres permitidos
+        const allowedChars = /^[a-zA-Z0-9\s\-_.,!?@#$%&*()+=:;'"`~\/\\|\[\]{}<>]+$/;
+        
+        // Validar longitud máxima
+        if (str.length > 1000) {
+            console.warn('⚠️ Entrada demasiado larga detectada');
+            return str.substring(0, 1000);
+        }
+        
+        // Sanitizar caracteres peligrosos
+        let sanitized = str
             .replace(/[<>]/g, '') // Prevenir HTML
             .replace(/javascript:/gi, '') // Prevenir JavaScript
             .replace(/on\w+=/gi, '') // Prevenir eventos
+            .replace(/data:/gi, '') // Prevenir data URLs
+            .replace(/vbscript:/gi, '') // Prevenir VBScript
+            .replace(/expression\(/gi, '') // Prevenir CSS expressions
+            .replace(/eval\(/gi, '') // Prevenir eval
+            .replace(/setTimeout\(/gi, '') // Prevenir setTimeout
+            .replace(/setInterval\(/gi, '') // Prevenir setInterval
+            .replace(/document\./gi, '') // Prevenir acceso a document
+            .replace(/window\./gi, '') // Prevenir acceso a window
+            .replace(/localStorage\./gi, '') // Prevenir acceso a localStorage
+            .replace(/sessionStorage\./gi, '') // Prevenir acceso a sessionStorage
             .trim();
+        
+        // Validar contra lista blanca
+        if (!allowedChars.test(sanitized)) {
+            console.warn('⚠️ Caracteres no permitidos detectados en entrada');
+            return '';
+        }
+        
+        return sanitized;
     }
 
     /**
@@ -794,12 +838,59 @@ class SecurityManager {
     }
 
     /**
-     * Generar token de auditoría
+     * Generar token de auditoría seguro
      */
     generateAuditToken() {
         const timestamp = Date.now();
         const sessionId = this.getSessionId();
-        return btoa(`${timestamp}:${sessionId}:audit`);
+        const randomBytes = this.generateRandomBytes(16);
+        const signature = this.generateSignature(timestamp, sessionId, randomBytes);
+        
+        return btoa(`${timestamp}:${sessionId}:${randomBytes}:${signature}`);
+    }
+
+    /**
+     * Generar bytes aleatorios seguros
+     */
+    generateRandomBytes(length) {
+        const array = new Uint8Array(length);
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            crypto.getRandomValues(array);
+        } else {
+            // Fallback para navegadores antiguos
+            for (let i = 0; i < length; i++) {
+                array[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    /**
+     * Generar firma criptográfica
+     */
+    generateSignature(timestamp, sessionId, randomBytes) {
+        const data = `${timestamp}:${sessionId}:${randomBytes}:audit`;
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(data);
+        
+        // Usar SHA-256 si está disponible
+        if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+            return crypto.subtle.digest('SHA-256', dataBuffer).then(hash => {
+                return Array.from(new Uint8Array(hash))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('')
+                    .substring(0, 16);
+            });
+        } else {
+            // Fallback simple (no criptográficamente seguro)
+            let hash = 0;
+            for (let i = 0; i < data.length; i++) {
+                const char = data.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convertir a 32-bit integer
+            }
+            return Math.abs(hash).toString(16).padStart(8, '0');
+        }
     }
 
     /**
