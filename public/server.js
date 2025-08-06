@@ -73,18 +73,31 @@ app.use((req, res, next) => {
     // CORS configuration permisiva para ALB
     const origin = req.headers.origin;
     const host = req.headers.host;
+    const referer = req.headers.referer;
     
     console.log('🌐 Origin recibido:', origin);
     console.log('🏠 Host recibido:', host);
+    console.log('📄 Referer recibido:', referer);
     
-    // Permitir cualquier origen para desarrollo/producción
+    // Para ALB, siempre permitir el origen
     if (origin) {
         res.header('Access-Control-Allow-Origin', origin);
         console.log('✅ CORS permitido para:', origin);
+    } else if (referer) {
+        // Si no hay origin pero hay referer, extraer el origen del referer
+        try {
+            const refererUrl = new URL(referer);
+            const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
+            res.header('Access-Control-Allow-Origin', refererOrigin);
+            console.log('✅ CORS permitido para referer:', refererOrigin);
+        } catch (e) {
+            res.header('Access-Control-Allow-Origin', '*');
+            console.log('✅ CORS permitido para todos los orígenes (fallback)');
+        }
     } else {
-        // Si no hay origin, permitir el host actual
+        // Fallback: permitir todos los orígenes
         res.header('Access-Control-Allow-Origin', '*');
-        console.log('✅ CORS permitido para todos los orígenes');
+        console.log('✅ CORS permitido para todos los orígenes (sin origin/referer)');
     }
     
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

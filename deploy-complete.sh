@@ -205,11 +205,11 @@ check_status() {
 show_urls() {
     show_info "🌐 URLs de la aplicación:"
     echo ""
-    echo "CloudFront: https://dgxsjud1r60fi.cloudfront.net/game"
+    echo "ALB (HTTP): http://$PUBLIC_IP/game"
     echo "EC2 Directo: http://$PUBLIC_IP:3000/game"
     echo ""
     show_info "Para verificar cambios, visita:"
-    echo "https://dgxsjud1r60fi.cloudfront.net/game"
+    echo "http://$PUBLIC_IP/game"
 }
 
 # Función para mostrar ayuda

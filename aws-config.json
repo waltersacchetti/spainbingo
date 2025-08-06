@@ -17,9 +17,44 @@
           }
         ]
       },
+      "alb": {
+        "loadBalancer": {
+          "enabled": true,
+          "type": "application",
+          "scheme": "internet-facing",
+          "ipAddressType": "ipv4",
+          "listeners": [
+            {
+              "port": 80,
+              "protocol": "HTTP",
+              "defaultAction": {
+                "type": "forward",
+                "targetGroup": "spainbingo-ec2-tg"
+              }
+            }
+          ],
+          "targetGroups": [
+            {
+              "name": "spainbingo-ec2-tg",
+              "port": 3000,
+              "protocol": "HTTP",
+              "targetType": "instance",
+              "healthCheck": {
+                "path": "/",
+                "port": "3000",
+                "protocol": "HTTP",
+                "interval": 30,
+                "timeout": 5,
+                "healthyThreshold": 2,
+                "unhealthyThreshold": 2
+              }
+            }
+          ]
+        }
+      },
       "cloudfront": {
         "distribution": {
-          "enabled": true,
+          "enabled": false,
           "defaultRootObject": "entrada.html",
           "aliases": ["spainbingo.es", "www.spainbingo.es"],
           "sslCertificate": "arn:aws:acm:us-east-1:ACCOUNT:certificate/CERTIFICATE-ID"
