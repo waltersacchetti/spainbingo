@@ -4,31 +4,56 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Rate limiting
-const rateLimit = require('express-rate-limit');
+// Rate limiting simple (sin dependencias externas)
+class RateLimiter {
+    constructor(windowMs, max) {
+        this.windowMs = windowMs;
+        this.max = max;
+        this.requests = new Map();
+    }
+
+    checkLimit(identifier) {
+        const now = Date.now();
+        const windowStart = now - this.windowMs;
+        
+        if (!this.requests.has(identifier)) {
+            this.requests.set(identifier, []);
+        }
+        
+        const requests = this.requests.get(identifier);
+        
+        // Limpiar requests antiguos
+        const validRequests = requests.filter(time => time > windowStart);
+        this.requests.set(identifier, validRequests);
+        
+        if (validRequests.length >= this.max) {
+            return false;
+        }
+        
+        validRequests.push(now);
+        return true;
+    }
+}
 
 // Configurar rate limiting
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // máximo 5 intentos
-    message: {
-        success: false,
-        error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+const loginLimiter = new RateLimiter(15 * 60 * 1000, 5); // 15 minutos, 5 intentos
+const apiLimiter = new RateLimiter(15 * 60 * 1000, 100); // 15 minutos, 100 requests
 
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // máximo 100 requests
-    message: {
-        success: false,
-        error: 'Demasiadas peticiones. Intenta de nuevo en 15 minutos.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+// Middleware de rate limiting
+function rateLimitMiddleware(limiter) {
+    return (req, res, next) => {
+        const identifier = req.ip || req.connection.remoteAddress;
+        
+        if (!limiter.checkLimit(identifier)) {
+            return res.status(429).json({
+                success: false,
+                error: 'Demasiadas peticiones. Intenta de nuevo en 15 minutos.'
+            });
+        }
+        
+        next();
+    };
+}
 
 // Middleware
 app.use(express.json());
@@ -116,10 +141,10 @@ function validateInput(data, rules) {
 }
 
 // Aplicar rate limiting
-app.use('/api/', apiLimiter);
+app.use('/api/', rateLimitMiddleware(apiLimiter));
 
 // API endpoints para autenticación
-app.post('/api/login', loginLimiter, (req, res) => {
+app.post('/api/login', rateLimitMiddleware(loginLimiter), (req, res) => {
     try {
         const { email, password } = req.body;
         
