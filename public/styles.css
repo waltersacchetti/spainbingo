@@ -2861,6 +2861,56 @@ body {
     50% { opacity: 0.8; }
 }
 
+/* Notificación de Compra */
+.purchase-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 8px 32px rgba(40, 167, 69, 0.3);
+    z-index: 10000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease-in-out;
+    max-width: 350px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.purchase-notification.show {
+    transform: translateX(0);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.notification-content i {
+    font-size: 2rem;
+    color: #fff;
+}
+
+.notification-text h4 {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.notification-text p {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.notification-text small {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
 .cards-modal-grid {
     flex: 1;
     display: grid;
@@ -2869,7 +2919,27 @@ body {
     padding: var(--spacing-lg);
     overflow-y: auto;
     min-height: 400px;
-    max-height: none;
+    max-height: 70vh;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--bg-secondary);
+}
+
+.cards-modal-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cards-modal-grid::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.cards-modal-grid::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.cards-modal-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
 }
 
 .cards-modal-grid .bingo-card {

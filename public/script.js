@@ -135,15 +135,11 @@ class BingoPro {
         this.loadFavoriteCards(); // Load favorite cards from localStorage
         this.loadAnalytics(); // Load analytics data
         
-        // Generar cartones de demostración si no hay ninguno
-        if (this.userCards.length === 0) {
-            console.log('Generando cartones de demostración...');
-            this.addCard(); // Agregar 1 cartón de demostración
-            this.addCard(); // Agregar 1 cartón más
-        }
+        // NO generar cartones automáticamente - el usuario debe comprarlos
+        console.log('Juego profesional: Sin cartones por defecto - El usuario debe comprarlos');
         
-        // Seleccionar todos los cartones por defecto
-        this.selectedCards = [...this.userCards];
+        // No seleccionar cartones por defecto
+        this.selectedCards = [];
         
         this.updateDisplay();
         this.updateAnalyticsDisplay();
@@ -535,65 +531,84 @@ class BingoPro {
     }
 
     callNumber() {
-        // Validaciones básicas
+        // Validaciones profesionales
         if (this.gameState !== 'playing') {
-            console.log('Juego no está en estado playing:', this.gameState);
+            console.log('⚠️ Juego no está en estado playing:', this.gameState);
             return;
         }
 
         if (this.calledNumbers.size >= 90) {
-            console.log('Todos los números han sido llamados');
+            console.log('🏁 Todos los números han sido llamados');
             this.endGame();
             return;
         }
 
-        // Anti-spam protection básica
+        // Anti-spam protection profesional
         const now = Date.now();
         if (this.lastCallTime && (now - this.lastCallTime) < this.securitySettings.minCallInterval) {
-            console.log('Llamada demasiado rápida');
+            console.log('⚠️ Llamada demasiado rápida - Protección anti-spam');
             return;
         }
 
         const availableNumbers = this.availableNumbers.filter(num => !this.calledNumbers.has(num));
         
         if (availableNumbers.length === 0) {
-            console.log('No hay números disponibles');
+            console.log('❌ No hay números disponibles');
             this.endGame();
             return;
         }
 
-        // Seleccionar número aleatorio
-        const number = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+        // Seleccionar número con lógica estratégica profesional
+        const number = this.selectNextNumber(availableNumbers);
         
-        console.log(`Llamando número: ${number}`);
-        console.log('Números disponibles restantes:', availableNumbers.length);
+        console.log(`🎯 Llamando número: ${number}`);
+        console.log(`📊 Números disponibles restantes: ${availableNumbers.length}`);
         
-        // Agregar número a los llamados
+        // Agregar número a los llamados con metadata profesional
         this.calledNumbers.add(number);
         this.lastNumberCalled = number;
         this.lastCallTime = now;
         this.callHistory.push({
             number: number,
             timestamp: new Date(),
+            gameId: this.currentGameId,
+            phase: this.globalGameState?.phase || 'unknown',
+            totalCalled: this.calledNumbers.size
+        });
+
+        console.log(`✅ Número ${number} agregado. Total llamados: ${this.calledNumbers.size}`);
+
+        // Update analytics profesional
+        this.updateAnalytics('number_called', { 
+            number,
+            phase: this.globalGameState?.phase,
+            totalCalled: this.calledNumbers.size,
             gameId: this.currentGameId
         });
 
-        console.log(`Número ${number} agregado a calledNumbers. Total llamados: ${this.calledNumbers.size}`);
-
-        // Update analytics
-        this.updateAnalytics('number_called', { number });
-
+        // Efectos profesionales
         this.playNumberSound();
         this.updateDisplay();
-        this.checkWin();
-        this.addChatMessage('system', `Número llamado: ${number}`);
-        console.log(`Número llamado: ${number}`);
+        
+        // Verificar victorias inmediatamente
+        const winResult = this.checkWin();
+        if (winResult) {
+            console.log('🏆 ¡Victoria detectada!');
+            this.endGame();
+            return;
+        }
+        
+        // Notificación profesional en chat
+        this.addChatMessage('system', `🎯 Número llamado: **${number}** (${this.calledNumbers.size}/90)`);
         
         // Actualizar modal de números llamados si está abierto
         const modal = document.getElementById('calledNumbersModal');
         if (modal && modal.style.display === 'block') {
             this.updateCalledNumbersModal();
         }
+        
+        // Actualizar estadísticas en tiempo real
+        this.updateStats();
     }
 
     selectNextNumber(availableNumbers) {
@@ -910,45 +925,108 @@ class BingoPro {
         
         console.log('Intentando comprar cartones:', quantity, 'Estado del juego:', this.gameState);
         
+        // Validaciones profesionales
+        if (quantity <= 0 || quantity > 20) {
+            alert('❌ Cantidad inválida. Puedes comprar entre 1 y 20 cartones por transacción.');
+            return false;
+        }
+        
         if (this.userBalance < totalCost) {
-            alert('Saldo insuficiente para comprar estos cartones');
+            alert(`❌ Saldo insuficiente.\n💰 Necesitas: €${totalCost.toFixed(2)}\n💳 Tienes: €${this.userBalance.toFixed(2)}`);
             return false;
         }
 
-        // Permitir comprar cartones solo cuando el juego está esperando o terminado
+        // Validar estado del juego
         if (this.gameState === 'playing') {
-            alert('No puedes comprar cartones durante una partida en curso. Espera a que termine.');
+            alert('❌ No puedes comprar cartones durante una partida en curso.\n⏰ Espera a que termine la partida actual.');
+            return false;
+        }
+        
+        // Validar límite de cartones por juego
+        const maxCardsPerGame = 50;
+        if (this.userCards.length + quantity > maxCardsPerGame) {
+            alert(`❌ Límite de cartones alcanzado.\n📊 Máximo ${maxCardsPerGame} cartones por juego.\n🎯 Ya tienes ${this.userCards.length} cartones.`);
             return false;
         }
 
-        // Procesar compra
+        // Procesar compra profesional
         this.userBalance -= totalCost;
         
-        // Generar cartones
+        // Generar cartones únicos
         const newCards = [];
         for (let i = 0; i < quantity; i++) {
             const card = this.addCard();
             if (card) {
+                card.purchaseTime = new Date();
+                card.purchasePrice = this.cardPrice;
                 newCards.push(card);
             }
         }
         
-        // Agregar a cartones seleccionados
+        // Seleccionar automáticamente los nuevos cartones
         this.selectedCards.push(...newCards);
+        
+        // Registrar transacción
+        this.gameHistory.push({
+            type: 'card_purchase',
+            quantity: quantity,
+            totalCost: totalCost,
+            timestamp: new Date(),
+            gameId: this.currentGameId
+        });
         
         // Update analytics
         this.updateAnalytics('card_purchased', {
             quantity: quantity,
-            cost: totalCost
+            cost: totalCost,
+            balance_after: this.userBalance
         });
         
+        // Actualizar interfaz
         this.updateUI();
         this.updateDisplay();
         
-        this.addChatMessage('system', `${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`);
-        console.log(`${quantity} cartones comprados por €${totalCost}`);
+        // Notificación profesional
+        this.addChatMessage('system', `✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}\n💰 Saldo restante: €${this.userBalance.toFixed(2)}`);
         
+        // Mostrar confirmación visual
+        this.showPurchaseConfirmation(quantity, totalCost);
+        
+        console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
         return true;
+    }
+
+    showPurchaseConfirmation(quantity, totalCost) {
+        // Crear notificación temporal
+        const notification = document.createElement('div');
+        notification.className = 'purchase-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-check-circle"></i>
+                <div class="notification-text">
+                    <h4>✅ Compra Exitosa</h4>
+                    <p>${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}</p>
+                    <small>Saldo restante: €${this.userBalance.toFixed(2)}</small>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
 
     buyPackage(packageType) {
@@ -1446,23 +1524,30 @@ class BingoPro {
     }
 
     startNewGame() {
-        console.log('Iniciando nueva partida automática global...');
+        console.log('🎮 Iniciando nueva partida profesional de Bingo...');
         
         if (this.gameState === 'playing') {
-            console.log('Ya hay una partida en curso');
+            console.log('⚠️ Ya hay una partida en curso');
+            return;
+        }
+        
+        // Validar que el usuario tenga cartones para jugar
+        if (this.userCards.length === 0) {
+            console.log('⚠️ Usuario sin cartones - No se puede iniciar partida');
+            this.addChatMessage('system', '❌ No puedes jugar sin cartones. Compra cartones primero.');
             return;
         }
         
         // Calcular premios dinámicos
         const dynamicPrizes = this.calculateDynamicPrizes();
         
-        // Inicializar estado global del juego
+        // Inicializar estado global del juego profesional
         this.globalGameState = {
             gameId: this.generateGameId(),
             startTime: new Date(),
             endTime: null,
-            totalPlayers: Math.floor(Math.random() * 50) + 10, // Simular jugadores
-            totalCards: Math.floor(Math.random() * 200) + 50,  // Simular cartones
+            totalPlayers: Math.floor(Math.random() * 100) + 25, // Simular más jugadores
+            totalCards: Math.floor(Math.random() * 500) + 100,  // Simular más cartones
             calledNumbers: new Set(),
             winners: {
                 line: null,
@@ -1470,7 +1555,9 @@ class BingoPro {
                 bingo: null
             },
             prizes: dynamicPrizes.prizes,
-            isActive: true
+            isActive: true,
+            phase: 'early', // early, mid, late
+            numbersCalled: 0
         };
         
         // Limpiar estado anterior
@@ -1481,7 +1568,7 @@ class BingoPro {
         this.currentGameId = this.globalGameState.gameId;
         this.gameStartTime = new Date();
         
-        // Usar todos los cartones del usuario si no hay seleccionados
+        // Usar cartones seleccionados o todos si no hay seleccionados
         if (this.selectedCards.length === 0) {
             this.selectedCards = [...this.userCards];
         }
@@ -1517,22 +1604,59 @@ class BingoPro {
             clearInterval(this.autoPlayInterval);
         }
         
-        console.log('Iniciando llamada automática de números...');
+        console.log('🎲 Iniciando llamada automática profesional...');
+        
+        // Anunciar inicio de partida
+        this.addChatMessage('system', '🎮 ¡La partida ha comenzado! Los números se llamarán automáticamente.');
         
         this.autoPlayInterval = setInterval(() => {
             if (this.gameState === 'playing' && this.calledNumbers.size < 90) {
-                console.log('Llamando número automáticamente...');
+                console.log('🎯 Llamando número automáticamente...');
+                
+                // Actualizar fase del juego
+                this.updateGamePhase();
+                
+                // Llamar número con lógica estratégica
                 this.callNumber();
                 
-                // Verificar si alguien ganó
+                // Verificar victorias
                 if (this.checkWin()) {
                     this.endGame();
+                    return;
                 }
+                
+                // Verificar si se han llamado todos los números
+                if (this.calledNumbers.size >= 90) {
+                    console.log('🏁 Todos los números han sido llamados - Fin de partida');
+                    this.addChatMessage('system', '🏁 ¡Fin de partida! Se han llamado todos los números del 1 al 90.');
+                    this.endGame();
+                    return;
+                }
+                
+                // Mostrar progreso cada 10 números
+                if (this.calledNumbers.size % 10 === 0) {
+                    this.addChatMessage('system', `📊 Progreso: ${this.calledNumbers.size}/90 números llamados`);
+                }
+                
             } else if (this.calledNumbers.size >= 90) {
-                console.log('Todos los números han sido llamados');
+                console.log('🏁 Todos los números han sido llamados');
                 this.endGame();
             }
-        }, 3000); // Llamar número cada 3 segundos
+        }, 2500); // Llamar número cada 2.5 segundos (más dinámico)
+    }
+
+    updateGamePhase() {
+        const numbersCalled = this.calledNumbers.size;
+        
+        if (numbersCalled < 30) {
+            this.globalGameState.phase = 'early';
+        } else if (numbersCalled < 60) {
+            this.globalGameState.phase = 'mid';
+        } else {
+            this.globalGameState.phase = 'late';
+        }
+        
+        this.globalGameState.numbersCalled = numbersCalled;
     }
 
     // Función para resetear la experiencia de bienvenida (solo para desarrollo)
