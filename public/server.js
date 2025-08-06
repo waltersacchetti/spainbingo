@@ -70,17 +70,21 @@ app.use((req, res, next) => {
     res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     
-    // CORS configuration segura
-    const allowedOrigins = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'https://dgxsjud1r60fi.cloudfront.net',
-        'http://52.212.178.26:3000'
-    ];
-    
+    // CORS configuration permisiva para ALB
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    const host = req.headers.host;
+    
+    console.log('🌐 Origin recibido:', origin);
+    console.log('🏠 Host recibido:', host);
+    
+    // Permitir cualquier origen para desarrollo/producción
+    if (origin) {
         res.header('Access-Control-Allow-Origin', origin);
+        console.log('✅ CORS permitido para:', origin);
+    } else {
+        // Si no hay origin, permitir el host actual
+        res.header('Access-Control-Allow-Origin', '*');
+        console.log('✅ CORS permitido para todos los orígenes');
     }
     
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
