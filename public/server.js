@@ -65,6 +65,13 @@ function rateLimitMiddleware(limiter) {
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// Middleware de logging para debug
+app.use((req, res, next) => {
+    console.log(`🔍 DEBUG - ${req.method} ${req.path}`);
+    console.log(`🔍 DEBUG - Body:`, JSON.stringify(req.body, null, 2));
+    next();
+});
+
 // Configuración de seguridad
 app.use((req, res, next) => {
     // Headers de seguridad
@@ -527,6 +534,9 @@ app.post('/api/register', rateLimitMiddleware(loginLimiter), async (req, res) =>
     try {
         const userData = req.body;
         const clientIP = req.ip || req.connection.remoteAddress;
+        
+        console.log('🔍 DEBUG - Datos recibidos en /api/register:', JSON.stringify(userData, null, 2));
+        console.log('🔍 DEBUG - Headers:', JSON.stringify(req.headers, null, 2));
         
         const result = await UserManager.registerUser(userData, clientIP);
         
