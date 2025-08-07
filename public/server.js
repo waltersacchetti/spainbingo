@@ -61,11 +61,12 @@ function rateLimitMiddleware(limiter) {
     };
 }
 
-// Middleware de logging para debug (ANTES de express.json)
+// Middleware de logging para debug (MUY TEMPRANO)
 app.use((req, res, next) => {
     console.log(`🔍 DEBUG - ${req.method} ${req.path}`);
     console.log(`🔍 DEBUG - URL:`, req.url);
     console.log(`🔍 DEBUG - Original URL:`, req.originalUrl);
+    console.log(`🔍 DEBUG - Headers:`, Object.keys(req.headers));
     next();
 });
 
@@ -536,8 +537,18 @@ app.get('/api/admin/users/:id', rateLimitMiddleware(apiLimiter), async (req, res
     }
 });
 
+// Ruta de prueba para debug
+app.post('/api/test-register', (req, res) => {
+    console.log('🔍 TEST ROUTE - Datos recibidos:', JSON.stringify(req.body, null, 2));
+    res.json({
+        success: true,
+        message: 'Ruta de prueba funcionando',
+        data: req.body
+    });
+});
+
 // API para registrar nuevo usuario (mejorado)
-app.post('/api/register', rateLimitMiddleware(loginLimiter), async (req, res) => {
+app.post('/api/register', async (req, res) => {
     try {
         const userData = req.body;
         const clientIP = req.ip || req.connection.remoteAddress;
