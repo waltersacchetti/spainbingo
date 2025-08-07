@@ -63,24 +63,20 @@ sync_public() {
     if [ -f "sync-public.sh" ]; then
         ./sync-public.sh sync
     else
-        show_warning "Script sync-public.sh no encontrado, sincronizando manualmente..."
+        show_warning "Script sync-public.sh no encontrado, verificando carpeta public..."
         
-        # Sincronización manual
-        mkdir -p public
-        cp index.html public/ 2>/dev/null || true
-        cp styles.css public/ 2>/dev/null || true
-        cp script.js public/ 2>/dev/null || true
-        cp auth.js public/ 2>/dev/null || true
-        cp security.js public/ 2>/dev/null || true
-        cp welcome.html public/ 2>/dev/null || true
-        cp welcome-styles.css public/ 2>/dev/null || true
-        cp welcome-script.js public/ 2>/dev/null || true
-        cp login.html public/ 2>/dev/null || true
-        cp entrada.html public/ 2>/dev/null || true
-        cp privacy-policy.html public/ 2>/dev/null || true
-        cp terms.html public/ 2>/dev/null || true
+        # Verificar que la carpeta public existe y tiene contenido
+        if [ ! -d "public" ]; then
+            show_error "Carpeta public no encontrada"
+            return 1
+        fi
         
-        show_success "Sincronización manual completada"
+        if [ ! -f "public/server.js" ]; then
+            show_error "Archivo public/server.js no encontrado"
+            return 1
+        fi
+        
+        show_success "Carpeta public verificada correctamente"
     fi
 }
 
@@ -112,9 +108,13 @@ commit_and_push() {
 deploy_to_ec2() {
     show_info "Desplegando a la EC2..."
     
-    # Copiar archivos a la EC2
+    # Crear directorio public en el servidor si no existe
+    show_info "Creando directorio public en el servidor..."
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'mkdir -p /home/ec2-user/public'
+    
+    # Copiar archivos a la EC2 (solo la carpeta public)
     show_info "Copiando archivos a la EC2..."
-    rsync -avz --delete -e "ssh -i spainbingo-key.pem" public/ ec2-user@$PUBLIC_IP:/home/ec2-user/ --exclude='node_modules' --exclude='.git'
+    rsync -avz --delete -e "ssh -i spainbingo-key.pem" public/ ec2-user@$PUBLIC_IP:/home/ec2-user/public/ --exclude='node_modules' --exclude='.git'
     
     # Instalar dependencias si es necesario
     show_info "Verificando dependencias..."
@@ -143,7 +143,7 @@ verify_deployment() {
     
     # Verificar que los archivos se actualizaron
     show_info "Verificando archivos actualizados..."
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && ls -la | head -10'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user/public && ls -la | head -10'
 }
 
 # Despliegue completo
@@ -208,6 +208,11 @@ check_status() {
     echo ""
     show_info "Estado de las APIs:"
     ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats | head -5'
+    
+    # Estado de archivos en el servidor
+    echo ""
+    show_info "Archivos en el servidor:"
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user/public && ls -la | head -10'
 }
 
 # Probar sistema de gestión de usuarios
