@@ -4,8 +4,11 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Importar configuración de base de datos
+const { sequelize, testConnection } = require('./config/database');
+
 // Importar modelos
-const User = require('./models/User');
+const User = require('./models/User')(sequelize);
 
 // Rate limiting simple (sin dependencias externas)
 class RateLimiter {

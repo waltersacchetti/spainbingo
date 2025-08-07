@@ -5,7 +5,8 @@
 
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
-const User = require('./User');
+const { sequelize } = require('../config/database');
+const User = require('./User')(sequelize);
 const userCache = require('./UserCache');
 
 class UserManager {
