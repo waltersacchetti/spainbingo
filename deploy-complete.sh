@@ -239,13 +239,13 @@ test_user_management() {
 show_urls() {
     show_info "🌐 URLs de la aplicación:"
     echo ""
-    echo "🌍 Dominio: https://spain-bingo.es"
-    echo "🌍 www: https://www.spain-bingo.es"
-    echo "ALB (HTTP): http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
-    echo "EC2 Directo: http://$PUBLIC_IP:3000"
+    echo "🌍 ALB Principal: http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
+    echo "🌍 EC2 Directo: http://$PUBLIC_IP:3000"
     echo ""
     show_info "Para verificar cambios, visita:"
-    echo "https://spain-bingo.es"
+    echo "http://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com"
+    echo ""
+    show_info "Nota: Los dominios spain-bingo.es están en configuración"
 }
 
 # Función para mostrar ayuda
