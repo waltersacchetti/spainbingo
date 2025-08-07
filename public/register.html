@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpainBingo - Crear Cuenta</title>
+    <link rel="stylesheet" href="welcome-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Estilos específicos para registro */
+        .register-page {
+            background: var(--gradient-hero);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+        }
+
+        .register-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .register-header {
+            background: var(--gradient-primary);
+            padding: var(--spacing-2xl);
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .register-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .register-logo .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--spacing-md);
+            font-size: 1.5rem;
+        }
+
+        .register-logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .register-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .register-body {
+            padding: var(--spacing-2xl);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            transition: var(--transition-normal);
+            background: var(--bg-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: var(--spacing-md);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+
+        .input-icon input {
+            padding-left: calc(var(--spacing-md) * 2 + 20px);
+        }
+
+        .btn-register-submit {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--gradient-primary);
+            color: var(--text-light);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-register-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-register-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+            font-weight: 500;
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        .register-footer {
+            background: var(--bg-secondary);
+            padding: var(--spacing-lg);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .register-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-to-login {
+            position: absolute;
+            top: var(--spacing-lg);
+            left: var(--spacing-lg);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-light);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition-normal);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-to-login:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .password-requirements {
+            background: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            margin-top: var(--spacing-sm);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .password-requirements ul {
+            margin: var(--spacing-sm) 0 0 0;
+            padding-left: var(--spacing-lg);
+        }
+
+        .password-requirements li {
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .requirement-met {
+            color: var(--success-color);
+        }
+
+        .requirement-unmet {
+            color: var(--text-secondary);
+        }
+
+        .form-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        .verification-options {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+        }
+
+        .verification-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: var(--transition-normal);
+            background: var(--bg-primary);
+        }
+
+        .verification-option:hover {
+            border-color: var(--primary-color);
+        }
+
+        .verification-option input[type="radio"] {
+            display: none;
+        }
+
+        .verification-option input[type="radio"]:checked + .checkmark {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .verification-option .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            position: relative;
+            transition: var(--transition-normal);
+        }
+
+        .verification-option .checkmark:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            opacity: 0;
+            transition: var(--transition-normal);
+        }
+
+        .verification-option input[type="radio"]:checked + .checkmark:after {
+            opacity: 1;
+        }
+
+        .verification-option i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .legal-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+        }
+
+        .legal-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .legal-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .legal-checkbox .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            position: relative;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: var(--transition-normal);
+        }
+
+        .legal-checkbox input[type="checkbox"]:checked + .checkmark {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .legal-checkbox .checkmark:after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: var(--transition-normal);
+        }
+
+        .legal-checkbox input[type="checkbox"]:checked + .checkmark:after {
+            opacity: 1;
+        }
+
+        .legal-checkbox a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .legal-checkbox a:hover {
+            text-decoration: underline;
+        }
+
+        .age-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #856404;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            margin-top: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .verification-step {
+            display: none;
+            background: var(--bg-secondary);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            margin-top: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .verification-step.active {
+            display: block;
+        }
+
+        .verification-code {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .verification-code input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+        }
+
+        .verification-code input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-lg);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+            border-color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .register-page {
+                padding: var(--spacing-md);
+            }
+            
+            .register-container {
+                max-width: 100%;
+            }
+            
+            .back-to-login {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-page">
+        <a href="/login.html" class="back-to-login">
+            <i class="fas fa-arrow-left"></i>
+            Volver al login
+        </a>
+        
+        <div class="register-container">
+            <div class="register-header">
+                <div class="register-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-dice"></i>
+                    </div>
+                    <h1>SpainBingo</h1>
+                </div>
+                <p>¡Únete a la diversión!</p>
+            </div>
+
+            <div class="register-body">
+                <!-- Mensajes de alerta -->
+                <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+                <div id="successMessage" class="alert alert-success" style="display: none;"></div>
+
+                <!-- Formulario de registro -->
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nombre de Usuario
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                class="form-input" 
+                                placeholder="Tu nombre de usuario" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            Correo Electrónico
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                class="form-input" 
+                                placeholder="tu@email.com" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Contraseña
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                class="form-input" 
+                                placeholder="Tu contraseña" 
+                                required
+                            >
+                        </div>
+                        <div class="password-requirements">
+                            <strong>La contraseña debe contener:</strong>
+                            <ul>
+                                <li id="req-length" class="requirement-unmet">Al menos 8 caracteres</li>
+                                <li id="req-uppercase" class="requirement-unmet">Al menos una mayúscula</li>
+                                <li id="req-lowercase" class="requirement-unmet">Al menos una minúscula</li>
+                                <li id="req-number" class="requirement-unmet">Al menos un número</li>
+                                <li id="req-special" class="requirement-unmet">Al menos un carácter especial</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Confirmar Contraseña
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                class="form-input" 
+                                placeholder="Confirma tu contraseña" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateOfBirth" class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Fecha de Nacimiento
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar"></i>
+                            <input 
+                                type="date" 
+                                id="dateOfBirth" 
+                                class="form-input" 
+                                required
+                                max=""
+                            >
+                        </div>
+                        <small class="form-text">Debes ser mayor de 18 años para registrarte</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="form-label">
+                            <i class="fas fa-phone"></i>
+                            Teléfono Móvil
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-phone"></i>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                class="form-input" 
+                                placeholder="+34 600 000 000" 
+                                required
+                            >
+                        </div>
+                        <small class="form-text">Para verificación de seguridad y notificaciones</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-shield-alt"></i>
+                            Verificación de Seguridad
+                        </label>
+                        <div class="verification-options">
+                            <label class="verification-option">
+                                <input type="radio" name="verificationMethod" value="email" checked>
+                                <span class="checkmark"></span>
+                                <i class="fas fa-envelope"></i>
+                                Verificar por Email
+                            </label>
+                            <label class="verification-option">
+                                <input type="radio" name="verificationMethod" value="sms">
+                                <span class="checkmark"></span>
+                                <i class="fas fa-sms"></i>
+                                Verificar por SMS
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="legal-checkboxes">
+                            <label class="legal-checkbox">
+                                <input type="checkbox" id="ageVerification" required>
+                                <span class="checkmark"></span>
+                                Confirmo que soy mayor de 18 años
+                            </label>
+                            
+                            <label class="legal-checkbox">
+                                <input type="checkbox" id="termsAcceptance" required>
+                                <span class="checkmark"></span>
+                                Acepto los <a href="terms.html" target="_blank">Términos y Condiciones</a>
+                            </label>
+                            
+                            <label class="legal-checkbox">
+                                <input type="checkbox" id="privacyAcceptance" required>
+                                <span class="checkmark"></span>
+                                Acepto la <a href="privacy-policy.html" target="_blank">Política de Privacidad</a>
+                            </label>
+                            
+                            <label class="legal-checkbox">
+                                <input type="checkbox" id="responsibleGaming" required>
+                                <span class="checkmark"></span>
+                                Acepto las políticas de juego responsable
+                            </label>
+                            
+                            <label class="legal-checkbox">
+                                <input type="checkbox" id="marketingConsent">
+                                <span class="checkmark"></span>
+                                Acepto recibir comunicaciones comerciales (opcional)
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="registerBtn" class="btn-register-submit">
+                        <i class="fas fa-user-plus"></i>
+                        Crear Cuenta
+                    </button>
+                </form>
+
+                <!-- Paso de verificación -->
+                <div id="verificationStep" class="verification-step">
+                    <h3>Verificación de Cuenta</h3>
+                    <p id="verificationMessage">Hemos enviado un código de verificación a tu <span id="verificationMethod">email</span>.</p>
+                    
+                    <div class="verification-code">
+                        <input type="text" maxlength="1" class="code-input" data-index="0">
+                        <input type="text" maxlength="1" class="code-input" data-index="1">
+                        <input type="text" maxlength="1" class="code-input" data-index="2">
+                        <input type="text" maxlength="1" class="code-input" data-index="3">
+                        <input type="text" maxlength="1" class="code-input" data-index="4">
+                        <input type="text" maxlength="1" class="code-input" data-index="5">
+                    </div>
+                    
+                    <button id="verifyBtn" class="btn-register-submit">
+                        <i class="fas fa-check"></i>
+                        Verificar Código
+                    </button>
+                    
+                    <div style="margin-top: var(--spacing-md);">
+                        <button id="resendCodeBtn" class="btn-secondary">
+                            <i class="fas fa-redo"></i>
+                            Reenviar Código
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="register-footer">
+                <p>Al crear una cuenta, aceptas nuestros 
+                    <a href="terms.html">Términos de Servicio</a> y 
+                    <a href="privacy-policy.html">Política de Privacidad</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🎮 SpainBingo Register - Versión Moderna');
+        
+        let isProcessing = false;
+        
+        function showMessage(text, type) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (type === 'error') {
+                errorDiv.textContent = text;
+                errorDiv.style.display = 'block';
+            } else if (type === 'success') {
+                successDiv.textContent = text;
+                successDiv.style.display = 'block';
+            }
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function setLoading(loading) {
+            const registerBtn = document.getElementById('registerBtn');
+            const inputs = ['username', 'email', 'password', 'confirmPassword'];
+            
+            registerBtn.disabled = loading;
+            inputs.forEach(id => {
+                document.getElementById(id).disabled = loading;
+            });
+            
+            if (loading) {
+                registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando cuenta...';
+            } else {
+                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
+            }
+        }
+        
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+            
+            // Actualizar indicadores visuales
+            document.getElementById('req-length').className = requirements.length ? 'requirement-met' : 'requirement-unmet';
+            document.getElementById('req-uppercase').className = requirements.uppercase ? 'requirement-met' : 'requirement-unmet';
+            document.getElementById('req-lowercase').className = requirements.lowercase ? 'requirement-met' : 'requirement-unmet';
+            document.getElementById('req-number').className = requirements.number ? 'requirement-met' : 'requirement-unmet';
+            document.getElementById('req-special').className = requirements.special ? 'requirement-met' : 'requirement-unmet';
+            
+            return Object.values(requirements).every(req => req);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Register page loaded');
+            
+            const registerForm = document.getElementById('registerForm');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const dateOfBirthInput = document.getElementById('dateOfBirth');
+            const phoneInput = document.getElementById('phone');
+            const verificationStep = document.getElementById('verificationStep');
+            const verificationMethod = document.getElementById('verificationMethod');
+            const verificationMessage = document.getElementById('verificationMessage');
+            
+            // Configurar fecha máxima (18 años atrás)
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            dateOfBirthInput.max = maxDate.toISOString().split('T')[0];
+            
+            // Validar contraseña en tiempo real
+            passwordInput.addEventListener('input', function() {
+                validatePassword(this.value);
+            });
+            
+            // Validar edad en tiempo real
+            dateOfBirthInput.addEventListener('change', function() {
+                validateAge(this.value);
+            });
+            
+            // Configurar inputs de código de verificación
+            const codeInputs = document.querySelectorAll('.code-input');
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1) {
+                        if (index < codeInputs.length - 1) {
+                            codeInputs[index + 1].focus();
+                        }
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+            });
+            
+            function validateAge(dateOfBirth) {
+                if (!dateOfBirth) return false;
+                
+                const birthDate = new Date(dateOfBirth);
+                const today = new Date();
+                const age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                if (age < 18) {
+                    showMessage('Debes ser mayor de 18 años para registrarte', 'error');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            function validatePhone(phone) {
+                const phoneRegex = /^(\+34|0034)?[6-9]\d{8}$/;
+                return phoneRegex.test(phone.replace(/\s/g, ''));
+            }
+            
+            function validateLegalCheckboxes() {
+                const requiredCheckboxes = [
+                    'ageVerification',
+                    'termsAcceptance', 
+                    'privacyAcceptance',
+                    'responsibleGaming'
+                ];
+                
+                for (const checkboxId of requiredCheckboxes) {
+                    if (!document.getElementById(checkboxId).checked) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            function showVerificationStep() {
+                registerForm.style.display = 'none';
+                verificationStep.classList.add('active');
+                
+                const method = document.querySelector('input[name="verificationMethod"]:checked').value;
+                verificationMethod.textContent = method === 'email' ? 'email' : 'teléfono';
+                verificationMessage.textContent = `Hemos enviado un código de verificación a tu ${method === 'email' ? 'email' : 'teléfono'}.`;
+            }
+            
+            function hideVerificationStep() {
+                verificationStep.classList.remove('active');
+                registerForm.style.display = 'block';
+            }
+
+            async function sendVerificationCode(userId, method) {
+                try {
+                    const response = await fetch('/api/verification/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userId, method })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error al enviar código de verificación:', error);
+                    return {
+                        success: false,
+                        error: 'Error de conexión'
+                    };
+                }
+            }
+
+            async function verifyCode(userId, code) {
+                try {
+                    const response = await fetch('/api/verification/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userId, code })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error al verificar código:', error);
+                    return {
+                        success: false,
+                        error: 'Error de conexión'
+                    };
+                }
+            }
+            
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (isProcessing) {
+                    console.log('⚠️ Registration already in progress');
+                    return;
+                }
+                
+                console.log('📝 Register form submitted');
+                
+                const username = document.getElementById('username').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const dateOfBirth = dateOfBirthInput.value;
+                const phone = phoneInput.value.trim();
+                const verificationMethod = document.querySelector('input[name="verificationMethod"]:checked').value;
+                
+                // Validaciones
+                if (!username || !email || !password || !confirmPassword || !dateOfBirth || !phone) {
+                    showMessage('Por favor, completa todos los campos obligatorios', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('Las contraseñas no coinciden', 'error');
+                    return;
+                }
+                
+                if (!validatePassword(password)) {
+                    showMessage('La contraseña no cumple con los requisitos de seguridad', 'error');
+                    return;
+                }
+                
+                if (username.length < 3) {
+                    showMessage('El nombre de usuario debe tener al menos 3 caracteres', 'error');
+                    return;
+                }
+                
+                if (!validateAge(dateOfBirth)) {
+                    return;
+                }
+                
+                if (!validatePhone(phone)) {
+                    showMessage('Por favor, introduce un número de teléfono válido (+34 600 000 000)', 'error');
+                    return;
+                }
+                
+                if (!validateLegalCheckboxes()) {
+                    showMessage('Debes aceptar todos los términos obligatorios', 'error');
+                    return;
+                }
+                
+                isProcessing = true;
+                hideMessages();
+                setLoading(true);
+                
+                try {
+                    console.log('📡 Sending registration request...');
+                    
+                    const registrationData = {
+                        username,
+                        email,
+                        password,
+                        dateOfBirth,
+                        phone,
+                        verificationMethod,
+                        marketingConsent: document.getElementById('marketingConsent').checked
+                    };
+                    
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(registrationData)
+                    });
+                    
+                    console.log(`📊 Response status: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('📄 Response received:', data.success ? 'SUCCESS' : 'FAILED');
+                    
+                    if (data.success) {
+                        console.log('✅ Registration successful, showing verification step');
+                        showMessage('¡Registro exitoso! Ahora verifica tu cuenta.', 'success');
+                        
+                        // Guardar ID del usuario para verificación
+                        window.lastRegisteredUserId = data.user.id;
+                        
+                        // Enviar código de verificación
+                        const verificationResult = await sendVerificationCode(data.user.id, verificationMethod);
+                        if (verificationResult.success) {
+                            showVerificationStep();
+                            showMessage('Código de verificación enviado. Revisa tu ' + verificationMethod, 'success');
+                        } else {
+                            showMessage('Error al enviar código de verificación: ' + verificationResult.error, 'error');
+                        }
+                        
+                    } else {
+                        console.log('❌ Registration failed:', data.error);
+                        showMessage(data.error || 'Error al crear la cuenta', 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('💥 Registration error:', error);
+                    showMessage('Error de conexión. Inténtalo de nuevo.', 'error');
+                } finally {
+                    isProcessing = false;
+                    setLoading(false);
+                }
+            });
+            
+            // Verificación de código
+            document.getElementById('verifyBtn').addEventListener('click', async function() {
+                const code = Array.from(codeInputs).map(input => input.value).join('');
+                
+                if (code.length !== 6) {
+                    showMessage('Por favor, introduce el código completo de 6 dígitos', 'error');
+                    return;
+                }
+                
+                // Obtener el ID del usuario del localStorage o de la sesión
+                const sessionData = localStorage.getItem('spainbingo_session');
+                let userId;
+                
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+                    userId = session.user.id;
+                } else {
+                    // Si no hay sesión, usar el último usuario registrado
+                    userId = window.lastRegisteredUserId;
+                }
+                
+                if (!userId) {
+                    showMessage('Error: No se encontró el ID del usuario', 'error');
+                    return;
+                }
+                
+                console.log('🔐 Verifying code:', code, 'for user:', userId);
+                
+                const result = await verifyCode(userId, code);
+                
+                if (result.success) {
+                    showMessage('¡Cuenta verificada exitosamente! Redirigiendo al login...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
+                } else {
+                    showMessage('Error: ' + result.error, 'error');
+                }
+            });
+            
+            // Reenviar código
+            document.getElementById('resendCodeBtn').addEventListener('click', async function() {
+                console.log('📤 Resending verification code');
+                
+                const sessionData = localStorage.getItem('spainbingo_session');
+                let userId;
+                
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+                    userId = session.user.id;
+                } else {
+                    userId = window.lastRegisteredUserId;
+                }
+                
+                if (!userId) {
+                    showMessage('Error: No se encontró el ID del usuario', 'error');
+                    return;
+                }
+                
+                const method = document.querySelector('input[name="verificationMethod"]:checked').value;
+                const result = await sendVerificationCode(userId, method);
+                
+                if (result.success) {
+                    showMessage('Código reenviado. Revisa tu ' + verificationMethod.textContent, 'success');
+                } else {
+                    showMessage('Error al reenviar código: ' + result.error, 'error');
+                }
+            });
+            
+            console.log('🎯 Event listeners configured');
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (isProcessing) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+        
+        console.log('🛡️ Register system initialized');
+    </script>
+</body>
+</html> 

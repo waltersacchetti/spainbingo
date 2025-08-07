@@ -105,40 +105,26 @@ app.use((req, res, next) => {
         'spain-bingo.es',
         'www.spain-bingo.es',
         'spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com',
+        '52.212.178.26',
         'localhost',
         '127.0.0.1'
     ];
     
-    // Para ALB, siempre permitir el origen
+    // CORS más permisivo para desarrollo
     if (origin) {
-        const originHost = new URL(origin).hostname;
-        if (allowedDomains.includes(originHost) || originHost.includes('localhost') || originHost.includes('127.0.0.1')) {
-            res.header('Access-Control-Allow-Origin', origin);
-            console.log('✅ CORS permitido para:', origin);
-        } else {
-            res.header('Access-Control-Allow-Origin', '*');
-            console.log('⚠️ CORS permitido para dominio no listado:', origin);
-        }
+        res.header('Access-Control-Allow-Origin', origin);
+        console.log('✅ CORS permitido para origin:', origin);
     } else if (referer) {
-        // Si no hay origin pero hay referer, extraer el origen del referer
         try {
             const refererUrl = new URL(referer);
             const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
-            const refererHost = refererUrl.hostname;
-            
-            if (allowedDomains.includes(refererHost) || refererHost.includes('localhost') || refererHost.includes('127.0.0.1')) {
-                res.header('Access-Control-Allow-Origin', refererOrigin);
-                console.log('✅ CORS permitido para referer:', refererOrigin);
-            } else {
-                res.header('Access-Control-Allow-Origin', '*');
-                console.log('⚠️ CORS permitido para referer no listado:', refererOrigin);
-            }
+            res.header('Access-Control-Allow-Origin', refererOrigin);
+            console.log('✅ CORS permitido para referer:', refererOrigin);
         } catch (e) {
             res.header('Access-Control-Allow-Origin', '*');
             console.log('✅ CORS permitido para todos los orígenes (fallback)');
         }
     } else {
-        // Fallback: permitir todos los orígenes
         res.header('Access-Control-Allow-Origin', '*');
         console.log('✅ CORS permitido para todos los orígenes (sin origin/referer)');
     }
@@ -165,6 +151,10 @@ app.get('/welcome', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'register.html'));
 });
 
 app.get('/game', (req, res) => {
@@ -671,6 +661,94 @@ app.post('/api/admin/cache/clear', rateLimitMiddleware(apiLimiter), (req, res) =
         });
     } catch (error) {
         console.error('Error al limpiar caché:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para enviar código de verificación
+app.post('/api/verification/send', rateLimitMiddleware(loginLimiter), async (req, res) => {
+    try {
+        const { userId, method } = req.body;
+        
+        if (!userId || !method) {
+            return res.status(400).json({
+                success: false,
+                error: 'ID de usuario y método de verificación son requeridos'
+            });
+        }
+
+        if (!['email', 'sms'].includes(method)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Método de verificación inválido'
+            });
+        }
+
+        const result = await UserManager.sendVerificationCode(userId, method);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: result.message,
+                expiresIn: result.expiresIn
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: result.error
+            });
+        }
+
+    } catch (error) {
+        console.error('Error al enviar código de verificación:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para verificar código
+app.post('/api/verification/verify', rateLimitMiddleware(loginLimiter), async (req, res) => {
+    try {
+        const { userId, code } = req.body;
+        
+        if (!userId || !code) {
+            return res.status(400).json({
+                success: false,
+                error: 'ID de usuario y código son requeridos'
+            });
+        }
+
+        if (code.length !== 6) {
+            return res.status(400).json({
+                success: false,
+                error: 'Código debe tener 6 dígitos'
+            });
+        }
+
+        const result = await UserManager.verifyCode(userId, code);
+        
+        if (result.success) {
+            // Limpiar caché del usuario
+            userCache.removeCachedUser(userId);
+            
+            res.json({
+                success: true,
+                message: result.message
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: result.error
+            });
+        }
+
+    } catch (error) {
+        console.error('Error al verificar código:', error);
         res.status(500).json({
             success: false,
             error: 'Error interno del servidor'

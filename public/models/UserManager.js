@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const { sequelize } = require('../config/database');
 const User = require('./User')(sequelize);
 const userCache = require('./UserCache');
+const verificationService = require('../services/VerificationService');
 
 class UserManager {
     constructor() {
@@ -50,12 +51,26 @@ class UserManager {
             errors.push('La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial');
         }
 
-        // Validar edad (18+ años)
-        if (userData.date_of_birth) {
-            const age = this.calculateAge(userData.date_of_birth);
+        // Validar fecha de nacimiento (obligatoria)
+        if (!userData.dateOfBirth) {
+            errors.push('La fecha de nacimiento es obligatoria');
+        } else {
+            const age = this.calculateAge(userData.dateOfBirth);
             if (age < 18) {
                 errors.push('Debes ser mayor de 18 años para registrarte');
             }
+        }
+
+        // Validar teléfono (obligatorio)
+        if (!userData.phone) {
+            errors.push('El número de teléfono es obligatorio');
+        } else if (!this.isValidPhone(userData.phone)) {
+            errors.push('Por favor, introduce un número de teléfono válido (+34 600 000 000)');
+        }
+
+        // Validar método de verificación
+        if (!userData.verificationMethod || !['email', 'sms'].includes(userData.verificationMethod)) {
+            errors.push('Debes seleccionar un método de verificación');
         }
 
         // Validar datos personales
@@ -64,9 +79,6 @@ class UserManager {
         }
         if (userData.last_name && userData.last_name.length > 50) {
             errors.push('El apellido no puede exceder 50 caracteres');
-        }
-        if (userData.phone && !/^\+?[\d\s\-\(\)]+$/.test(userData.phone)) {
-            errors.push('Número de teléfono inválido');
         }
 
         return errors;
@@ -90,6 +102,14 @@ class UserManager {
         const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
         
         return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+    }
+
+    /**
+     * Verificar si el teléfono es válido (formato español)
+     */
+    isValidPhone(phone) {
+        const phoneRegex = /^(\+34|0034)?[6-9]\d{8}$/;
+        return phoneRegex.test(phone.replace(/\s/g, ''));
     }
 
     /**
@@ -189,8 +209,10 @@ class UserManager {
                 password_hash: passwordHash,
                 first_name: userData.first_name || null,
                 last_name: userData.last_name || null,
-                date_of_birth: userData.date_of_birth || null,
+                date_of_birth: userData.dateOfBirth || null,
                 phone: userData.phone || null,
+                verification_method: userData.verificationMethod || 'email',
+                marketing_consent: userData.marketingConsent || false,
                 country: userData.country || 'Spain',
                 city: userData.city || null,
                 postal_code: userData.postal_code || null,
@@ -445,6 +467,27 @@ class UserManager {
      */
     getCacheStats() {
         return userCache.getCacheStats();
+    }
+
+    /**
+     * Enviar código de verificación
+     */
+    async sendVerificationCode(userId, method) {
+        return await verificationService.sendVerificationCode(userId, method);
+    }
+
+    /**
+     * Verificar código de verificación
+     */
+    async verifyCode(userId, code) {
+        return await verificationService.verifyCode(userId, code);
+    }
+
+    /**
+     * Limpiar códigos expirados
+     */
+    async cleanExpiredCodes() {
+        return await verificationService.cleanExpiredCodes();
     }
 }
 

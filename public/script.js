@@ -99,6 +99,14 @@ class BingoPro {
             favoriteNumbers: new Map(),
             luckyCards: [],
             
+            // Session statistics
+            sessionStats: {
+                startTime: new Date(),
+                gamesPlayed: 0,
+                cardsUsed: 0,
+                numbersCalled: 0
+            },
+            
             // Nuevo sistema de dificultad dinámica
             difficultySystem: {
                 currentLevel: 1,
@@ -122,12 +130,6 @@ class BingoPro {
         };
         
         this.gameHistory = [];
-        this.sessionStats = {
-            startTime: new Date(),
-            gamesPlayed: 0,
-            cardsUsed: 0,
-            numbersCalled: 0
-        };
         
         // Performance tracking
         this.performanceMetrics = {
@@ -1354,6 +1356,7 @@ class BingoPro {
         this.addChatMessage('system', `✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}\n💰 Saldo restante: €${this.userBalance.toFixed(2)}`);
         
         // Mostrar confirmación visual
+        console.log('🔔 Llamando a showPurchaseConfirmation...');
         this.showPurchaseConfirmation(quantity, totalCost);
         
         console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
@@ -1361,6 +1364,8 @@ class BingoPro {
     }
 
     showPurchaseConfirmation(quantity, totalCost) {
+        console.log('🔔 Mostrando notificación de compra:', quantity, totalCost);
+        
         // Crear notificación temporal
         const notification = document.createElement('div');
         notification.className = 'purchase-notification';
@@ -1375,19 +1380,23 @@ class BingoPro {
             </div>
         `;
         
+        console.log('🔔 Notificación creada, agregando al DOM...');
         document.body.appendChild(notification);
         
         // Animar entrada
         setTimeout(() => {
+            console.log('🔔 Agregando clase show...');
             notification.classList.add('show');
         }, 100);
         
         // Remover después de 3 segundos
         setTimeout(() => {
+            console.log('🔔 Removiendo notificación...');
             notification.classList.remove('show');
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
+                    console.log('🔔 Notificación removida del DOM');
                 }
             }, 300);
         }, 3000);
