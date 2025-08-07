@@ -61,13 +61,20 @@ function rateLimitMiddleware(limiter) {
     };
 }
 
+// Middleware de logging para debug (ANTES de express.json)
+app.use((req, res, next) => {
+    console.log(`🔍 DEBUG - ${req.method} ${req.path}`);
+    console.log(`🔍 DEBUG - URL:`, req.url);
+    console.log(`🔍 DEBUG - Original URL:`, req.originalUrl);
+    next();
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Middleware de logging para debug
+// Middleware de logging para debug (DESPUÉS de express.json)
 app.use((req, res, next) => {
-    console.log(`🔍 DEBUG - ${req.method} ${req.path}`);
     console.log(`🔍 DEBUG - Body:`, JSON.stringify(req.body, null, 2));
     next();
 });
