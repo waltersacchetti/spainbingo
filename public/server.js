@@ -253,51 +253,7 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-app.post('/api/register', (req, res) => {
-    try {
-        const { username, email, password, firstName, lastName, dateOfBirth, phone } = req.body;
-        
-        console.log('📝 Register attempt:', { username, email, firstName, lastName });
-        
-        if (!username || !email || !password || !firstName || !lastName || !dateOfBirth) {
-            return res.status(400).json({
-                success: false,
-                error: 'Todos los campos obligatorios son requeridos'
-            });
-        }
-        
-        // Simular registro exitoso (en producción esto guardaría en la base de datos)
-        const user = {
-            id: 'user_' + Date.now(),
-            username: username,
-            email: email,
-            firstName: firstName,
-            lastName: lastName,
-            dateOfBirth: dateOfBirth,
-            phone: phone || '',
-            balance: 500,
-            level: 'Bronce',
-            avatar: 'default',
-            createdAt: new Date().toISOString()
-        };
-        
-        const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        console.log('✅ Registration successful for:', email);
-        
-        res.json({
-            success: true,
-            user: user,
-            token: token
-        });
-    } catch (error) {
-        console.error('❌ Registration error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor'
-        });
-    }
-});
+// Ruta de registro eliminada - usando la versión mejorada con UserManager
 
 app.post('/api/register-with-confirmation', (req, res) => {
     try {
