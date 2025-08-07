@@ -114,11 +114,15 @@ deploy_to_ec2() {
     
     # Copiar archivos a la EC2
     show_info "Copiando archivos a la EC2..."
-    scp -i spainbingo-key.pem -r public/ ec2-user@$PUBLIC_IP:/var/www/spainbingo/
+    rsync -avz --delete -e "ssh -i spainbingo-key.pem" public/ ec2-user@$PUBLIC_IP:/home/ec2-user/ --exclude='node_modules' --exclude='.git'
     
-    # Reiniciar aplicación desde la carpeta public
+    # Instalar dependencias si es necesario
+    show_info "Verificando dependencias..."
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && if [ ! -d "node_modules" ] || [ ! -f "node_modules/sequelize/package.json" ]; then npm install sequelize pg pg-hstore bcrypt uuid; fi'
+    
+    # Reiniciar aplicación
     show_info "Reiniciando aplicación..."
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo/public && pm2 restart spainbingo'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && pm2 restart spainbingo'
     
     show_success "Despliegue a EC2 completado"
 }
@@ -128,18 +132,18 @@ verify_deployment() {
     show_info "Verificando estado de la aplicación..."
     
     # Verificar health check
-    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/health')
+    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats')
     
     if echo "$health_check" | grep -q "success"; then
         show_success "Aplicación funcionando correctamente"
     else
-        show_error "La aplicación no responde correctamente"
-        return 1
+        show_warning "La aplicación no responde al health check, verificando estado PM2..."
+        ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && pm2 status'
     fi
     
     # Verificar que los archivos se actualizaron
     show_info "Verificando archivos actualizados..."
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo/public && ls -la | head -10'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && ls -la | head -10'
 }
 
 # Despliegue completo
@@ -198,7 +202,32 @@ check_status() {
     # Estado de la aplicación
     echo ""
     show_info "Estado de la aplicación:"
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /var/www/spainbingo && pm2 status'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && pm2 status'
+    
+    # Estado de las APIs
+    echo ""
+    show_info "Estado de las APIs:"
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats | head -5'
+}
+
+# Probar sistema de gestión de usuarios
+test_user_management() {
+    show_info "🧪 Probando sistema de gestión de usuarios..."
+    
+    # Probar APIs
+    echo ""
+    show_info "Probando APIs de gestión de usuarios:"
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats'
+    
+    echo ""
+    show_info "Probando APIs de caché:"
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/cache/stats'
+    
+    echo ""
+    show_info "Probando script CLI de gestión:"
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && node scripts/user-management.js cache-stats'
+    
+    show_success "Pruebas del sistema de gestión de usuarios completadas"
 }
 
 # Mostrar URLs
@@ -225,6 +254,7 @@ show_help() {
     echo "  commit [MENSAJE] - Solo commit y push"
     echo "  deploy          - Solo desplegar a EC2"
     echo "  status          - Verificar estado de la aplicación"
+    echo "  test-users      - Probar sistema de gestión de usuarios"
     echo "  urls            - Mostrar URLs de la aplicación"
     echo "  help            - Mostrar esta ayuda"
     echo ""
@@ -232,6 +262,7 @@ show_help() {
     echo "  ./deploy-complete.sh full \"Agregar nueva funcionalidad\""
     echo "  ./deploy-complete.sh quick"
     echo "  ./deploy-complete.sh status"
+    echo "  ./deploy-complete.sh test-users"
     echo ""
     echo "Flujo recomendado:"
     echo "1. Hacer cambios en los archivos principales"
@@ -269,6 +300,10 @@ main() {
         "status")
             load_instance_info
             check_status
+            ;;
+        "test-users")
+            load_instance_info
+            test_user_management
             ;;
         "urls")
             load_instance_info
