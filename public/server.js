@@ -4,6 +4,9 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Importar modelos
+const User = require('./models/User');
+
 // Rate limiting simple (sin dependencias externas)
 class RateLimiter {
     constructor(windowMs, max) {
@@ -469,6 +472,223 @@ app.get('/api/chat', (req, res) => {
         success: true,
         messages: []
     });
+});
+
+// ========================================
+// NUEVAS RUTAS DE GESTIÓN DE USUARIOS
+// ========================================
+
+// Importar el gestor de usuarios
+const UserManager = require('./models/UserManager');
+const userCache = require('./models/UserCache');
+
+// API para obtener estadísticas de usuarios (solo admin)
+app.get('/api/admin/users/stats', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        const stats = await UserManager.getUserStats();
+        const cacheStats = UserManager.getCacheStats();
+        
+        res.json({
+            success: true,
+            stats: stats,
+            cache: cacheStats
+        });
+    } catch (error) {
+        console.error('Error al obtener estadísticas de usuarios:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para listar usuarios (solo admin)
+app.get('/api/admin/users', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        
+        const users = await User.findAll({
+            order: [['created_at', 'DESC']],
+            limit: limit,
+            offset: offset,
+            attributes: ['id', 'username', 'email', 'first_name', 'last_name', 'is_verified', 'is_active', 'balance', 'created_at']
+        });
+        
+        const total = await User.count();
+        
+        res.json({
+            success: true,
+            users: users.map(user => user.toJSON()),
+            pagination: {
+                page: page,
+                limit: limit,
+                total: total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error al listar usuarios:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para obtener usuario por ID
+app.get('/api/admin/users/:id', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const user = await UserManager.getUserById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Usuario no encontrado'
+            });
+        }
+        
+        res.json({
+            success: true,
+            user: user
+        });
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para registrar nuevo usuario (mejorado)
+app.post('/api/register', rateLimitMiddleware(loginLimiter), async (req, res) => {
+    try {
+        const userData = req.body;
+        const clientIP = req.ip || req.connection.remoteAddress;
+        
+        const result = await UserManager.registerUser(userData, clientIP);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: result.message,
+                user: result.user
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error en registro:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para actualizar usuario
+app.put('/api/admin/users/:id', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const updateData = req.body;
+        
+        const result = await UserManager.updateUser(userId, updateData);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Usuario actualizado exitosamente',
+                user: result.user
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para cambiar contraseña
+app.post('/api/users/change-password', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        const { userId, currentPassword, newPassword } = req.body;
+        
+        if (!userId || !currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Todos los campos son requeridos'
+            });
+        }
+        
+        const result = await UserManager.changePassword(userId, currentPassword, newPassword);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Contraseña cambiada exitosamente'
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error al cambiar contraseña:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para obtener estadísticas del caché
+app.get('/api/admin/cache/stats', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const stats = userCache.getCacheStats();
+        
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Error al obtener estadísticas del caché:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para limpiar caché
+app.post('/api/admin/cache/clear', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        userCache.clearAllCache();
+        
+        res.json({
+            success: true,
+            message: 'Caché limpiado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al limpiar caché:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
 });
 
 // Manejo de errores
