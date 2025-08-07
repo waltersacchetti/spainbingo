@@ -66,7 +66,7 @@ app.use((req, res, next) => {
     res.header('X-Frame-Options', 'DENY');
     res.header('X-XSS-Protection', '1; mode=block');
     res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    res.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;");
+    res.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:;");
     res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     

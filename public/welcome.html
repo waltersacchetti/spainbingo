@@ -363,6 +363,273 @@
         </div>
     </footer>
 
+    <!-- Modal de Verificación de Edad -->
+    <div id="ageVerificationModal" class="age-modal" style="display: none;">
+        <div class="age-modal-content">
+            <div class="age-modal-header">
+                <div class="age-icon">
+                    <i class="fas fa-birthday-cake"></i>
+                </div>
+                <h2>Verificación de Edad</h2>
+                <p>Debes ser mayor de 18 años para acceder a SpainBingo</p>
+            </div>
+            
+            <div class="age-modal-body">
+                <div class="age-form">
+                    <label for="birthDate">Fecha de Nacimiento:</label>
+                    <input type="date" id="birthDate" max="" required>
+                    <p class="age-note">Al continuar, confirmas que eres mayor de edad y aceptas nuestros términos.</p>
+                </div>
+            </div>
+            
+            <div class="age-modal-footer">
+                <button id="confirmAgeBtn" class="btn-age-confirm">
+                    <i class="fas fa-check"></i>
+                    Confirmar Edad
+                </button>
+                <button id="denyAgeBtn" class="btn-age-deny">
+                    <i class="fas fa-times"></i>
+                    Salir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Estilos para el modal de verificación de edad */
+        .age-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .age-modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            max-width: 450px;
+            width: 90%;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .age-modal-header {
+            background: var(--gradient-primary);
+            color: var(--text-light);
+            padding: var(--spacing-2xl);
+            text-align: center;
+        }
+
+        .age-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+            font-size: 2rem;
+        }
+
+        .age-modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .age-modal-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .age-modal-body {
+            padding: var(--spacing-2xl);
+        }
+
+        .age-form label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .age-form input[type="date"] {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            transition: var(--transition-normal);
+        }
+
+        .age-form input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .age-note {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-md);
+            line-height: 1.5;
+        }
+
+        .age-modal-footer {
+            padding: var(--spacing-lg) var(--spacing-2xl);
+            background: var(--bg-secondary);
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .btn-age-confirm, .btn-age-deny {
+            flex: 1;
+            padding: var(--spacing-md);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-age-confirm {
+            background: var(--gradient-success);
+            color: var(--text-light);
+        }
+
+        .btn-age-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-age-deny {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-age-deny:hover {
+            background: var(--danger-color);
+            color: var(--text-light);
+            border-color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .age-modal-content {
+                width: 95%;
+                margin: var(--spacing-md);
+            }
+            
+            .age-modal-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+
     <script src="welcome-script.js"></script>
+    <script>
+        // Verificación de edad al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si ya se ha confirmado la edad
+            const ageVerified = localStorage.getItem('spainbingo_age_verified');
+            
+            if (!ageVerified) {
+                showAgeVerification();
+            }
+        });
+
+        function showAgeVerification() {
+            const modal = document.getElementById('ageVerificationModal');
+            const birthDateInput = document.getElementById('birthDate');
+            
+            // Establecer fecha máxima (hoy - 18 años)
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            birthDateInput.max = maxDate.toISOString().split('T')[0];
+            
+            modal.style.display = 'flex';
+            
+            // Prevenir scroll del body
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAgeVerification() {
+            const modal = document.getElementById('ageVerificationModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+
+        // Event listeners para los botones
+        document.getElementById('confirmAgeBtn').addEventListener('click', function() {
+            const birthDate = document.getElementById('birthDate').value;
+            
+            if (!birthDate) {
+                alert('Por favor, selecciona tu fecha de nacimiento.');
+                return;
+            }
+            
+            const age = calculateAge(birthDate);
+            
+            if (age >= 18) {
+                localStorage.setItem('spainbingo_age_verified', 'true');
+                localStorage.setItem('spainbingo_user_age', age.toString());
+                hideAgeVerification();
+                console.log('✅ Edad verificada:', age);
+            } else {
+                alert('Debes ser mayor de 18 años para acceder a SpainBingo.');
+            }
+        });
+
+        document.getElementById('denyAgeBtn').addEventListener('click', function() {
+            alert('Debes ser mayor de 18 años para acceder a SpainBingo.');
+            window.close();
+            // Si window.close() no funciona, redirigir a una página de error
+            window.location.href = 'https://www.google.com';
+        });
+
+        // Prevenir cerrar el modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html> 

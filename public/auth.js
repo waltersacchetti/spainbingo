@@ -84,8 +84,8 @@ class AuthManager {
                 this.sessionToken = sessionData.token;
                 console.log('✅ Sesión existente validada y cargada');
                 
-                // Si estamos en la página de login y ya estamos autenticados, redirigir al juego
-                if (window.location.pathname.includes('login.html')) {
+                // Si estamos en la página de login EXACTA y ya estamos autenticados, redirigir al juego
+                if (window.location.pathname === '/login.html' || window.location.pathname.endsWith('/login.html')) {
                     this.redirectToGame();
                 }
             } catch (error) {

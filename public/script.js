@@ -98,13 +98,35 @@ class BingoPro {
             winRate: 0,
             favoriteNumbers: new Map(),
             luckyCards: [],
-            gameHistory: [],
-            sessionStats: {
-                startTime: new Date(),
-                gamesPlayed: 0,
-                cardsUsed: 0,
-                numbersCalled: 0
+            
+            // Nuevo sistema de dificultad dinámica
+            difficultySystem: {
+                currentLevel: 1,
+                playerSkill: 0.5, // 0-1, se ajusta basado en el rendimiento
+                winRate: 0,
+                gamesWon: 0,
+                totalGames: 0,
+                difficultyMultiplier: 1.0,
+                adaptiveEnabled: true,
+                lastAdjustment: Date.now()
+            },
+            
+            // Sistema de patrones de juego
+            gamePatterns: {
+                lastNumbers: [],
+                patternDetection: true,
+                antiPatternEnabled: true,
+                consecutiveWins: 0,
+                consecutiveLosses: 0
             }
+        };
+        
+        this.gameHistory = [];
+        this.sessionStats = {
+            startTime: new Date(),
+            gamesPlayed: 0,
+            cardsUsed: 0,
+            numbersCalled: 0
         };
         
         // Performance tracking
@@ -883,42 +905,87 @@ class BingoPro {
     }
 
     selectStrategicNumber(availableNumbers, phase) {
-        // Analizar qué números ayudarían más a completar líneas
-        const strategicNumbers = this.analyzeStrategicNumbers(availableNumbers);
+        // Análisis estratégico avanzado de números disponibles
+        const strategicAnalysis = this.analyzeStrategicNumbers(availableNumbers);
         
-        if (phase === 'early') {
-            // En fase temprana, evitar números muy estratégicos
-            const nonStrategic = availableNumbers.filter(num => !strategicNumbers.includes(num));
-            return nonStrategic.length > 0 ? 
-                nonStrategic[Math.floor(Math.random() * nonStrategic.length)] :
-                availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+        // Sistema de ponderación dinámica basado en la fase del juego
+        const phaseWeights = {
+            early: { low: 0.6, mid: 0.3, high: 0.1 },
+            mid: { low: 0.3, mid: 0.5, high: 0.2 },
+            late: { low: 0.1, mid: 0.3, high: 0.6 }
+        };
+        
+        const weights = phaseWeights[phase];
+        
+        // Categorizar números por valor estratégico
+        const lowValueNumbers = strategicAnalysis.filter(num => num.value < 0.3);
+        const midValueNumbers = strategicAnalysis.filter(num => num.value >= 0.3 && num.value <= 0.7);
+        const highValueNumbers = strategicAnalysis.filter(num => num.value > 0.7);
+        
+        // Crear pool de selección ponderada
+        let selectionPool = [];
+        
+        // Agregar números según ponderación de fase
+        if (lowValueNumbers.length > 0) {
+            const count = Math.ceil(lowValueNumbers.length * weights.low);
+            selectionPool.push(...lowValueNumbers.slice(0, count));
         }
-        else if (phase === 'late') {
-            // En fase tardía, favorecer números menos estratégicos
-            const lessStrategic = strategicNumbers.slice(0, Math.floor(strategicNumbers.length * 0.3));
-            return lessStrategic.length > 0 ?
-                lessStrategic[Math.floor(Math.random() * lessStrategic.length)] :
-                availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+        
+        if (midValueNumbers.length > 0) {
+            const count = Math.ceil(midValueNumbers.length * weights.mid);
+            selectionPool.push(...midValueNumbers.slice(0, count));
         }
-        else {
-            // Fase media: balance normal
-            return availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+        
+        if (highValueNumbers.length > 0) {
+            const count = Math.ceil(highValueNumbers.length * weights.high);
+            selectionPool.push(...highValueNumbers.slice(0, count));
         }
+        
+        // Si no hay suficientes números en el pool, agregar todos los disponibles
+        if (selectionPool.length === 0) {
+            selectionPool = strategicAnalysis;
+        }
+        
+        // Selección final con algoritmo de ruleta ponderada
+        const totalWeight = selectionPool.reduce((sum, num) => sum + (1 - num.value), 0);
+        let random = Math.random() * totalWeight;
+        
+        for (const num of selectionPool) {
+            random -= (1 - num.value);
+            if (random <= 0) {
+                return num.number;
+            }
+        }
+        
+        // Fallback: selección aleatoria del pool
+        return selectionPool[Math.floor(Math.random() * selectionPool.length)].number;
     }
 
     analyzeStrategicNumbers(availableNumbers) {
-        const strategicScores = {};
+        const strategicAnalysis = [];
         
         availableNumbers.forEach(number => {
-            let score = 0;
+            let totalScore = 0;
+            let maxPossibleScore = 0;
+            
             this.userCards.forEach(card => {
-                score += this.calculateNumberStrategicValue(number, card);
+                const cardScore = this.calculateNumberStrategicValue(number, card);
+                totalScore += cardScore;
+                maxPossibleScore += 10; // Máximo score posible por cartón
             });
-            strategicScores[number] = score;
+            
+            // Normalizar el valor entre 0 y 1
+            const normalizedValue = maxPossibleScore > 0 ? totalScore / maxPossibleScore : 0;
+            
+            strategicAnalysis.push({
+                number: number,
+                value: normalizedValue,
+                score: totalScore
+            });
         });
         
         // Ordenar por valor estratégico (mayor a menor)
-        return availableNumbers.sort((a, b) => strategicScores[b] - strategicScores[a]);
+        return strategicAnalysis.sort((a, b) => b.value - a.value);
     }
 
     calculateNumberStrategicValue(number, card) {
@@ -930,20 +997,38 @@ class BingoPro {
                 if (card.numbers[col][row] === number) {
                     // Calcular cuántos números de la fila ya están marcados
                     let rowMarked = 0;
+                    let rowTotal = 0;
+                    
                     for (let c = 0; c < 9; c++) {
-                        if (card.numbers[c][row] && this.calledNumbers.has(card.numbers[c][row])) {
-                            rowMarked++;
+                        if (card.numbers[c][row]) {
+                            rowTotal++;
+                            if (this.calledNumbers.has(card.numbers[c][row])) {
+                                rowMarked++;
+                            }
                         }
                     }
                     
-                    // Si ya hay 4 números marcados en la fila, este número es muy estratégico
-                    if (rowMarked === 4) {
-                        value += 10;
-                    } else if (rowMarked === 3) {
-                        value += 5;
-                    } else if (rowMarked === 2) {
-                        value += 2;
+                    // Calcular valor estratégico de la fila
+                    if (rowMarked === 4 && rowTotal === 5) {
+                        value += 15; // Muy cerca de completar línea
+                    } else if (rowMarked === 3 && rowTotal === 5) {
+                        value += 8; // Cerca de completar línea
+                    } else if (rowMarked === 2 && rowTotal === 5) {
+                        value += 4; // Progreso medio
+                    } else if (rowMarked === 1 && rowTotal === 5) {
+                        value += 2; // Inicio de línea
                     } else {
+                        value += 1; // Valor base
+                    }
+                    
+                    // Bonus por números en esquinas (más difíciles de completar)
+                    if ((row === 0 && col === 0) || (row === 0 && col === 8) || 
+                        (row === 2 && col === 0) || (row === 2 && col === 8)) {
+                        value += 2;
+                    }
+                    
+                    // Bonus por números en el centro (más fáciles de completar)
+                    if (row === 1 && col === 4) {
                         value += 1;
                     }
                 }
@@ -2553,8 +2638,9 @@ class BingoPro {
         const modal = document.getElementById('bingoCardsModal');
         const modalContent = modal?.querySelector('.modal-content');
         const cardsGrid = modal?.querySelector('.cards-modal-grid');
+        const modalBody = modal?.querySelector('.modal-body');
         
-        if (!modal || !modalContent || !cardsGrid) return;
+        if (!modal || !modalContent || !cardsGrid || !modalBody) return;
         
         // Calcular altura necesaria basada en el número de cartones
         const cardCount = this.userCards.length;
@@ -2562,23 +2648,96 @@ class BingoPro {
         const rowsNeeded = Math.ceil(cardCount / cardsPerRow);
         
         // Altura estimada por fila (cartón + gap + padding)
-        const rowHeight = 320; // altura aproximada de un cartón + espaciado
-        const summaryHeight = 100; // altura del header de estadísticas
-        const padding = 60; // padding adicional
+        const rowHeight = 280; // altura reducida de un cartón + espaciado
+        const summaryHeight = 80; // altura del header de estadísticas
+        const headerHeight = 60; // altura del header del modal
+        const footerHeight = 60; // altura del footer del modal
+        const padding = 40; // padding adicional
         
-        const estimatedHeight = summaryHeight + (rowsNeeded * rowHeight) + padding;
+        const estimatedHeight = headerHeight + summaryHeight + (rowsNeeded * rowHeight) + footerHeight + padding;
         
-        // Limitar altura máxima al 90% de la ventana
-        const maxHeight = window.innerHeight * 0.9;
+        // Limitar altura máxima al 95% de la ventana
+        const maxHeight = window.innerHeight * 0.95;
         const finalHeight = Math.min(estimatedHeight, maxHeight);
         
         // Aplicar altura fija para asegurar scroll
-        modalContent.style.height = `${maxHeight}px`;
+        modalContent.style.height = `${finalHeight}px`;
+        modalContent.style.maxHeight = `${maxHeight}px`;
         
-        // Asegurar que el grid tenga scroll
-        cardsGrid.style.height = `${maxHeight - summaryHeight - 40}px`;
+        // Calcular altura del área de scroll
+        const scrollableHeight = finalHeight - headerHeight - summaryHeight - footerHeight - 20;
+        
+        // Asegurar que el grid tenga scroll con altura fija
+        cardsGrid.style.height = `${scrollableHeight}px`;
+        cardsGrid.style.overflowY = 'auto';
+        cardsGrid.style.overflowX = 'hidden';
+        
+        // Asegurar que el modal body tenga flex correcto
+        modalBody.style.display = 'flex';
+        modalBody.style.flexDirection = 'column';
+        modalBody.style.height = '100%';
+        modalBody.style.overflow = 'hidden';
         
         console.log(`Modal ajustado: ${cardCount} cartones, ${rowsNeeded} filas, altura: ${finalHeight}px, scroll habilitado`);
+        
+        // Agregar indicador visual de scroll si hay muchos cartones
+        if (cardCount > 6) {
+            this.addScrollIndicator();
+        }
+    }
+    
+    addScrollIndicator() {
+        const cardsGrid = document.querySelector('.cards-modal-grid');
+        if (!cardsGrid) return;
+        
+        // Remover indicador anterior si existe
+        const existingIndicator = document.querySelector('.scroll-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // Crear indicador de scroll
+        const indicator = document.createElement('div');
+        indicator.className = 'scroll-indicator';
+        indicator.innerHTML = `
+            <div class="scroll-indicator-content">
+                <i class="fas fa-chevron-down"></i>
+                <span>Desliza para ver más cartones</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        `;
+        
+        // Agregar estilos inline para el indicador
+        indicator.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 10;
+            animation: fadeInOut 2s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+        `;
+        
+        indicator.querySelector('.scroll-indicator-content').style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+        
+        cardsGrid.appendChild(indicator);
+        
+        // Remover indicador después de 5 segundos
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 5000);
     }
 
     updateCalledNumbersModal() {
@@ -2901,12 +3060,64 @@ class BingoPro {
                     gamesPlayed: 0,
                     cardsUsed: 0,
                     numbersCalled: 0
+                },
+                difficultySystem: {
+                    currentLevel: 1,
+                    playerSkill: 0.5,
+                    winRate: 0,
+                    gamesWon: 0,
+                    totalGames: 0,
+                    difficultyMultiplier: 1.0,
+                    adaptiveEnabled: true,
+                    lastAdjustment: Date.now()
+                },
+                gamePatterns: {
+                    lastNumbers: [],
+                    patternDetection: true,
+                    antiPatternEnabled: true,
+                    consecutiveWins: 0,
+                    consecutiveLosses: 0
                 }
             };
             this.saveAnalytics();
             this.updateAnalyticsDisplay();
             alert('Estadísticas reseteadas correctamente');
         }
+    }
+    
+    // Nuevo método para actualizar dificultad dinámica
+    updateDifficultySystem(gameResult) {
+        const difficulty = this.gameAnalytics.difficultySystem;
+        
+        // Actualizar estadísticas
+        difficulty.totalGames++;
+        if (gameResult === 'win') {
+            difficulty.gamesWon++;
+            this.gameAnalytics.gamePatterns.consecutiveWins++;
+            this.gameAnalytics.gamePatterns.consecutiveLosses = 0;
+        } else {
+            this.gameAnalytics.gamePatterns.consecutiveLosses++;
+            this.gameAnalytics.gamePatterns.consecutiveWins = 0;
+        }
+        
+        // Calcular nueva tasa de victoria
+        difficulty.winRate = difficulty.gamesWon / difficulty.totalGames;
+        
+        // Ajustar habilidad del jugador
+        const targetWinRate = 0.15; // 15% es la tasa objetivo
+        const skillAdjustment = (difficulty.winRate - targetWinRate) * 0.1;
+        difficulty.playerSkill = Math.max(0, Math.min(1, difficulty.playerSkill - skillAdjustment));
+        
+        // Ajustar multiplicador de dificultad
+        if (difficulty.winRate > 0.2) {
+            difficulty.difficultyMultiplier = Math.min(2.0, difficulty.difficultyMultiplier + 0.1);
+        } else if (difficulty.winRate < 0.1) {
+            difficulty.difficultyMultiplier = Math.max(0.5, difficulty.difficultyMultiplier - 0.1);
+        }
+        
+        difficulty.lastAdjustment = Date.now();
+        
+        console.log(`🎯 Dificultad actualizada: Win Rate: ${(difficulty.winRate * 100).toFixed(1)}%, Skill: ${(difficulty.playerSkill * 100).toFixed(1)}%, Multiplier: ${difficulty.difficultyMultiplier.toFixed(2)}`);
     }
 }
 
@@ -2931,7 +3142,51 @@ window.resetWelcomeExperience = function() {
 
 // Inicializar el juego cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar autenticación antes de inicializar el juego
+    // Si el juego ya fue inicializado de manera simple, saltar verificación de auth pero continuar con la inicialización
+    if (window.gameInitialized) {
+        console.log('🎮 Juego inicializado en modo simple - saltando verificación auth, cargando funcionalidad...');
+        
+        // Obtener datos del usuario desde localStorage
+        const sessionData = localStorage.getItem('spainbingo_session');
+        if (sessionData) {
+            const session = JSON.parse(sessionData);
+            const user = session.user;
+            
+            console.log('✅ Usuario desde sesión simple:', user.firstName);
+            
+            // Actualizar información del usuario en la UI (versión simple)
+            updateUserInfoSimple(user);
+            
+            // Inicializar el juego
+            bingoGame = new BingoPro();
+            bingoGame.initializeGame();
+            
+            // Configuración adicional del chat después de la inicialización
+            setTimeout(() => {
+                console.log('🔧 Configuración adicional del chat...');
+                const chatInput = document.getElementById('chatInput');
+                const sendButton = document.querySelector('.btn-send');
+                
+                if (chatInput) {
+                    console.log('✅ Chat input encontrado y configurado');
+                    chatInput.readOnly = false;
+                    chatInput.disabled = false;
+                    chatInput.style.pointerEvents = 'auto';
+                    chatInput.style.userSelect = 'text';
+                    chatInput.style.webkitUserSelect = 'text';
+                }
+                
+                if (sendButton) {
+                    console.log('✅ Botón enviar encontrado y configurado');
+                    sendButton.style.pointerEvents = 'auto';
+                    sendButton.style.cursor = 'pointer';
+                }
+            }, 500);
+        }
+        return;
+    }
+    
+    // Verificar autenticación antes de inicializar el juego (solo si NO está en modo simple)
     if (typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
         const user = authManager.getCurrentUser();
         console.log('✅ Usuario autenticado:', user.name);
@@ -2996,6 +3251,34 @@ function updateUserInfo(user) {
     if (levelElement) {
         levelElement.textContent = `Nivel ${user.level}`;
     }
+}
+
+// Función para actualizar información del usuario en modo simple (sin authManager)
+function updateUserInfoSimple(user) {
+    console.log('🔄 Actualizando UI con datos de sesión simple...');
+    
+    // Actualizar nombre de usuario
+    const usernameElement = document.querySelector('.username');
+    if (usernameElement) {
+        usernameElement.textContent = `${user.firstName} ${user.lastName}`;
+        console.log('✅ Username actualizado:', usernameElement.textContent);
+    }
+    
+    // Actualizar saldo
+    const balanceElement = document.getElementById('userBalance');
+    if (balanceElement) {
+        balanceElement.textContent = `€${user.balance}`;
+        console.log('✅ Balance actualizado:', balanceElement.textContent);
+    }
+    
+    // Actualizar nivel si existe
+    const levelElement = document.querySelector('.user-level');
+    if (levelElement) {
+        levelElement.textContent = `Nivel ${user.level || 1}`;
+        console.log('✅ Level actualizado:', levelElement.textContent);
+    }
+    
+    console.log('✅ UI actualizada con datos de sesión simple');
 }
 
 // Función de logout
