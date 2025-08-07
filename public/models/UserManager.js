@@ -244,7 +244,7 @@ class UserManager {
             // Buscar en base de datos
             const user = await User.findOne({
                 where: {
-                    [User.sequelize.Op.or]: [
+                    [sequelize.Op.or]: [
                         { email: email.toLowerCase() },
                         { username: username.toLowerCase() }
                     ]
@@ -377,12 +377,12 @@ class UserManager {
         try {
             const stats = await User.findAll({
                 attributes: [
-                    [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'total_users'],
-                    [User.sequelize.fn('COUNT', User.sequelize.literal('CASE WHEN is_verified = true THEN 1 END')), 'verified_users'],
-                    [User.sequelize.fn('COUNT', User.sequelize.literal('CASE WHEN is_active = true THEN 1 END')), 'active_users'],
-                    [User.sequelize.fn('SUM', User.sequelize.col('balance')), 'total_balance'],
-                    [User.sequelize.fn('SUM', User.sequelize.col('total_wagered')), 'total_wagered'],
-                    [User.sequelize.fn('SUM', User.sequelize.col('total_won')), 'total_won']
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'total_users'],
+                    [sequelize.fn('COUNT', sequelize.literal('CASE WHEN is_verified = true THEN 1 END')), 'verified_users'],
+                    [sequelize.fn('COUNT', sequelize.literal('CASE WHEN is_active = true THEN 1 END')), 'active_users'],
+                    [sequelize.fn('SUM', sequelize.col('balance')), 'total_balance'],
+                    [sequelize.fn('SUM', sequelize.col('total_wagered')), 'total_wagered'],
+                    [sequelize.fn('SUM', sequelize.col('total_won')), 'total_won']
                 ],
                 raw: true
             });
