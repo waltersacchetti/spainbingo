@@ -409,7 +409,7 @@ class SecurityManager {
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <h3>🔞 Verificación de Edad</h3>
-                <p>Para acceder a SpainBingo, debes confirmar que eres mayor de 18 años según la legislación española sobre juegos de azar.</p>
+                <p>Para acceder a BingoRoyal, debes confirmar que eres mayor de 18 años según la legislación española sobre juegos de azar.</p>
                 
                 <div class="age-input">
                     <label for="birthDate">
@@ -525,7 +525,7 @@ class SecurityManager {
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <h3>✅ Verificación Exitosa</h3>
-                    <p>¡Bienvenido a SpainBingo! Tu edad ha sido verificada correctamente.</p>
+                    <p>¡Bienvenido a BingoRoyal! Tu edad ha sido verificada correctamente.</p>
                     <div class="age-warning" style="background: rgba(78, 205, 196, 0.1); border-color: rgba(78, 205, 196, 0.3); color: #4ecdc4;">
                         <i class="fas fa-info-circle"></i>
                         <strong>Confirmado:</strong> Tienes ${age} años y cumples con los requisitos de edad.
@@ -591,7 +591,7 @@ class SecurityManager {
                         <i class="fas fa-ban"></i>
                     </div>
                     <h3>🚫 Acceso Denegado</h3>
-                    <p>Lo sentimos, pero debes ser mayor de 18 años para acceder a SpainBingo.</p>
+                    <p>Lo sentimos, pero debes ser mayor de 18 años para acceder a BingoRoyal.</p>
                     <div class="age-warning">
                         <i class="fas fa-info-circle"></i>
                         <strong>Información:</strong> Los juegos de azar están regulados en España y requieren mayoría de edad.
@@ -962,7 +962,7 @@ class SecurityManager {
         modal.innerHTML = `
             <div class="gdpr-consent-content">
                 <h3>🍪 Política de Cookies y Privacidad</h3>
-                <p>SpainBingo utiliza cookies y almacena datos para mejorar tu experiencia de juego y cumplir con las regulaciones españolas de juegos de azar.</p>
+                <p>BingoRoyal utiliza cookies y almacena datos para mejorar tu experiencia de juego y cumplir con las regulaciones españolas de juegos de azar.</p>
                 
                 <div class="consent-options">
                     <label>

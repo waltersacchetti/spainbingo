@@ -10,107 +10,9 @@ const { sequelize, testConnection } = require('./config/database');
 // Importar modelos
 const User = require('./models/User')(sequelize);
 
-// ===== GESTOR DE BINGOS GLOBALES MULTI-MODO =====
-class GlobalBingoManager {
-    constructor() {
-        this.games = new Map(); // mode -> GlobalBingoGame
-        this.activeModes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
-        
-        // Inicializar bingos para todos los modos
-        this.initializeAllGames();
-    }
-    
-    initializeAllGames() {
-        console.log('🎮 Inicializando gestor de bingos globales...');
-        
-        this.activeModes.forEach(mode => {
-            this.games.set(mode, new GlobalBingoGame(mode));
-            console.log(`✅ Bingo ${mode} inicializado`);
-        });
-        
-        console.log(`🎯 Total de bingos activos: ${this.games.size}`);
-    }
-    
-    getGame(mode) {
-        return this.games.get(mode) || this.games.get('CLASSIC');
-    }
-    
-    getAllGames() {
-        return this.games;
-    }
-    
-    getGameState(mode) {
-        const game = this.getGame(mode);
-        return game ? game.getGameState() : null;
-    }
-    
-    joinPlayer(mode, userId, cards = []) {
-        const game = this.getGame(mode);
-        if (game) {
-            return game.joinPlayer(userId, cards);
-        }
-        return false;
-    }
-    
-    updatePlayerCards(mode, userId, cards) {
-        const game = this.getGame(mode);
-        if (game) {
-            game.updatePlayerCards(userId, cards);
-        }
-    }
-    
-    removePlayer(mode, userId) {
-        const game = this.getGame(mode);
-        if (game) {
-            game.removePlayer(userId);
-        }
-    }
-    
-    getActivePlayersCount(mode) {
-        const game = this.getGame(mode);
-        return game ? game.players.size : 0;
-    }
-    
-    getPlayersWithCardsCount(mode) {
-        const game = this.getGame(mode);
-        if (!game) return 0;
-        
-        return Array.from(game.players.values()).filter(player => 
-            player.cards && player.cards.length > 0
-        ).length;
-    }
-    
-    getTotalActivePlayers() {
-        let total = 0;
-        this.games.forEach(game => {
-            total += game.players.size;
-        });
-        return total;
-    }
-    
-    getTotalPlayersWithCards() {
-        let total = 0;
-        this.games.forEach(game => {
-            total += Array.from(game.players.values()).filter(player => 
-                player.cards && player.cards.length > 0
-            ).length;
-        });
-        return total;
-    }
-    
-    getGlobalStats() {
-        return {
-            totalOnlinePlayers: this.getTotalActivePlayers(),
-            totalPlayersWithCards: this.getTotalPlayersWithCards(),
-            playersByMode: {}
-        };
-    }
-}
-
-// ===== SISTEMA DE BINGO GLOBAL MULTI-MODO =====
+// ===== SISTEMA DE BINGO GLOBAL =====
 class GlobalBingoGame {
-    constructor(gameMode = 'CLASSIC') {
-        this.gameMode = gameMode;
+    constructor() {
         this.gameState = 'waiting'; // waiting, playing, finished
         this.currentGameId = null;
         this.calledNumbers = [];
@@ -124,57 +26,13 @@ class GlobalBingoGame {
         this.lastNumberCalled = null;
         this.winners = [];
         
-        // Configuración específica por modo
-        this.setGameModeConfiguration(gameMode);
+        // Configuración del juego
+        this.gameDuration = 2 * 60 * 1000; // 2 minutos
+        this.numberCallInterval = 3000; // 3 segundos entre números
+        this.maxNumbersPerGame = 90;
         
         // Inicializar el juego global
         this.initializeGlobalGame();
-    }
-    
-    setGameModeConfiguration(mode) {
-        const configurations = {
-            CLASSIC: {
-                name: 'Bingo Clásico',
-                gameDuration: 2 * 60 * 1000, // 2 minutos
-                numberCallInterval: 3000, // 3 segundos
-                maxNumbersPerGame: 90,
-                prizes: { line: 10, twoLines: 25, bingo: 100 }
-            },
-            RAPID: {
-                name: 'Bingo Rápido',
-                gameDuration: 1 * 60 * 1000, // 1 minuto
-                numberCallInterval: 1500, // 1.5 segundos
-                maxNumbersPerGame: 90,
-                prizes: { line: 15, twoLines: 40, bingo: 150 }
-            },
-            VIP: {
-                name: 'Bingo VIP',
-                gameDuration: 3 * 60 * 1000, // 3 minutos
-                numberCallInterval: 4000, // 4 segundos
-                maxNumbersPerGame: 90,
-                prizes: { line: 25, twoLines: 75, bingo: 300 }
-            },
-            NIGHT: {
-                name: 'Bingo Nocturno',
-                gameDuration: 2.5 * 60 * 1000, // 2.5 minutos
-                numberCallInterval: 3500, // 3.5 segundos
-                maxNumbersPerGame: 90,
-                prizes: { line: 20, twoLines: 60, bingo: 200 }
-            }
-        };
-        
-        const config = configurations[mode] || configurations.CLASSIC;
-        this.gameDuration = config.gameDuration;
-        this.numberCallInterval = config.numberCallInterval;
-        this.maxNumbersPerGame = config.maxNumbersPerGame;
-        this.prizes = config.prizes;
-        this.modeName = config.name;
-        
-        console.log(`🎮 Configuración cargada para ${this.modeName}:`, {
-            duration: `${this.gameDuration / 1000}s`,
-            interval: `${this.numberCallInterval}ms`,
-            prizes: this.prizes
-        });
     }
     
     initializeGlobalGame() {
@@ -442,17 +300,6 @@ class GlobalBingoGame {
     
     // Métodos para clientes
     getGameState() {
-        // Contar jugadores únicos (por userId)
-        const uniquePlayers = this.players.size;
-        
-        // Contar jugadores con cartones (que realmente están jugando)
-        const playersWithCards = Array.from(this.players.values()).filter(player => 
-            player.cards && player.cards.length > 0
-        ).length;
-        
-        // Contar sesiones activas (por sessionId)
-        const activeSessions = Array.from(this.players.values()).length;
-        
         return {
             gameState: this.gameState,
             gameId: this.currentGameId,
@@ -461,38 +308,17 @@ class GlobalBingoGame {
             gameStartTime: this.gameStartTime,
             nextGameTime: this.nextGameTime,
             currentPhase: this.currentPhase,
-            totalOnlinePlayers: uniquePlayers, // Jugadores logueados online
-            playersWithCards: playersWithCards, // Jugadores con cartones comprados
-            activeSessions: activeSessions, // Sesiones activas
+            totalPlayers: this.players.size,
             winners: [...this.winners]
         };
     }
     
     joinPlayer(userId, cards = []) {
-        console.log('🔍 DEBUG: joinPlayer llamado con userId:', userId);
-        console.log('🔍 DEBUG: Tipo de userId:', typeof userId);
-        console.log('🔍 DEBUG: Jugadores actuales:', Array.from(this.players.keys()));
-        
-        // Verificar si el jugador ya existe
-        if (this.players.has(userId)) {
-            // Actualizar la sesión existente
-            const existingPlayer = this.players.get(userId);
-            existingPlayer.cards = cards;
-            existingPlayer.lastSeen = new Date();
-            this.players.set(userId, existingPlayer);
-            console.log('🔄 Sesión actualizada para jugador existente:', userId);
-        } else {
-            // Crear nueva sesión
-            this.players.set(userId, {
-                cards: cards,
-                lastSeen: new Date(),
-                sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-            });
-            console.log('👤 Nuevo jugador unido al bingo global:', userId);
-        }
-        
-        console.log('📊 Total de jugadores únicos conectados:', this.players.size);
-        console.log('🔍 DEBUG: Lista completa de jugadores:', Array.from(this.players.keys()));
+        this.players.set(userId, {
+            cards: cards,
+            lastSeen: new Date()
+        });
+        console.log('👤 Jugador unido al bingo global:', userId);
     }
     
     updatePlayerCards(userId, cards) {
@@ -501,9 +327,6 @@ class GlobalBingoGame {
             playerData.cards = cards;
             playerData.lastSeen = new Date();
             this.players.set(userId, playerData);
-            console.log('🔄 Cartones actualizados para jugador:', userId);
-        } else {
-            console.log('⚠️ Intento de actualizar cartones para jugador inexistente:', userId);
         }
     }
     
@@ -524,14 +347,12 @@ class GlobalBingoGame {
     }
 }
 
-// Instancia global del gestor de bingos
-const globalBingoManager = new GlobalBingoManager();
+// Instancia global del bingo
+const globalBingo = new GlobalBingoGame();
 
-// Limpiar jugadores inactivos cada minuto para todos los modos
+// Limpiar jugadores inactivos cada minuto
 setInterval(() => {
-    globalBingoManager.getAllGames().forEach(game => {
-        game.cleanupInactivePlayers();
-    });
+    globalBingo.cleanupInactivePlayers();
 }, 60 * 1000);
 
 // Rate limiting simple (sin dependencias externas)
@@ -885,7 +706,7 @@ app.post('/api/chat', (req, res) => {
                          "• 'problemas' - Ayuda con problemas técnicos 🔧\n" +
                          "• 'bot' - Información sobre mí 🤖";
         } else if (lowerMsg.includes('premio') || lowerMsg.includes('premios')) {
-            botResponse = "🏆 **Premios BingoRoyal:**\n" +
+            botResponse = "🏆 **Premios SpainBingo:**\n" +
                          "• **Partidas normales:** Línea €50, Bingo €400\n" +
                          "• **Cada 2 horas:** Línea €150, Bingo €1,500\n" +
                          "• **Fines de semana 21:00:** Línea €500, Bingo €5,000\n" +
@@ -1284,23 +1105,13 @@ app.post('/api/verification/verify', rateLimitMiddleware(loginLimiter), async (r
 // APIS DE BINGO GLOBAL
 // ========================================
 
-// API para obtener el estado actual del juego global por modo
+// API para obtener el estado actual del juego global
 app.get('/api/bingo/state', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { mode = 'CLASSIC' } = req.query;
-        const gameState = globalBingoManager.getGameState(mode);
-        
-        if (!gameState) {
-            return res.status(404).json({
-                success: false,
-                error: 'Modo de juego no encontrado'
-            });
-        }
-        
+        const gameState = globalBingo.getGameState();
         res.json({
             success: true,
-            gameState: gameState,
-            mode: mode
+            gameState: gameState
         });
     } catch (error) {
         console.error('Error obteniendo estado del bingo global:', error);
@@ -1311,10 +1122,10 @@ app.get('/api/bingo/state', rateLimitMiddleware(apiLimiter), (req, res) => {
     }
 });
 
-// API para unirse al juego global por modo
+// API para unirse al juego global
 app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { userId, cards, mode = 'CLASSIC' } = req.body;
+        const { userId, cards } = req.body;
         
         if (!userId) {
             return res.status(400).json({
@@ -1323,20 +1134,12 @@ app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
             });
         }
         
-        const success = globalBingoManager.joinPlayer(mode, userId, cards || []);
-        
-        if (!success) {
-            return res.status(400).json({
-                success: false,
-                error: 'No se pudo unir al modo de juego'
-            });
-        }
+        globalBingo.joinPlayer(userId, cards || []);
         
         res.json({
             success: true,
-            message: `Jugador unido al ${mode}`,
-            gameState: globalBingoManager.getGameState(mode),
-            mode: mode
+            message: 'Jugador unido al bingo global',
+            gameState: globalBingo.getGameState()
         });
     } catch (error) {
         console.error('Error uniendo jugador al bingo global:', error);
@@ -1347,10 +1150,10 @@ app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
     }
 });
 
-// API para actualizar cartones del jugador por modo
+// API para actualizar cartones del jugador
 app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { userId, cards, mode = 'CLASSIC' } = req.body;
+        const { userId, cards } = req.body;
         
         if (!userId) {
             return res.status(400).json({
@@ -1359,12 +1162,11 @@ app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) 
             });
         }
         
-        globalBingoManager.updatePlayerCards(mode, userId, cards || []);
+        globalBingo.updatePlayerCards(userId, cards || []);
         
         res.json({
             success: true,
-            message: 'Cartones actualizados',
-            mode: mode
+            message: 'Cartones actualizados'
         });
     } catch (error) {
         console.error('Error actualizando cartones:', error);
@@ -1375,10 +1177,10 @@ app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) 
     }
 });
 
-// API para salir del juego global por modo
+// API para salir del juego global
 app.post('/api/bingo/leave', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { userId, mode = 'CLASSIC' } = req.body;
+        const { userId } = req.body;
         
         if (!userId) {
             return res.status(400).json({
@@ -1387,12 +1189,11 @@ app.post('/api/bingo/leave', rateLimitMiddleware(apiLimiter), (req, res) => {
             });
         }
         
-        globalBingoManager.removePlayer(mode, userId);
+        globalBingo.removePlayer(userId);
         
         res.json({
             success: true,
-            message: `Jugador salió del ${mode}`,
-            mode: mode
+            message: 'Jugador salió del bingo global'
         });
     } catch (error) {
         console.error('Error sacando jugador del bingo global:', error);
@@ -1403,35 +1204,18 @@ app.post('/api/bingo/leave', rateLimitMiddleware(apiLimiter), (req, res) => {
     }
 });
 
-// API para obtener estadísticas del juego global por modo
+// API para obtener estadísticas del juego global
 app.get('/api/bingo/stats', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { mode = 'CLASSIC' } = req.query;
-        const game = globalBingoManager.getGame(mode);
-        
-        if (!game) {
-            return res.status(404).json({
-                success: false,
-                error: 'Modo de juego no encontrado'
-            });
-        }
-        
-        const gameState = game.getGameState();
-        
         const stats = {
-            mode: mode,
-            totalOnlinePlayers: gameState.totalOnlinePlayers,
-            playersWithCards: gameState.playersWithCards,
-            gameHistory: game.gameHistory.length,
-            currentGameId: game.currentGameId,
-            gameState: game.gameState,
-            calledNumbersCount: game.calledNumbers.length,
-            currentPhase: game.currentPhase,
-            lastNumberCalled: game.lastNumberCalled,
-            winnersCount: game.winners.length,
-            gameDuration: game.gameDuration,
-            numberCallInterval: game.numberCallInterval,
-            modeName: game.modeName
+            totalPlayers: globalBingo.players.size,
+            gameHistory: globalBingo.gameHistory.length,
+            currentGameId: globalBingo.currentGameId,
+            gameState: globalBingo.gameState,
+            calledNumbersCount: globalBingo.calledNumbers.length,
+            currentPhase: globalBingo.currentPhase,
+            lastNumberCalled: globalBingo.lastNumberCalled,
+            winnersCount: globalBingo.winners.length
         };
         
         res.json({
@@ -1447,65 +1231,21 @@ app.get('/api/bingo/stats', rateLimitMiddleware(apiLimiter), (req, res) => {
     }
 });
 
-// API para obtener estadísticas globales de todos los modos
-app.get('/api/bingo/global-stats', rateLimitMiddleware(apiLimiter), (req, res) => {
-    try {
-        const globalStats = globalBingoManager.getGlobalStats();
-        
-        // Agregar estadísticas por modo
-        globalBingoManager.activeModes.forEach(mode => {
-            const game = globalBingoManager.getGame(mode);
-            if (game) {
-                const gameState = game.getGameState();
-                globalStats.playersByMode[mode] = {
-                    totalOnlinePlayers: gameState.totalOnlinePlayers,
-                    playersWithCards: gameState.playersWithCards,
-                    gameState: gameState.gameState,
-                    modeName: game.modeName
-                };
-            }
-        });
-        
-        res.json({
-            success: true,
-            stats: globalStats
-        });
-    } catch (error) {
-        console.error('Error obteniendo estadísticas globales:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error obteniendo estadísticas globales'
-        });
-    }
-});
-
-// API para forzar inicio de nueva partida por modo (solo para testing)
+// API para forzar inicio de nueva partida (solo para testing)
 app.post('/api/bingo/force-start', rateLimitMiddleware(apiLimiter), (req, res) => {
     try {
-        const { mode = 'CLASSIC' } = req.body;
-        const game = globalBingoManager.getGame(mode);
-        
-        if (!game) {
-            return res.status(404).json({
-                success: false,
-                error: 'Modo de juego no encontrado'
-            });
-        }
-        
-        if (game.gameState === 'waiting') {
-            game.startNewGame();
+        if (globalBingo.gameState === 'waiting') {
+            globalBingo.startNewGame();
             res.json({
                 success: true,
-                message: `Nueva partida forzada en ${mode}`,
-                gameState: game.getGameState(),
-                mode: mode
+                message: 'Nueva partida forzada',
+                gameState: globalBingo.getGameState()
             });
         } else {
             res.json({
                 success: false,
                 message: 'No se puede forzar inicio, juego en curso',
-                gameState: game.getGameState(),
-                mode: mode
+                gameState: globalBingo.getGameState()
             });
         }
     } catch (error) {

@@ -52,7 +52,7 @@ exports.handler = async (event) => {
                              "• 'problemas' - Ayuda con problemas técnicos 🔧\n" +
                              "• 'bot' - Información sobre mí 🤖";
             } else if (lowerMsg.includes('premio') || lowerMsg.includes('premios')) {
-                botResponse = "🏆 **Premios SpainBingo:**\n" +
+                botResponse = "🏆 **Premios BingoRoyal:**\n" +
                              "• **Partidas normales:** Línea €50, Bingo €400\n" +
                              "• **Cada 2 horas:** Línea €150, Bingo €1,500\n" +
                              "• **Fines de semana 21:00:** Línea €500, Bingo €5,000\n" +

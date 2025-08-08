@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BingoRoyal - Jugar Bingo Online</title>
-    <link rel="stylesheet" href="styles-codere.css">
+    <title>SpainBingo - Jugar Bingo Online</title>
+    <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- <script src="auth.js"></script> TEMPORALMENTE DESHABILITADO -->
@@ -18,7 +18,7 @@
                 <div class="logo-section">
                     <div class="logo">
                         <i class="fas fa-dice"></i>
-                        <span>BingoRoyal</span>
+                        <span>SpainBingo</span>
                     </div>
                     <div class="tagline">El Rey del Bingo Online</div>
                     <div class="welcome-message">¡Bienvenido al mejor Bingo de España! 🎯</div>
@@ -161,153 +161,22 @@
         <main class="main-content">
             <!-- Pestaña de Juego -->
             <div class="tab-content active" id="game-tab">
-                <!-- Selector de Modos de Juego -->
-                <div class="game-modes-section">
-                    <div class="modes-container">
-                        <div class="modes-header">
-                            <h3><i class="fas fa-gamepad"></i> Modos de Juego</h3>
-                            <div class="current-mode-display">
-                                <span>Modo actual: </span>
-                                <span id="currentGameMode" class="current-mode">Bingo Clásico</span>
-                            </div>
-                        </div>
-                        
-                        <div class="modes-grid">
-                            <!-- Bingo Clásico -->
-                            <div class="mode-card" data-mode="CLASSIC">
-                                <div class="mode-header">
-                                    <i class="fas fa-star"></i>
-                                    <h4>Bingo Clásico</h4>
-                                    <span class="mode-badge">BÁSICO</span>
-                                </div>
-                                <p class="mode-description">El bingo tradicional con partidas de 2 minutos</p>
-                                <div class="mode-features">
-                                    <span class="feature">2 min partidas</span>
-                                    <span class="feature">€1 cartones</span>
-                                    <span class="feature">Sin requisitos</span>
-                                </div>
-                                <div class="mode-prizes">
-                                    <div class="prize-item">
-                                        <span class="prize-type">Línea:</span>
-                                        <span class="prize-amount">€10</span>
-                                    </div>
-                                    <div class="prize-item">
-                                        <span class="prize-type">Bingo:</span>
-                                        <span class="prize-amount">€100</span>
-                                    </div>
-                                </div>
-                                <button class="btn-select-mode" onclick="selectGameMode('CLASSIC')">
-                                    <i class="fas fa-play"></i>
-                                    Jugar
-                                </button>
-                            </div>
-
-                            <!-- Bingo Rápido -->
-                            <div class="mode-card" data-mode="RAPID">
-                                <div class="mode-header">
-                                    <i class="fas fa-bolt"></i>
-                                    <h4>Bingo Rápido</h4>
-                                    <span class="mode-badge">RÁPIDO</span>
-                                </div>
-                                <p class="mode-description">Partidas aceleradas de 1 minuto para jugadores experimentados</p>
-                                <div class="mode-features">
-                                    <span class="feature">1 min partidas</span>
-                                    <span class="feature">€1.50 cartones</span>
-                                    <span class="feature">Nivel 5+</span>
-                                </div>
-                                <div class="mode-prizes">
-                                    <div class="prize-item">
-                                        <span class="prize-type">Línea:</span>
-                                        <span class="prize-amount">€15</span>
-                                    </div>
-                                    <div class="prize-item">
-                                        <span class="prize-type">Bingo:</span>
-                                        <span class="prize-amount">€150</span>
-                                    </div>
-                                </div>
-                                <button class="btn-select-mode" onclick="selectGameMode('RAPID')">
-                                    <i class="fas fa-play"></i>
-                                    Jugar
-                                </button>
-                            </div>
-
-                            <!-- Bingo VIP -->
-                            <div class="mode-card" data-mode="VIP">
-                                <div class="mode-header">
-                                    <i class="fas fa-crown"></i>
-                                    <h4>Bingo VIP</h4>
-                                    <span class="mode-badge">VIP</span>
-                                </div>
-                                <p class="mode-description">Experiencia premium con premios exclusivos y cartones especiales</p>
-                                <div class="mode-features">
-                                    <span class="feature">3 min partidas</span>
-                                    <span class="feature">€3 cartones</span>
-                                    <span class="feature">Nivel 10+ VIP</span>
-                                </div>
-                                <div class="mode-prizes">
-                                    <div class="prize-item">
-                                        <span class="prize-type">Línea:</span>
-                                        <span class="prize-amount">€25</span>
-                                    </div>
-                                    <div class="prize-item">
-                                        <span class="prize-type">Bingo:</span>
-                                        <span class="prize-amount">€300</span>
-                                    </div>
-                                </div>
-                                <button class="btn-select-mode" onclick="selectGameMode('VIP')">
-                                    <i class="fas fa-play"></i>
-                                    Jugar
-                                </button>
-                            </div>
-
-                            <!-- Bingo Nocturno -->
-                            <div class="mode-card" data-mode="NIGHT">
-                                <div class="mode-header">
-                                    <i class="fas fa-moon"></i>
-                                    <h4>Bingo Nocturno</h4>
-                                    <span class="mode-badge">NOCTURNO</span>
-                                </div>
-                                <p class="mode-description">Partidas especiales solo disponibles por la noche</p>
-                                <div class="mode-features">
-                                    <span class="feature">2.5 min partidas</span>
-                                    <span class="feature">€2 cartones</span>
-                                    <span class="feature">Solo de noche</span>
-                                </div>
-                                <div class="mode-prizes">
-                                    <div class="prize-item">
-                                        <span class="prize-type">Línea:</span>
-                                        <span class="prize-amount">€20</span>
-                                    </div>
-                                    <div class="prize-item">
-                                        <span class="prize-type">Bingo:</span>
-                                        <span class="prize-amount">€200</span>
-                                    </div>
-                                </div>
-                                <button class="btn-select-mode" onclick="selectGameMode('NIGHT')">
-                                    <i class="fas fa-play"></i>
-                                    Jugar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Hero Section - Premio Principal -->
                 <div class="hero-section">
                     <div class="hero-content">
                         <h1>¡El mayor Bote de Bingo en España!</h1>
                         <div class="main-prize-display">
-                            <div id="globalJackpot" class="prize-amount">€67,152.10</div>
-                            <div class="prize-label">Bote Global Acumulado</div>
+                            <div class="prize-amount">€67,152.10</div>
+                            <div class="prize-label">Super Bote Compartido</div>
                         </div>
                         <div class="hero-stats">
                             <div class="stat-item">
-                                <span id="activePlayers" class="stat-number">0</span>
-                                <span class="stat-text">Jugando Ahora</span>
+                                <span class="stat-number">1,247</span>
+                                <span class="stat-text">Jugadores Activos</span>
                             </div>
                             <div class="stat-item">
-                                <span id="totalPlayers" class="stat-number">0</span>
-                                <span class="stat-text">Online</span>
+                                <span class="stat-number">24/7</span>
+                                <span class="stat-text">Abierto Siempre</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-number">€1</span>
@@ -354,7 +223,7 @@
                             <div class="purchase-info">
                                 <div class="price-info">
                                     <i class="fas fa-euro-sign"></i>
-                                    <span id="cardPrice">€1.00</span> por cartón
+                                    <span>€1.00 por cartón</span>
                                 </div>
                                 <div class="selected-cards">
                                     <span id="selectedCardsCount">0</span> cartones seleccionados
@@ -1187,7 +1056,7 @@
             console.log('📍 Verificando sesión en /game...');
             
             // Verificar si hay sesión válida
-            const sessionData = localStorage.getItem('bingoroyal_session');
+            const sessionData = localStorage.getItem('spainbingo_session');
             
             if (!sessionData) {
                 console.log('❌ No hay sesión - redirigiendo a login');
@@ -1201,7 +1070,7 @@
                 // Verificar estructura básica de la sesión
                 if (!session.user || !session.token || !session.timestamp) {
                     console.log('❌ Sesión inválida - estructura incorrecta');
-                    localStorage.removeItem('bingoroyal_session');
+                    localStorage.removeItem('spainbingo_session');
                     window.location.href = '/login.html';
                     return;
                 }
@@ -1212,7 +1081,7 @@
                 
                 if (sessionAge > maxAge) {
                     console.log('❌ Sesión expirada');
-                    localStorage.removeItem('bingoroyal_session');
+                    localStorage.removeItem('spainbingo_session');
                     window.location.href = '/login.html';
                     return;
                 }
@@ -1220,7 +1089,7 @@
                 console.log('✅ Sesión válida - usuario:', session.user.email);
                 
                 // Marcar bienvenida como visitada
-                localStorage.setItem('bingoroyal_welcome_visited', 'true');
+                localStorage.setItem('spainbingo_welcome_visited', 'true');
                 
                 // Marcar como inicializado para evitar que script.js interfiera
                 window.gameInitialized = true;
@@ -1247,7 +1116,7 @@
                 
             } catch (error) {
                 console.error('❌ Error verificando sesión:', error);
-                localStorage.removeItem('bingoroyal_session');
+                localStorage.removeItem('spainbingo_session');
                 window.location.href = '/login.html';
                 return;
             }

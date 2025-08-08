@@ -84,7 +84,7 @@ class VerificationService {
             // Simulación de envío de email
             const emailContent = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #667eea;">SpainBingo - Verificación de Cuenta</h2>
+                    <h2 style="color: #667eea;">BingoRoyal - Verificación de Cuenta</h2>
                     <p>Hola <strong>${username}</strong>,</p>
                     <p>Tu código de verificación es:</p>
                     <div style="background: #f8f9fa; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
@@ -94,7 +94,7 @@ class VerificationService {
                     <p>Si no solicitaste este código, puedes ignorar este email.</p>
                     <hr>
                     <p style="font-size: 12px; color: #666;">
-                        SpainBingo - El mejor bingo online de España
+                        BingoRoyal - El mejor bingo online de España
                     </p>
                 </div>
             `;
@@ -102,7 +102,7 @@ class VerificationService {
             // En producción, aquí enviarías el email real
             console.log('📧 Email simulado enviado:', {
                 to: email,
-                subject: 'SpainBingo - Código de Verificación',
+                subject: 'BingoRoyal - Código de Verificación',
                 content: emailContent
             });
 
@@ -129,7 +129,7 @@ class VerificationService {
             console.log(`📱 Enviando código ${code} a ${phone} para usuario ${username}`);
             
             // Simulación de envío de SMS
-            const smsContent = `SpainBingo: Tu código de verificación es ${code}. Expira en ${this.codeExpiryMinutes} minutos.`;
+            const smsContent = `BingoRoyal: Tu código de verificación es ${code}. Expira en ${this.codeExpiryMinutes} minutos.`;
 
             // En producción, aquí enviarías el SMS real
             console.log('📱 SMS simulado enviado:', {

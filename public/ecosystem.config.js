@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'spainbingo',
+    name: 'bingoroyal',
     script: 'server.js',
     instances: 1,
     exec_mode: 'fork',

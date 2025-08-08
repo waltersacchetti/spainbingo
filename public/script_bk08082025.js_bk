@@ -45,107 +45,6 @@ class BingoPro {
             isActive: false
         };
         
-        // Variables para bote global
-        this.globalJackpot = 67152.10; // Bote global acumulado
-        this.jackpotUpdateInterval = null;
-        
-        // ===== MODOS DE JUEGO =====
-        this.gameModes = {
-            CLASSIC: {
-                id: 'classic',
-                name: 'Bingo Clásico',
-                description: 'El bingo tradicional con partidas de 2 minutos',
-                duration: 2 * 60 * 1000, // 2 minutos
-                numberCallInterval: 3000, // 3 segundos
-                cardPrice: 1.00,
-                minPlayers: 1,
-                maxCards: 30,
-                requirements: {
-                    level: 0,
-                    balance: 0,
-                    timeOfDay: 'any'
-                },
-                prizes: {
-                    line: 10,
-                    twoLines: 25,
-                    bingo: 100
-                },
-                features: ['Números del 1-90', 'Partidas automáticas', 'Bote compartido'],
-                isActive: true
-            },
-            RAPID: {
-                id: 'rapid',
-                name: 'Bingo Rápido',
-                description: 'Partidas aceleradas de 1 minuto para jugadores experimentados',
-                duration: 1 * 60 * 1000, // 1 minuto
-                numberCallInterval: 1500, // 1.5 segundos
-                cardPrice: 1.50,
-                minPlayers: 3,
-                maxCards: 20,
-                requirements: {
-                    level: 5,
-                    balance: 10,
-                    timeOfDay: 'any'
-                },
-                prizes: {
-                    line: 15,
-                    twoLines: 40,
-                    bingo: 150
-                },
-                features: ['Partidas rápidas', 'Premios aumentados', 'Números más frecuentes'],
-                isActive: true
-            },
-            VIP: {
-                id: 'vip',
-                name: 'Bingo VIP',
-                description: 'Experiencia premium con premios exclusivos y cartones especiales',
-                duration: 3 * 60 * 1000, // 3 minutos
-                numberCallInterval: 4000, // 4 segundos
-                cardPrice: 3.00,
-                minPlayers: 5,
-                maxCards: 50,
-                requirements: {
-                    level: 10,
-                    balance: 50,
-                    timeOfDay: 'any',
-                    vipStatus: true
-                },
-                prizes: {
-                    line: 25,
-                    twoLines: 75,
-                    bingo: 300
-                },
-                features: ['Cartones VIP', 'Premios exclusivos', 'Chat privado', 'Soporte prioritario'],
-                isActive: true
-            },
-            NIGHT: {
-                id: 'night',
-                name: 'Bingo Nocturno',
-                description: 'Partidas especiales solo disponibles por la noche',
-                duration: 2.5 * 60 * 1000, // 2.5 minutos
-                numberCallInterval: 3500, // 3.5 segundos
-                cardPrice: 2.00,
-                minPlayers: 2,
-                maxCards: 25,
-                requirements: {
-                    level: 3,
-                    balance: 20,
-                    timeOfDay: 'night'
-                },
-                prizes: {
-                    line: 20,
-                    twoLines: 60,
-                    bingo: 200
-                },
-                features: ['Solo por la noche', 'Ambiente especial', 'Premios nocturnos', 'Números mágicos'],
-                isActive: true
-            }
-        };
-
-        // Modo de juego actual (con persistencia)
-        this.currentGameMode = this.loadGameMode() || 'CLASSIC';
-        
-        // Condiciones de victoria por modo
         this.winConditions = {
             LINE: { name: 'línea', required: 5, prize: 10, probability: 0.15 },
             BINGO: { name: 'bingo', required: 15, prize: 100, probability: 0.02 }
@@ -181,8 +80,7 @@ class BingoPro {
         });
         // Variables para chat en vivo
         this.chatApiUrl = '/api/chat';
-        // Usar userId persistente basado en sesión o generar uno único
-        this.userId = this.getOrCreateUserId();
+        this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         this.userName = 'Jugador';
         this.chatPollingInterval = null;
         this.lastMessageId = null;
@@ -245,6 +143,7 @@ class BingoPro {
         this.setupEventListeners();
         this.initializeSounds();
         this.updateUI();
+        this.startGameScheduler();
         this.initializeLiveChat();
         
         // ===== CONEXIÓN AL BINGO GLOBAL =====
@@ -273,9 +172,6 @@ class BingoPro {
         this.selectedCards = [];
         this.favoriteCards = new Set();
         
-        // Cargar estado del juego guardado
-        this.loadGameState();
-        
         // Cargar datos guardados
         this.loadFavoriteCards(); // Load favorite cards from localStorage
         this.loadAnalytics(); // Load analytics data
@@ -290,8 +186,8 @@ class BingoPro {
         this.updateAnalyticsDisplay();
         this.saveAnalytics(); // Save analytics data after each update
         
-        // El scheduler se maneja desde el servidor global
-        // No necesitamos scheduler local
+        // Iniciar el scheduler de partidas
+        this.startGameScheduler();
         
         console.log('Juego inicializado correctamente');
         
@@ -299,20 +195,6 @@ class BingoPro {
         if (securityManager.isProduction()) {
             this.setupProductionFeatures();
         }
-        
-        // Inicializar números llamados
-        setTimeout(() => {
-            generateCalledNumbers();
-        }, 100);
-        
-        // Inicializar sistema de bote global
-        this.initializeGlobalJackpot();
-        
-        // Inicializar modos de juego
-        this.initializeGameModes();
-        
-        // La lógica real de jugadores se maneja en connectToGlobalBingo()
-        // que se llama automáticamente en el constructor
     }
 
     /**
@@ -550,70 +432,41 @@ class BingoPro {
         }, 15 * 60 * 1000);
     }
 
-    /**
-     * Sincronizar con el estado del servidor global
-     */
-    syncWithServerState() {
-        // Obtener estado actual del servidor
-        this.updateCountdownFromServer();
+    startGameScheduler() {
+        // Programar la próxima partida en 2 minutos
+        this.scheduleNextGame();
         
-        // Actualizar countdown cada segundo
-        if (this.gameCountdown) {
-            clearInterval(this.gameCountdown);
-        }
-        
+        // Actualizar el countdown cada segundo
         this.gameCountdown = setInterval(() => {
-            this.updateCountdownFromServer();
+            this.updateGameCountdown();
         }, 1000);
     }
 
-    /**
-     * Actualizar countdown desde el servidor
-     */
-    async updateCountdownFromServer() {
-        try {
-            const currentMode = this.getCurrentGameMode();
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
-            const data = await response.json();
-            
-            if (data.success && data.gameState) {
-                const serverState = data.gameState;
-                
-                // Sincronizar estado del juego
-                this.gameState = serverState.gameState;
-                
-                // Si el servidor está en 'waiting', calcular tiempo restante
-                if (serverState.gameState === 'waiting' && serverState.nextGameTime) {
-                    const nextGameTime = new Date(serverState.nextGameTime);
-                    const now = new Date();
-                    const timeLeft = nextGameTime.getTime() - now.getTime();
-                    
-                    if (timeLeft > 0) {
-                        const minutes = Math.floor(timeLeft / 60000);
-                        const seconds = Math.floor((timeLeft % 60000) / 1000);
-                        this.updateCountdownDisplay(minutes, seconds);
-                    } else {
-                        // El tiempo se agotó, el servidor debería iniciar el juego
-                        this.updateCountdownDisplay(0, 0);
-                    }
-                } else if (serverState.gameState === 'playing') {
-                    // El juego está en curso, mostrar 0:00
-                    this.updateCountdownDisplay(0, 0);
-                }
-                
-                // Sincronizar números llamados
-                if (serverState.calledNumbers && serverState.calledNumbers.length > this.calledNumbers.size) {
-                    this.calledNumbers = new Set(serverState.calledNumbers);
-                    this.lastNumberCalled = serverState.lastNumberCalled;
-                    this.renderCalledNumbers();
-                    this.updateLastNumber();
-                    this.renderCards();
-                }
-            }
-        } catch (error) {
-            console.log('⚠️ Error sincronizando con servidor:', error);
-            // Fallback: mostrar countdown local si no se puede conectar
-            this.updateCountdownDisplay(0, 0);
+    scheduleNextGame() {
+        const now = new Date();
+        this.nextGameStartTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutos
+        console.log('Próxima partida programada para:', this.nextGameStartTime);
+        this.updateGameCountdown();
+    }
+
+    updateGameCountdown() {
+        if (!this.nextGameStartTime) {
+            console.log('No hay próxima partida programada');
+            return;
+        }
+        
+        const now = new Date();
+        const timeLeft = this.nextGameStartTime.getTime() - now.getTime();
+        
+        console.log('Countdown - Tiempo restante:', timeLeft, 'ms, Estado del juego:', this.gameState);
+        
+        if (timeLeft <= 0) {
+            console.log('¡Tiempo agotado! Iniciando nueva partida...');
+            this.startNewGame();
+        } else {
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            this.updateCountdownDisplay(minutes, seconds);
         }
     }
 
@@ -635,491 +488,6 @@ class BingoPro {
         }
         return numbers;
     }
-
-    /**
-     * Inicializar sistema de bote global
-     */
-    initializeGlobalJackpot() {
-        console.log('💰 Inicializando sistema de bote global...');
-        
-        // Actualizar bote global cada 30 segundos
-        this.jackpotUpdateInterval = setInterval(() => {
-            this.updateGlobalJackpot();
-        }, 30000);
-        
-        // Actualización inicial
-        this.updateGlobalJackpot();
-    }
-
-    /**
-     * Actualizar bote global
-     */
-    updateGlobalJackpot() {
-        // Simular incremento del bote basado en actividad
-        const baseIncrement = Math.random() * 50 + 10; // 10-60 euros por actualización
-        const timeMultiplier = 1 + (Date.now() % 3600000) / 3600000; // Variación por hora
-        const increment = baseIncrement * timeMultiplier;
-        
-        this.globalJackpot += increment;
-        
-        // Actualizar display
-        this.updateGlobalJackpotDisplay();
-        
-        console.log(`💰 Bote global actualizado: €${this.globalJackpot.toFixed(2)} (+€${increment.toFixed(2)})`);
-    }
-
-    /**
-     * Actualizar display del bote global
-     */
-    updateGlobalJackpotDisplay() {
-        const jackpotElement = document.getElementById('globalJackpot');
-        if (jackpotElement) {
-            const formattedAmount = this.globalJackpot.toLocaleString('es-ES', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            jackpotElement.textContent = `€${formattedAmount}`;
-            
-            // Agregar efecto de animación
-            jackpotElement.classList.add('player-count-updated');
-            setTimeout(() => {
-                jackpotElement.classList.remove('player-count-updated');
-            }, 1000);
-        }
-    }
-
-    /**
-     * Obtener o crear un userId único por usuario real
-     */
-    getOrCreateUserId() {
-        // Intentar obtener información del usuario autenticado
-        let userInfo = null;
-        
-        // Verificar si hay sesión de usuario
-        const sessionData = localStorage.getItem('bingoroyal_session');
-        if (sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                userInfo = session.user;
-                console.log('👤 Usuario autenticado encontrado:', userInfo.email || userInfo.firstName);
-            } catch (error) {
-                console.log('⚠️ Error parseando sesión:', error);
-            }
-        }
-        
-        // Verificar si hay authManager disponible
-        if (!userInfo && typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
-            userInfo = authManager.getCurrentUser();
-            console.log('👤 Usuario desde authManager:', userInfo.email || userInfo.name);
-        }
-        
-        // Si tenemos información del usuario real, usar su email como identificador único
-        if (userInfo && (userInfo.email || userInfo.id)) {
-            const realUserId = userInfo.email || `user_${userInfo.id}`;
-            console.log('🆔 Usando userId basado en usuario real:', realUserId);
-            return realUserId;
-        }
-        
-        // Si no hay usuario autenticado, usar userId anónimo persistente
-        let anonymousUserId = localStorage.getItem('bingoroyal_anonymous_userId');
-        
-        if (!anonymousUserId) {
-            // Crear un userId anónimo único
-            anonymousUserId = 'anonymous_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('bingoroyal_anonymous_userId', anonymousUserId);
-            console.log('🆔 Nuevo userId anónimo creado:', anonymousUserId);
-        } else {
-            console.log('🆔 Usando userId anónimo existente:', anonymousUserId);
-        }
-        
-        return anonymousUserId;
-    }
-
-    /**
-     * Obtener información del usuario para verificar requisitos
-     */
-    getUserInfo() {
-        let userInfo = null;
-        
-        // Verificar si hay sesión de usuario
-        const sessionData = localStorage.getItem('bingoroyal_session');
-        if (sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                userInfo = session.user;
-            } catch (error) {
-                console.log('⚠️ Error parseando sesión:', error);
-            }
-        }
-        
-        // Verificar si hay authManager disponible
-        if (!userInfo && typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
-            userInfo = authManager.getCurrentUser();
-        }
-        
-        return userInfo;
-    }
-
-    /**
-     * Verificar si es de noche (entre 22:00 y 06:00)
-     */
-    isNightTime() {
-        const now = new Date();
-        const hour = now.getHours();
-        return hour >= 22 || hour < 6;
-    }
-
-    /**
-     * Verificar si el usuario cumple los requisitos para un modo de juego
-     */
-    checkGameModeRequirements(modeId) {
-        const mode = this.gameModes[modeId];
-        if (!mode || !mode.isActive) {
-            return { canPlay: false, reason: 'Modo de juego no disponible' };
-        }
-
-        const userInfo = this.getUserInfo();
-        const requirements = mode.requirements;
-
-        // Verificar nivel del usuario
-        const userLevel = userInfo?.level || 0;
-        if (userLevel < requirements.level) {
-            return { 
-                canPlay: false, 
-                reason: `Nivel requerido: ${requirements.level}. Tu nivel: ${userLevel}` 
-            };
-        }
-
-        // Verificar saldo
-        if (this.userBalance < requirements.balance) {
-            return { 
-                canPlay: false, 
-                reason: `Saldo requerido: €${requirements.balance}. Tu saldo: €${this.userBalance.toFixed(2)}` 
-            };
-        }
-
-        // Verificar hora del día para Bingo Nocturno
-        if (requirements.timeOfDay === 'night' && !this.isNightTime()) {
-            return { 
-                canPlay: false, 
-                reason: 'Bingo Nocturno solo disponible entre 22:00 y 06:00' 
-            };
-        }
-
-        // Verificar estado VIP
-        if (requirements.vipStatus && !userInfo?.vipStatus) {
-            return { 
-                canPlay: false, 
-                reason: 'Se requiere estado VIP para este modo' 
-            };
-        }
-
-        return { canPlay: true, reason: 'Requisitos cumplidos' };
-    }
-
-    /**
-     * Cambiar modo de juego
-     */
-    changeGameMode(modeId) {
-        const check = this.checkGameModeRequirements(modeId);
-        
-        if (!check.canPlay) {
-            this.showGameModeError(check.reason);
-            return false;
-        }
-
-        const mode = this.gameModes[modeId];
-        this.currentGameMode = modeId;
-        
-        // Actualizar configuración del juego
-        this.cardPrice = mode.cardPrice;
-        this.winConditions = {
-            LINE: { name: 'línea', required: 5, prize: mode.prizes.line, probability: 0.15 },
-            BINGO: { name: 'bingo', required: 15, prize: mode.prizes.bingo, probability: 0.02 }
-        };
-
-        // Guardar el nuevo modo en localStorage
-        this.saveGameMode(modeId);
-        
-        // Actualizar UI
-        this.updateGameModeDisplay();
-        this.updateCardPriceDisplay();
-        this.updateCardInfo();
-        
-        // El contador se maneja desde el servidor global
-        // No necesitamos reprogramar localmente
-        
-        // Reconectar al bingo global del nuevo modo
-        this.connectToGlobalBingo();
-        
-        // Mostrar confirmación
-        this.showGameModeChanged(mode);
-        
-        console.log(`🎮 Modo de juego cambiado a: ${mode.name}`);
-        return true;
-    }
-
-    /**
-     * Obtener modo de juego actual
-     */
-    getCurrentGameMode() {
-        return this.gameModes[this.currentGameMode];
-    }
-
-    /**
-     * Guardar modo de juego en localStorage
-     */
-    saveGameMode(modeId) {
-        try {
-            localStorage.setItem('bingoroyal_current_mode', modeId);
-            console.log(`💾 Modo de juego guardado: ${modeId}`);
-        } catch (error) {
-            console.error('❌ Error guardando modo de juego:', error);
-        }
-    }
-
-    /**
-     * Cargar modo de juego desde localStorage
-     */
-    loadGameMode() {
-        try {
-            const savedMode = localStorage.getItem('bingoroyal_current_mode');
-            if (savedMode && this.gameModes[savedMode]) {
-                console.log(`📂 Modo de juego cargado: ${savedMode}`);
-                return savedMode;
-            }
-        } catch (error) {
-            console.error('❌ Error cargando modo de juego:', error);
-        }
-        return null;
-    }
-
-    /**
-     * Guardar cartones del usuario en localStorage
-     */
-    saveUserCards() {
-        try {
-            const cardsData = this.userCards.map(card => ({
-                id: card.id,
-                numbers: card.numbers,
-                purchaseTime: card.purchaseTime,
-                purchasePrice: card.purchasePrice,
-                gameMode: card.gameMode,
-                isFavorite: card.isFavorite
-            }));
-            localStorage.setItem('bingoroyal_user_cards', JSON.stringify(cardsData));
-            console.log(`💾 Cartones guardados: ${cardsData.length} cartones`);
-        } catch (error) {
-            console.error('❌ Error guardando cartones:', error);
-        }
-    }
-
-    /**
-     * Cargar cartones del usuario desde localStorage
-     */
-    loadUserCards() {
-        try {
-            const savedCards = localStorage.getItem('bingoroyal_user_cards');
-            if (savedCards) {
-                const cardsData = JSON.parse(savedCards);
-                this.userCards = cardsData.map(cardData => ({
-                    ...cardData,
-                    purchaseTime: new Date(cardData.purchaseTime)
-                }));
-                console.log(`📂 Cartones cargados: ${this.userCards.length} cartones`);
-                return true;
-            }
-        } catch (error) {
-            console.error('❌ Error cargando cartones:', error);
-        }
-        return false;
-    }
-
-    /**
-     * Guardar estado completo del juego
-     */
-    saveGameState() {
-        this.saveGameMode(this.currentGameMode);
-        this.saveUserCards();
-        console.log('💾 Estado del juego guardado completamente');
-    }
-
-    /**
-     * Cargar estado completo del juego
-     */
-    loadGameState() {
-        const modeLoaded = this.loadGameMode();
-        const cardsLoaded = this.loadUserCards();
-        
-        if (modeLoaded) {
-            this.currentGameMode = modeLoaded;
-        }
-        
-        console.log(`📂 Estado del juego cargado - Modo: ${modeLoaded ? 'Sí' : 'No'}, Cartones: ${cardsLoaded ? 'Sí' : 'No'}`);
-        return { modeLoaded, cardsLoaded };
-    }
-
-    /**
-     * Obtener todos los modos disponibles para el usuario
-     */
-    getAvailableGameModes() {
-        const availableModes = [];
-        
-        for (const [modeId, mode] of Object.entries(this.gameModes)) {
-            if (mode.isActive) {
-                const check = this.checkGameModeRequirements(modeId);
-                availableModes.push({
-                    ...mode,
-                    canPlay: check.canPlay,
-                    reason: check.reason
-                });
-            }
-        }
-        
-        return availableModes;
-    }
-
-    /**
-     * Mostrar error de modo de juego
-     */
-    showGameModeError(message) {
-        // Crear modal de error
-        const modal = document.createElement('div');
-        modal.className = 'game-mode-error-modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>⚠️ No puedes jugar este modo</h3>
-                    <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p>${message}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-primary" onclick="this.parentElement.parentElement.parentElement.remove()">Entendido</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Auto-remover después de 5 segundos
-        setTimeout(() => {
-            if (modal.parentElement) {
-                modal.remove();
-            }
-        }, 5000);
-    }
-
-    /**
-     * Mostrar confirmación de cambio de modo
-     */
-    showGameModeChanged(mode) {
-        // Crear notificación
-        const notification = document.createElement('div');
-        notification.className = 'game-mode-notification';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <h4>🎮 ${mode.name}</h4>
-                <p>${mode.description}</p>
-                <div class="mode-features">
-                    ${mode.features.map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto-remover después de 3 segundos
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-            }
-        }, 3000);
-    }
-
-    /**
-     * Actualizar display del modo de juego
-     */
-    updateGameModeDisplay() {
-        const mode = this.getCurrentGameMode();
-        const modeDisplay = document.getElementById('currentGameMode');
-        
-        if (modeDisplay) {
-            modeDisplay.textContent = mode.name;
-            modeDisplay.className = `game-mode-display mode-${mode.id}`;
-        }
-    }
-
-    /**
-     * Actualizar display del precio de cartones
-     */
-    updateCardPriceDisplay() {
-        const mode = this.getCurrentGameMode();
-        const priceDisplay = document.getElementById('cardPrice');
-        
-        if (priceDisplay) {
-            priceDisplay.textContent = `€${mode.cardPrice.toFixed(2)}`;
-        }
-        
-        // También actualizar el precio en el hero section
-        const heroPriceDisplay = document.querySelector('.hero-stats .stat-number');
-        if (heroPriceDisplay && heroPriceDisplay.textContent.includes('€')) {
-            heroPriceDisplay.textContent = `€${mode.cardPrice.toFixed(2)}`;
-        }
-    }
-
-    /**
-     * Inicializar modos de juego
-     */
-    initializeGameModes() {
-        console.log('🎮 Inicializando modos de juego...');
-        
-        // Actualizar displays iniciales
-        this.updateGameModeDisplay();
-        this.updateCardPriceDisplay();
-        this.updateCardInfo();
-        
-        // Verificar disponibilidad de modos
-        const availableModes = this.getAvailableGameModes();
-        console.log('📋 Modos disponibles:', availableModes.map(mode => ({
-            name: mode.name,
-            canPlay: mode.canPlay,
-            reason: mode.reason
-        })));
-        
-        // Mostrar información del modo actual
-        const currentMode = this.getCurrentGameMode();
-        console.log(`🎯 Modo actual: ${currentMode.name}`);
-        
-        // Agregar mensaje al chat sobre el modo actual
-        this.addChatMessage('system', `🎮 Modo actual: ${currentMode.name} - ${currentMode.description}`);
-        
-        // Actualizar estado visual de las tarjetas de modo
-        setTimeout(() => {
-            updateModeCardsVisualState();
-        }, 100);
-    }
-
-    /**
-     * Actualizar información de cartones según el modo
-     */
-    updateCardInfo() {
-        const currentMode = this.getCurrentGameMode();
-        const cardInfoElement = document.querySelector('.selected-cards');
-        
-        if (cardInfoElement) {
-            cardInfoElement.innerHTML = `
-                <span id="selectedCardsCount">0</span> cartones seleccionados
-                <br><small style="color: var(--text-secondary);">Modo: ${currentMode.name}</small>
-            `;
-        }
-    }
-
-
-
-
 
     addCard() {
         // Validación de seguridad
@@ -1257,7 +625,7 @@ class BingoPro {
 
     renderCardGrid(card) {
         let html = '';
-        const logos = ['��', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
+        const logos = ['🎯', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
         let logoIndex = 0;
         
         console.log(`Renderizando cartón ${card.id}:`, card.numbers);
@@ -1384,13 +752,11 @@ class BingoPro {
         
         // Estadísticas adicionales
         if (totalPlayersElement) {
-            // Usar el mismo valor que se muestra en el hero section
-            const currentPlayers = this.globalGameState?.totalPlayers || 0;
-            totalPlayersElement.textContent = currentPlayers;
+            totalPlayersElement.textContent = this.globalGameState?.totalPlayers || Math.floor(Math.random() * 50) + 10;
         }
         
         if (totalCardsElement) {
-            totalCardsElement.textContent = this.globalGameState?.totalCards || this.userCards.length;
+            totalCardsElement.textContent = this.globalGameState?.totalCards || Math.floor(Math.random() * 200) + 50;
         }
         
         if (gameTimeElement) {
@@ -1821,37 +1187,33 @@ class BingoPro {
      * Calcular premios dinámicos basados en el horario
      */
     calculateDynamicPrizes() {
-        // Obtener premios del modo actual
-        const currentMode = this.getCurrentGameMode();
         const now = new Date();
         const hour = now.getHours();
         const dayOfWeek = now.getDay(); // 0 = Domingo, 6 = Sábado
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         
-        let basePrize = currentMode.prizes.bingo; // Premio base del modo actual
+        let basePrize = 500; // Premio base por partida
         
         // Premio especial cada 2 horas (a las horas pares)
         if (hour % 2 === 0) {
-            basePrize = Math.floor(basePrize * 1.5);
+            basePrize = 1500;
         }
         
         // Premio especial los fines de semana a las 21:00
         if (isWeekend && hour === 21) {
-            basePrize = Math.floor(basePrize * 2);
+            basePrize = 5000;
         }
         
         // Distribuir el premio base entre las diferentes combinaciones ganadoras
         const prizes = {
             line: Math.floor(basePrize * 0.20),      // 20% del premio total
-            twoLines: Math.floor(basePrize * 0.30),  // 30% del premio total
-            bingo: Math.floor(basePrize * 0.50)      // 50% del premio total
+            bingo: Math.floor(basePrize * 0.80)      // 80% del premio total
         };
         
         return {
             basePrize,
             prizes,
-            isSpecialGame: basePrize > currentMode.prizes.bingo,
-            modeName: currentMode.name
+            isSpecialGame: basePrize > 500
         };
     }
 
@@ -1870,8 +1232,8 @@ class BingoPro {
         
         this.showGameOverModal();
         
-        // La próxima partida se programa desde el servidor global
-        // No necesitamos programar localmente
+        // Programar la próxima partida
+        this.scheduleNextGame();
         
         // Resetear estado del jugador
         this.isPlayerJoined = false;
@@ -1881,9 +1243,7 @@ class BingoPro {
         this.updateDisplay();
         this.updateUI();
         
-        const currentMode = this.getCurrentGameMode();
-        const durationMinutes = Math.floor(currentMode.duration / 60000);
-        this.addChatMessage('system', `¡Partida terminada! La próxima partida de ${currentMode.name} comenzará en ${durationMinutes} minutos.`);
+        this.addChatMessage('system', '¡Partida terminada! La próxima partida comenzará en 2 minutos.');
         console.log('Juego terminado, estado cambiado a waiting');
     }
 
@@ -1919,10 +1279,7 @@ class BingoPro {
             return false;
         }
 
-        // Obtener precio del modo actual
-        const currentMode = this.getCurrentGameMode();
-        const cardPrice = currentMode.cardPrice;
-        const totalCost = quantity * cardPrice;
+        const totalCost = quantity * this.cardPrice;
         
         console.log('Intentando comprar cartones:', quantity, 'Estado del juego:', this.gameState);
         
@@ -1971,8 +1328,7 @@ class BingoPro {
             const card = this.addCard();
             if (card) {
                 card.purchaseTime = new Date();
-                card.purchasePrice = cardPrice; // Usar precio del modo actual
-                card.gameMode = currentMode.id; // Guardar modo de juego
+                card.purchasePrice = this.cardPrice;
                 newCards.push(card);
             }
         }
@@ -2002,9 +1358,6 @@ class BingoPro {
         
         // Notificación profesional
         this.addChatMessage('system', `✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}\n💰 Saldo restante: €${this.userBalance.toFixed(2)}`);
-        
-        // Guardar cartones en localStorage
-        this.saveUserCards();
         
         // Mostrar confirmación visual
         console.log('🔔 Llamando a showPurchaseConfirmation...');
@@ -2555,18 +1908,14 @@ class BingoPro {
             return;
         }
         
-        // Obtener configuración del modo de juego actual
-        const currentMode = this.getCurrentGameMode();
-        console.log(`🎮 Modo de juego: ${currentMode.name}`);
-        
         // En un bingo global, el juego funciona independientemente de los cartones del usuario
         // Los cartones del usuario solo afectan si puede ganar, no si el juego puede comenzar
         if (this.userCards.length === 0) {
             console.log('ℹ️ Usuario sin cartones - Juego global continúa, pero usuario no puede ganar');
-            this.addChatMessage('system', `ℹ️ ${currentMode.name} iniciado. Compra cartones para participar y ganar premios.`);
+            this.addChatMessage('system', 'ℹ️ Juego global iniciado. Compra cartones para participar y ganar premios.');
         }
         
-        // Calcular premios dinámicos basados en el modo actual
+        // Calcular premios dinámicos
         const dynamicPrizes = this.calculateDynamicPrizes();
         
         // Inicializar estado global del juego profesional
@@ -2574,8 +1923,8 @@ class BingoPro {
             gameId: this.generateGameId(),
             startTime: new Date(),
             endTime: null,
-            totalPlayers: this.globalGameState?.totalPlayers || 0, // Mantener valor real del servidor
-            totalCards: this.userCards.length, // Usar cartones reales del usuario
+            totalPlayers: Math.floor(Math.random() * 100) + 25, // Simular más jugadores
+            totalCards: Math.floor(Math.random() * 500) + 100,  // Simular más cartones
             calledNumbers: new Set(),
             winners: {
                 line: null,
@@ -2632,14 +1981,10 @@ class BingoPro {
             clearInterval(this.autoPlayInterval);
         }
         
-        // Obtener configuración del modo de juego actual
-        const currentMode = this.getCurrentGameMode();
-        const callInterval = currentMode.numberCallInterval;
+        console.log('🎲 Iniciando llamada automática profesional...');
         
-        console.log(`🎲 Iniciando llamada automática en modo ${currentMode.name} (${callInterval}ms entre números)...`);
-        
-        // Anunciar inicio de partida con información del modo
-        this.addChatMessage('system', `🎮 ¡${currentMode.name} ha comenzado! Los números se llamarán automáticamente cada ${callInterval/1000} segundos.`);
+        // Anunciar inicio de partida
+        this.addChatMessage('system', '🎮 ¡La partida ha comenzado! Los números se llamarán automáticamente.');
         
         this.autoPlayInterval = setInterval(() => {
             if (this.gameState === 'playing' && this.calledNumbers.size < 90) {
@@ -2693,7 +2038,7 @@ class BingoPro {
 
     // Función para resetear la experiencia de bienvenida (solo para desarrollo)
     resetWelcomeExperience() {
-        localStorage.removeItem('bingoroyal_welcome_visited');
+        localStorage.removeItem('bingospain_welcome_visited');
         alert('Experiencia de bienvenida reseteada. Recarga la página para ver la página de bienvenida.');
     }
 
@@ -3639,11 +2984,11 @@ class BingoPro {
         const favoriteCardIds = this.userCards
             .filter(card => card.isFavorite)
             .map(card => card.id);
-        localStorage.setItem('bingoroyal_favorite_cards', JSON.stringify(favoriteCardIds));
+        localStorage.setItem('spainbingo_favorite_cards', JSON.stringify(favoriteCardIds));
     }
     
     loadFavoriteCards() {
-        const favoriteCardIds = JSON.parse(localStorage.getItem('bingoroyal_favorite_cards') || '[]');
+        const favoriteCardIds = JSON.parse(localStorage.getItem('spainbingo_favorite_cards') || '[]');
         this.userCards.forEach(card => {
             card.isFavorite = favoriteCardIds.includes(card.id);
         });
@@ -3671,7 +3016,7 @@ class BingoPro {
     // Analytics Data Persistence
     saveAnalytics() {
         try {
-            localStorage.setItem('bingoroyal_analytics', JSON.stringify(this.gameAnalytics));
+            localStorage.setItem('spainbingo_analytics', JSON.stringify(this.gameAnalytics));
             console.log('Analytics data saved successfully');
         } catch (error) {
             console.error('Error saving analytics:', error);
@@ -3680,7 +3025,7 @@ class BingoPro {
     
     loadAnalytics() {
         try {
-            const saved = localStorage.getItem('bingoroyal_analytics');
+            const saved = localStorage.getItem('spainbingo_analytics');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 this.gameAnalytics = { ...this.gameAnalytics, ...parsed };
@@ -3702,7 +3047,7 @@ class BingoPro {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `bingoroyal-analytics-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `spainbingo-analytics-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3791,21 +3136,20 @@ class BingoPro {
     // ===== CONEXIÓN AL BINGO GLOBAL =====
     async connectToGlobalBingo() {
         try {
-            const currentMode = this.getCurrentGameMode();
-            console.log(`🌐 Conectando al bingo global (${currentMode.name})...`);
+            console.log('🌐 Conectando al bingo global...');
             
-            // Usar userId persistente
-            this.userId = this.userId || this.getOrCreateUserId();
+            // Generar ID único para este usuario
+            this.userId = this.userId || 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
-            // Unirse al juego global del modo actual
+            // Unirse al juego global
             await this.joinGlobalGame();
             
-            // Obtener estado actual del juego global del modo actual
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
+            // Obtener estado actual del juego global
+            const response = await fetch('/api/bingo/state');
             const data = await response.json();
             
             if (data.success) {
-                console.log(`✅ Conectado al bingo global (${currentMode.name}):`, data.gameState.gameState);
+                console.log('✅ Conectado al bingo global:', data.gameState.gameState);
                 
                 // Sincronizar números llamados del servidor global
                 if (data.gameState.calledNumbers && data.gameState.calledNumbers.length > 0) {
@@ -3819,12 +3163,9 @@ class BingoPro {
                 }
                 
                 // Actualizar contador de jugadores
-                this.updatePlayerCount(data.gameState);
+                this.updatePlayerCount(data.gameState.totalPlayers);
                 
-                // Iniciar sincronización con el servidor
-                this.syncWithServerState();
-                
-                // Sincronización adicional cada 3 segundos para datos no críticos
+                // Iniciar sincronización periódica cada 3 segundos
                 setInterval(async () => {
                     await this.syncWithGlobalServer();
                 }, 3000);
@@ -3839,7 +3180,6 @@ class BingoPro {
     
     async joinGlobalGame() {
         try {
-            const currentMode = this.getCurrentGameMode();
             const response = await fetch('/api/bingo/join', {
                 method: 'POST',
                 headers: {
@@ -3847,14 +3187,13 @@ class BingoPro {
                 },
                 body: JSON.stringify({
                     userId: this.userId,
-                    cards: this.userCards,
-                    mode: currentMode.id
+                    cards: this.userCards
                 })
             });
             
             const data = await response.json();
             if (data.success) {
-                console.log(`👤 Unido al juego global (${currentMode.name}) como jugador`);
+                console.log('👤 Unido al juego global como jugador');
             }
         } catch (error) {
             console.error('❌ Error uniéndose al juego global:', error);
@@ -3863,8 +3202,7 @@ class BingoPro {
     
     async syncWithGlobalServer() {
         try {
-            const currentMode = this.getCurrentGameMode();
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
+            const response = await fetch('/api/bingo/state');
             const data = await response.json();
             
             if (data.success) {
@@ -3887,8 +3225,7 @@ class BingoPro {
                 }
                 
                 // Actualizar contador de jugadores
-                console.log('🔍 DEBUG: syncWithGlobalServer - estado del servidor:', globalState);
-                this.updatePlayerCount(globalState);
+                this.updatePlayerCount(globalState.totalPlayers);
                 
                 // Actualizar cartones del usuario en el servidor si han cambiado
                 if (this.userCards.length > 0) {
@@ -3900,60 +3237,35 @@ class BingoPro {
         }
     }
     
-    updatePlayerCount(gameState) {
-        console.log('🔍 DEBUG: updatePlayerCount llamado con:', gameState);
+    updatePlayerCount(totalPlayers) {
+        // Actualizar todos los elementos que muestran el contador de jugadores
+        const elements = [
+            document.getElementById('activePlayers'),
+            document.getElementById('totalPlayers')
+        ];
         
-        // Extraer contadores del estado del juego
-        const totalOnlinePlayers = gameState.totalOnlinePlayers || 0;
-        const playersWithCards = gameState.playersWithCards || 0;
-        
-        console.log('🎮 Jugadores con cartones:', playersWithCards);
-        console.log('🌐 Total jugadores online:', totalOnlinePlayers);
-        
-        // Actualizar elementos específicos
-        const activePlayersElement = document.getElementById('activePlayers');
-        const totalPlayersElement = document.getElementById('totalPlayers');
-        
-        if (activePlayersElement) {
-            console.log(`🔍 DEBUG: Actualizando jugadores con cartones:`, activePlayersElement.textContent, '→', playersWithCards);
-            
-            // Formatear el número con comas para mejor legibilidad
-            const formattedActive = playersWithCards.toLocaleString('es-ES');
-            activePlayersElement.textContent = formattedActive;
-            
-            // Agregar clase para animación si el número cambió
-            if (activePlayersElement.dataset.lastCount !== playersWithCards.toString()) {
-                activePlayersElement.classList.add('player-count-updated');
-                setTimeout(() => {
-                    activePlayersElement.classList.remove('player-count-updated');
-                }, 1000);
-                activePlayersElement.dataset.lastCount = playersWithCards.toString();
+        elements.forEach(element => {
+            if (element) {
+                // Formatear el número con comas para mejor legibilidad
+                const formattedCount = totalPlayers.toLocaleString('es-ES');
+                element.textContent = formattedCount;
+                
+                // Agregar clase para animación si el número cambió
+                if (element.dataset.lastCount !== totalPlayers.toString()) {
+                    element.classList.add('player-count-updated');
+                    setTimeout(() => {
+                        element.classList.remove('player-count-updated');
+                    }, 1000);
+                    element.dataset.lastCount = totalPlayers.toString();
+                }
             }
-        }
+        });
         
-        if (totalPlayersElement) {
-            console.log(`🔍 DEBUG: Actualizando total jugadores online:`, totalPlayersElement.textContent, '→', totalOnlinePlayers);
-            
-            // Formatear el número con comas para mejor legibilidad
-            const formattedTotal = totalOnlinePlayers.toLocaleString('es-ES');
-            totalPlayersElement.textContent = formattedTotal;
-            
-            // Agregar clase para animación si el número cambió
-            if (totalPlayersElement.dataset.lastCount !== totalOnlinePlayers.toString()) {
-                totalPlayersElement.classList.add('player-count-updated');
-                setTimeout(() => {
-                    totalPlayersElement.classList.remove('player-count-updated');
-                }, 1000);
-                totalPlayersElement.dataset.lastCount = totalOnlinePlayers.toString();
-            }
-        }
-        
-        console.log('👥 Jugadores actualizados - Con cartones:', playersWithCards, 'Total online:', totalOnlinePlayers);
+        console.log('👥 Jugadores en línea actualizados:', totalPlayers);
     }
     
     async updateGlobalCards() {
         try {
-            const currentMode = this.getCurrentGameMode();
             await fetch('/api/bingo/update-cards', {
                 method: 'POST',
                 headers: {
@@ -3961,8 +3273,7 @@ class BingoPro {
                 },
                 body: JSON.stringify({
                     userId: this.userId,
-                    cards: this.userCards,
-                    mode: currentMode.id
+                    cards: this.userCards
                 })
             });
         } catch (error) {
@@ -3986,7 +3297,7 @@ window.buyPackage = function(packageType) {
 
 // Función para resetear experiencia de bienvenida (solo para desarrollo)
 window.resetWelcomeExperience = function() {
-    localStorage.removeItem('bingoroyal_welcome_visited');
+    localStorage.removeItem('bingospain_welcome_visited');
     alert('Experiencia de bienvenida reseteada. Recarga la página para ver la página de bienvenida.');
 };
 
@@ -3997,7 +3308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🎮 Juego inicializado en modo simple - saltando verificación auth, cargando funcionalidad...');
         
         // Obtener datos del usuario desde localStorage
-        const sessionData = localStorage.getItem('bingoroyal_session');
+        const sessionData = localStorage.getItem('spainbingo_session');
         if (sessionData) {
             const session = JSON.parse(sessionData);
             const user = session.user;
@@ -4163,7 +3474,7 @@ function logout() {
             authManager.logout();
         } else {
             // Fallback si authManager no está disponible
-            localStorage.removeItem('bingoroyal_session');
+            localStorage.removeItem('spainbingo_session');
             window.location.href = 'login.html';
         }
     }
@@ -4326,197 +3637,4 @@ function sendChatMessage() {
     } else {
         console.log('❌ BingoGame not available');
     }
-}
-
-// Función para generar números llamados dinámicamente
-function generateCalledNumbers() {
-    console.log('🔄 Generando números llamados...');
-    const numbersContainer = document.getElementById('calledNumbers');
-    if (!numbersContainer) {
-        console.log('❌ Contenedor de números no encontrado');
-        return;
-    }
-    
-    console.log('✅ Contenedor encontrado, limpiando...');
-    // Limpiar contenedor
-    numbersContainer.innerHTML = '';
-    
-    // Generar números del 1 al 90
-    for (let i = 1; i <= 90; i++) {
-        const numberElement = document.createElement('div');
-        numberElement.className = 'called-number';
-        numberElement.textContent = i.toString();
-        numberElement.dataset.number = i;
-        
-        // Agregar evento click para marcar como llamado
-        numberElement.addEventListener('click', function() {
-            this.classList.toggle('called');
-            if (this.classList.contains('called')) {
-                this.style.background = '#ff6b6b';
-                this.style.color = '#ffffff';
-                this.style.borderColor = '#ff6b6b';
-                this.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 300);
-            } else {
-                this.style.background = '#16213e';
-                this.style.color = '#ffffff';
-                this.style.borderColor = '#333';
-            }
-        });
-        
-        numbersContainer.appendChild(numberElement);
-    }
-    
-    console.log('✅ Números generados:', numbersContainer.children.length);
-}
-
-// Función para marcar números como llamados
-function markNumberAsCalled(number) {
-    const numberElement = document.querySelector(`[data-number="${number}"]`);
-    if (numberElement) {
-        numberElement.classList.add('called', 'recent');
-        setTimeout(() => {
-            numberElement.classList.remove('recent');
-        }, 1000);
-    }
-}
-
-// Función para actualizar el último número llamado
-function updateLastCalledNumber(number) {
-    const lastNumberDisplay = document.getElementById('lastNumber');
-    if (lastNumberDisplay) {
-        lastNumberDisplay.textContent = number || '-';
-        if (number) {
-            lastNumberDisplay.classList.add('recent');
-            setTimeout(() => {
-                lastNumberDisplay.classList.remove('recent');
-            }, 2000);
-        }
-    }
-}
-
-// Inicializar números llamados cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Inicializando números llamados...');
-    
-    // Debug inmediato
-    const numbersContainer = document.getElementById('calledNumbers');
-    console.log('🔍 Estado inicial del contenedor:', {
-        exists: !!numbersContainer,
-        id: numbersContainer?.id,
-        className: numbersContainer?.className,
-        children: numbersContainer?.children?.length || 0
-    });
-    
-    generateCalledNumbers();
-    
-    // Verificar después de generar
-    setTimeout(() => {
-        const container = document.getElementById('calledNumbers');
-        console.log('🔍 Estado después de generar:', {
-            children: container?.children?.length || 0,
-            firstChild: container?.children[0]?.textContent,
-            lastChild: container?.children[89]?.textContent
-        });
-    }, 100);
-    
-    // Simular algunos números llamados para demostración
-    setTimeout(() => {
-        markNumberAsCalled(15);
-        updateLastCalledNumber(15);
-    }, 1000);
-    
-    setTimeout(() => {
-        markNumberAsCalled(23);
-        updateLastCalledNumber(23);
-    }, 3000);
-    
-    setTimeout(() => {
-        markNumberAsCalled(47);
-        updateLastCalledNumber(47);
-    }, 5000);
-});
-
-// También inicializar cuando se carga el juego
-window.addEventListener('load', function() {
-    console.log('🎮 Página cargada, verificando números llamados...');
-    setTimeout(() => {
-        const numbersContainer = document.getElementById('calledNumbers');
-        if (numbersContainer && numbersContainer.children.length === 0) {
-            console.log('⚠️ Contenedor vacío, regenerando números...');
-            generateCalledNumbers();
-        } else {
-            console.log('✅ Números llamados ya generados:', numbersContainer?.children.length || 0);
-        }
-        
-        // Debug adicional
-        if (numbersContainer) {
-            console.log('🔍 Debug contenedor:', {
-                id: numbersContainer.id,
-                className: numbersContainer.className,
-                children: numbersContainer.children.length,
-                innerHTML: numbersContainer.innerHTML.substring(0, 200) + '...'
-            });
-        }
-    }, 500);
-}); 
-
-/**
- * Función global para seleccionar modo de juego
- */
-function selectGameMode(modeId) {
-    if (typeof bingoGame !== 'undefined' && bingoGame) {
-        const success = bingoGame.changeGameMode(modeId);
-        if (success) {
-            // Actualizar estado visual de las tarjetas
-            updateModeCardsVisualState();
-        }
-    } else {
-        console.error('❌ BingoGame no está inicializado');
-    }
-}
-
-/**
- * Actualizar estado visual de las tarjetas de modo
- */
-function updateModeCardsVisualState() {
-    const modeCards = document.querySelectorAll('.mode-card');
-    const currentMode = bingoGame ? bingoGame.getCurrentGameMode() : null;
-    
-    modeCards.forEach(card => {
-        const modeId = card.dataset.mode;
-        const availableModes = bingoGame ? bingoGame.getAvailableGameModes() : [];
-        const modeInfo = availableModes.find(mode => mode.id === modeId);
-        
-        if (modeInfo) {
-            if (modeInfo.canPlay) {
-                card.classList.remove('disabled');
-            } else {
-                card.classList.add('disabled');
-            }
-            
-            // Marcar como activo el modo actual
-            if (currentMode && modeId === currentMode.id) {
-                card.classList.add('active');
-            } else {
-                card.classList.remove('active');
-            }
-        }
-    });
-}
-
-/**
- * Inicializar estado de las tarjetas de modo al cargar la página
- */
-function initializeModeCards() {
-    setTimeout(() => {
-        updateModeCardsVisualState();
-    }, 1000); // Esperar a que BingoGame se inicialice
-}
-
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    initializeModeCards();
-});
+} 

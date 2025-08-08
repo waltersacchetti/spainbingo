@@ -1,5 +1,5 @@
 /**
- * Sistema de Autenticación - SpainBingo
+ * Sistema de Autenticación - BingoRoyal
  * Maneja login, registro y gestión de sesiones con base de datos real
  */
 
@@ -33,7 +33,7 @@ class AuthManager {
      * Cargar sesión desde localStorage con validación de seguridad
      */
     loadSession() {
-        const session = localStorage.getItem('spainbingo_session');
+        const session = localStorage.getItem('bingoroyal_session');
         if (session) {
             try {
                 const sessionData = JSON.parse(session);
@@ -735,7 +735,7 @@ class AuthManager {
         this.isAuthenticated = true;
         
         // Guardar en localStorage
-        localStorage.setItem('spainbingo_session', JSON.stringify({
+        localStorage.setItem('bingoroyal_session', JSON.stringify({
             user: this.currentUser,
             token: this.sessionToken,
             timestamp: Date.now()
@@ -757,7 +757,7 @@ class AuthManager {
      */
     redirectToGame() {
         // Marcar que ya visitó la página de bienvenida
-        localStorage.setItem('spainbingo_welcome_visited', 'true');
+        localStorage.setItem('bingoroyal_welcome_visited', 'true');
         
         // Redirigir al juego
         window.location.href = 'index.html';
@@ -770,7 +770,7 @@ class AuthManager {
         this.currentUser = null;
         this.isAuthenticated = false;
         this.sessionToken = null;
-        localStorage.removeItem('spainbingo_session');
+        localStorage.removeItem('bingoroyal_session');
         
         // Registrar evento de auditoría
         if (window.securityManager) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpainBingo - El Mejor Bingo Online de España</title>
+    <title>BingoRoyal - El Mejor Bingo Online de España</title>
     <link rel="stylesheet" href="styles-codere.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -23,7 +23,7 @@
                         </div>
                     </div>
                     <div class="logo-text">
-                        <h1>SpainBingo</h1>
+                        <h1>BingoRoyal</h1>
                         <p>El Rey del Bingo Online</p>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
     <section class="hero-section">
         <div class="hero-content">
             <div class="hero-text">
-                <h2>¡Bienvenido a <span class="highlight">SpainBingo</span>!</h2>
+                <h2>¡Bienvenido a <span class="highlight">BingoRoyal</span>!</h2>
                 <p>Descubre la mejor experiencia de bingo online de España. Juega con miles de jugadores, gana premios increíbles y disfruta de la emoción del bingo tradicional con tecnología moderna.</p>
                 <div class="hero-features">
                     <div class="feature">
@@ -311,7 +311,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>SpainBingo</h4>
+                    <h4>BingoRoyal</h4>
                     <p>El mejor bingo online de España. Juego responsable y diversión garantizada.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook"></i></a>
@@ -371,7 +371,7 @@
                     <i class="fas fa-birthday-cake"></i>
                 </div>
                 <h2>Verificación de Edad</h2>
-                <p>Debes ser mayor de 18 años para acceder a SpainBingo</p>
+                <p>Debes ser mayor de 18 años para acceder a BingoRoyal</p>
             </div>
             
             <div class="age-modal-body">
@@ -558,7 +558,7 @@
         // Verificación de edad al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar si ya se ha confirmado la edad
-            const ageVerified = localStorage.getItem('spainbingo_age_verified');
+            const ageVerified = localStorage.getItem('bingoroyal_age_verified');
             
             if (!ageVerified) {
                 showAgeVerification();
@@ -611,17 +611,17 @@
             const age = calculateAge(birthDate);
             
             if (age >= 18) {
-                localStorage.setItem('spainbingo_age_verified', 'true');
-                localStorage.setItem('spainbingo_user_age', age.toString());
+                localStorage.setItem('bingoroyal_age_verified', 'true');
+                localStorage.setItem('bingoroyal_user_age', age.toString());
                 hideAgeVerification();
                 console.log('✅ Edad verificada:', age);
             } else {
-                alert('Debes ser mayor de 18 años para acceder a SpainBingo.');
+                alert('Debes ser mayor de 18 años para acceder a BingoRoyal.');
             }
         });
 
         document.getElementById('denyAgeBtn').addEventListener('click', function() {
-            alert('Debes ser mayor de 18 años para acceder a SpainBingo.');
+            alert('Debes ser mayor de 18 años para acceder a BingoRoyal.');
             window.close();
             // Si window.close() no funciona, redirigir a una página de error
             window.location.href = 'https://www.google.com';

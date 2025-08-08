@@ -1,29 +1,128 @@
-// Script para la página de bienvenida de Bingo Spain
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Bingo Spain - Página de Bienvenida cargada');
-    
-    // Inicializar animaciones
-    initializeAnimations();
-    
-    // Configurar navegación suave
-    setupSmoothScrolling();
-    
-    // Configurar efectos de hover
-    setupHoverEffects();
-    
-    // Configurar contadores animados
-    setupCounters();
-    
-    // Configurar botones
-    setupButtons();
-    
-    // Configurar efectos de parallax
-    setupParallax();
-});
+// ===== WELCOME SCRIPT - BINGOROYAL =====
 
-// Inicializar animaciones
-function initializeAnimations() {
-    // Animación de entrada para elementos
+// Función para cerrar la página de bienvenida y ir al juego
+function closeWelcomeAndPlay() {
+    // Marcar que se ha visitado la página de bienvenida
+    localStorage.setItem('bingoroyal_welcome_visited', 'true');
+    
+    // Redirigir al juego
+    window.location.href = '/game';
+}
+
+// Función para ir al login
+function goToLogin() {
+    window.location.href = '/login.html';
+}
+
+// Animaciones de números flotantes
+function animateFloatingNumbers() {
+    const floatingNumbers = document.querySelectorAll('.floating-number');
+    
+    floatingNumbers.forEach((number, index) => {
+        // Aplicar animación con delay diferente para cada número
+        number.style.animationDelay = `${index * 0.5}s`;
+    });
+}
+
+// Animación de cartón de bingo
+function animateBingoCard() {
+    const cardCells = document.querySelectorAll('.card-cell');
+    let currentIndex = 0;
+    
+    const interval = setInterval(() => {
+        if (currentIndex < cardCells.length) {
+            // Marcar celda como llamada
+            cardCells[currentIndex].classList.add('called');
+            
+            // Remover la clase después de un tiempo
+            setTimeout(() => {
+                cardCells[currentIndex].classList.remove('called');
+            }, 2000);
+            
+            currentIndex++;
+        } else {
+            clearInterval(interval);
+            // Reiniciar después de un tiempo
+            setTimeout(animateBingoCard, 5000);
+        }
+    }, 1000);
+}
+
+// Efectos de hover para las tarjetas
+function setupCardHoverEffects() {
+    const gameCards = document.querySelectorAll('.game-card');
+    const offerCards = document.querySelectorAll('.offer-card');
+    
+    gameCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    offerCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+}
+
+// Contador animado para estadísticas
+function animateCounters() {
+    const counters = document.querySelectorAll('.stat-content h3');
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+        const duration = 2000; // 2 segundos
+        const step = target / (duration / 16); // 60 FPS
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            
+            // Formatear el número según el tipo
+            if (counter.textContent.includes('€')) {
+                counter.textContent = `€${Math.floor(current).toLocaleString()}`;
+            } else if (counter.textContent.includes('+')) {
+                counter.textContent = `${Math.floor(current).toLocaleString()}+`;
+            } else if (counter.textContent.includes('/')) {
+                counter.textContent = counter.textContent.replace(/\d+/, Math.floor(current));
+            } else {
+                counter.textContent = Math.floor(current).toLocaleString();
+            }
+        }, 16);
+    });
+}
+
+// Efectos de parallax para el hero
+function setupParallaxEffect() {
+    const heroSection = document.querySelector('.hero-section');
+    const floatingNumbers = document.querySelectorAll('.floating-number');
+    
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.5;
+        
+        floatingNumbers.forEach((number, index) => {
+            const speed = 0.5 + (index * 0.1);
+            number.style.transform = `translateY(${rate * speed}px)`;
+        });
+    });
+}
+
+// Efectos de entrada para elementos
+function setupEntranceAnimations() {
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -32,52 +131,152 @@ function initializeAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
             }
         });
     }, observerOptions);
     
-    // Observar elementos para animación
-    const animateElements = document.querySelectorAll('.game-card, .offer-card, .stat-card');
-    animateElements.forEach(el => {
+    // Observar elementos para animación de entrada
+    const animatedElements = document.querySelectorAll('.game-card, .offer-card, .stat-card');
+    animatedElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(el);
     });
-    
-    // Animación de números flotantes
-    animateFloatingNumbers();
 }
 
-// Animación de números flotantes
-function animateFloatingNumbers() {
-    const floatingNumbers = document.querySelectorAll('.floating-number');
+// Efectos de sonido (opcional)
+function setupSoundEffects() {
+    const buttons = document.querySelectorAll('.btn-primary, .btn-secondary, .btn-game, .btn-offer');
     
-    floatingNumbers.forEach((number, index) => {
-        // Crear animación personalizada para cada número
-        const delay = index * 0.5;
-        const duration = 4 + Math.random() * 2;
-        
-        number.style.animationDelay = `${delay}s`;
-        number.style.animationDuration = `${duration}s`;
-        
-        // Agregar efecto de brillo aleatorio
-        setInterval(() => {
-            number.style.filter = 'brightness(1.2) drop-shadow(0 0 10px rgba(0, 212, 170, 0.5))';
-            setTimeout(() => {
-                number.style.filter = 'brightness(1) drop-shadow(0 0 5px rgba(0, 212, 170, 0.3))';
-            }, 200);
-        }, 3000 + Math.random() * 2000);
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Crear efecto de sonido sutil
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        });
     });
 }
 
-// Configurar navegación suave
-function setupSmoothScrolling() {
-    const navLinks = document.querySelectorAll('.nav-link');
+// Efectos de partículas de fondo
+function setupParticleEffects() {
+    const heroSection = document.querySelector('.hero-section');
+    
+    // Crear partículas de fondo
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'background-particle';
+        particle.style.cssText = `
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat ${3 + Math.random() * 4}s linear infinite;
+            left: ${Math.random() * 100}%;
+            top: ${Math.random() * 100}%;
+        `;
+        heroSection.appendChild(particle);
+    }
+    
+    // Agregar CSS para la animación de partículas
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Efectos de hover para botones
+function setupButtonEffects() {
+    const buttons = document.querySelectorAll('.btn-primary, .btn-secondary, .btn-game, .btn-offer');
+    
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.05)';
+            this.style.boxShadow = '0 10px 25px rgba(233, 69, 96, 0.4)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '';
+        });
+    });
+}
+
+// Efectos de texto animado
+function setupTextAnimations() {
+    const heroTitle = document.querySelector('.hero-text h2');
+    if (heroTitle) {
+        const text = heroTitle.textContent;
+        heroTitle.innerHTML = '';
+        
+        text.split('').forEach((char, index) => {
+            const span = document.createElement('span');
+            span.textContent = char;
+            span.style.animationDelay = `${index * 0.1}s`;
+            span.style.animation = 'textFadeIn 0.5s ease forwards';
+            span.style.opacity = '0';
+            heroTitle.appendChild(span);
+        });
+        
+        // Agregar CSS para la animación de texto
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes textFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Efectos de scroll suave
+function setupSmoothScroll() {
+    const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
     
     navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
+        link.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            const targetId = link.getAttribute('href');
+            const targetId = this.getAttribute('href');
             const targetSection = document.querySelector(targetId);
             
             if (targetSection) {
@@ -90,492 +289,104 @@ function setupSmoothScrolling() {
     });
 }
 
-// Configurar efectos de hover
-function setupHoverEffects() {
-    // Efecto de hover para tarjetas de juego
-    const gameCards = document.querySelectorAll('.game-card');
+// Efectos de carga progresiva
+function setupProgressiveLoading() {
+    const sections = document.querySelectorAll('section');
     
-    gameCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            card.style.transform = 'translateY(-10px) scale(1.02)';
-            card.style.boxShadow = '0 20px 40px rgba(0, 212, 170, 0.2)';
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'translateY(0) scale(1)';
-            card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-        });
-    });
-    
-    // Efecto de hover para tarjetas de ofertas
-    const offerCards = document.querySelectorAll('.offer-card');
-    
-    offerCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            card.style.transform = 'translateY(-8px)';
-            card.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.25)';
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'translateY(0)';
-            card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
-        });
-    });
-}
-
-// Configurar contadores animados
-function setupCounters() {
-    const counters = document.querySelectorAll('.stat-content h3');
-    
-    const counterObserver = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const counter = entry.target;
-                const target = getCounterTarget(counter.textContent);
-                animateCounter(counter, target);
-                counterObserver.unobserve(counter);
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
             }
         });
-    }, { threshold: 0.5 });
+    }, {
+        threshold: 0.1
+    });
     
-    counters.forEach(counter => {
-        counterObserver.observe(counter);
+    sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(50px)';
+        section.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        observer.observe(section);
     });
 }
 
-// Obtener el valor objetivo del contador
-function getCounterTarget(text) {
-    const value = text.replace(/[^\d]/g, '');
-    return parseInt(value);
-}
-
-// Animar contador
-function animateCounter(element, target) {
-    let current = 0;
-    const increment = target / 100;
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-        
-        // Formatear el número
-        let displayValue;
-        if (target >= 1000000) {
-            displayValue = (current / 1000000).toFixed(1) + 'M';
-        } else if (target >= 1000) {
-            displayValue = (current / 1000).toFixed(0) + 'K';
-        } else {
-            displayValue = Math.floor(current);
-        }
-        
-        // Agregar símbolo de euro si es necesario
-        if (element.textContent.includes('€')) {
-            displayValue = '€' + displayValue;
-        }
-        
-        element.textContent = displayValue;
-    }, 20);
-}
-
-// Configurar botones
-function setupButtons() {
-    // Botón de login
-    const loginBtn = document.querySelector('.btn-login');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            // Redirigir directamente a la página de login
-            window.location.href = 'login.html';
-        });
-    }
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎮 Welcome script inicializado');
     
-    // Botones de ofertas
-    const offerBtns = document.querySelectorAll('.btn-offer');
-    offerBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showOfferModal(btn.closest('.offer-card'));
-        });
-    });
+    // Inicializar todas las animaciones y efectos
+    animateFloatingNumbers();
+    animateBingoCard();
+    setupCardHoverEffects();
+    setupParallaxEffect();
+    setupEntranceAnimations();
+    setupButtonEffects();
+    setupTextAnimations();
+    setupSmoothScroll();
+    setupProgressiveLoading();
     
-    // Botón de bono
-    const bonusBtn = document.querySelector('.btn-secondary');
-    if (bonusBtn) {
-        bonusBtn.addEventListener('click', () => {
-            showBonusModal();
+    // Efectos opcionales (descomentar si se desean)
+    // setupSoundEffects();
+    // setupParticleEffects();
+    
+    // Iniciar contadores después de un delay
+    setTimeout(animateCounters, 1000);
+    
+    console.log('✅ Todos los efectos de bienvenida inicializados');
+});
+
+// Efectos adicionales para dispositivos móviles
+function setupMobileEffects() {
+    if (window.innerWidth <= 768) {
+        // Ajustar animaciones para móviles
+        const floatingNumbers = document.querySelectorAll('.floating-number');
+        floatingNumbers.forEach(number => {
+            number.style.fontSize = '0.8rem';
+            number.style.padding = '0.5rem';
+        });
+        
+        // Reducir velocidad de animaciones en móviles
+        const animatedElements = document.querySelectorAll('[style*="animation"]');
+        animatedElements.forEach(el => {
+            const currentAnimation = el.style.animation;
+            if (currentAnimation) {
+                el.style.animation = currentAnimation.replace(/\d+s/g, (match) => {
+                    const time = parseFloat(match) * 1.5;
+                    return time + 's';
+                });
+            }
         });
     }
 }
 
-// Función para redirigir al login (ya no necesitamos modal)
-function redirectToLogin() {
-    window.location.href = 'login.html';
-}
+// Llamar setup de móviles después de la carga
+window.addEventListener('load', setupMobileEffects);
 
-// Función para redirigir al registro (ya no necesitamos modal)
-function redirectToRegister() {
-    // Redirigir a la página de login que tiene opción de registro
-    window.location.href = 'login.html';
-}
-
-// Mostrar modal de oferta
-function showOfferModal(offerCard) {
-    const offerTitle = offerCard.querySelector('h3').textContent;
-    const offerValue = offerCard.querySelector('.amount').textContent;
-    const offerBonus = offerCard.querySelector('.bonus').textContent;
+// Efectos de performance
+function optimizePerformance() {
+    // Usar requestAnimationFrame para animaciones suaves
+    let ticking = false;
     
-    const modal = createModal(offerTitle, `
-        <div class="offer-details">
-            <div class="offer-highlight">
-                <h3>${offerValue}</h3>
-                <p>${offerBonus}</p>
-            </div>
-            <div class="offer-terms">
-                <h4>Términos y Condiciones:</h4>
-                <ul>
-                    <li>Oferta válida para nuevos usuarios</li>
-                    <li>Depósito mínimo requerido</li>
-                    <li>Premios sujetos a requisitos de apuesta</li>
-                    <li>Válido por tiempo limitado</li>
-                </ul>
-            </div>
-            <button class="btn-primary">Aceptar Oferta</button>
-        </div>
-    `);
-    
-    document.body.appendChild(modal);
-}
-
-// Mostrar modal de bono
-function showBonusModal() {
-    const modal = createModal('¡Bono de Bienvenida!', `
-        <div class="bonus-details">
-            <div class="bonus-highlight">
-                <h3>€50 + 50 Cartones</h3>
-                <p>¡Completamente gratis!</p>
-            </div>
-            <div class="bonus-features">
-                <h4>Incluye:</h4>
-                <ul>
-                    <li>€50 de bono sin depósito</li>
-                    <li>50 cartones de bingo gratis</li>
-                    <li>Sin requisitos de apuesta</li>
-                    <li>Válido por 24 horas</li>
-                </ul>
-            </div>
-            <button class="btn-primary">Obtener Bono</button>
-        </div>
-    `);
-    
-    document.body.appendChild(modal);
-}
-
-// Crear modal genérico
-function createModal(title, content) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>${title}</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                ${content}
-            </div>
-        </div>
-    `;
-    
-    // Cerrar modal
-    const closeBtn = modal.querySelector('.modal-close');
-    closeBtn.addEventListener('click', () => {
-        modal.remove();
-    });
-    
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
-    
-    return modal;
-}
-
-// Configurar efectos de parallax
-function setupParallax() {
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const parallaxElements = document.querySelectorAll('.floating-number');
-        
-        parallaxElements.forEach((element, index) => {
-            const speed = 0.5 + (index * 0.1);
-            const yPos = -(scrolled * speed);
-            element.style.transform = `translateY(${yPos}px)`;
-        });
-    });
-}
-
-// Efectos adicionales para la página
-function addScrollEffects() {
-    // Efecto de aparición para el header
-    window.addEventListener('scroll', () => {
-        const header = document.querySelector('.welcome-header');
-        if (window.scrollY > 100) {
-            header.style.background = 'rgba(26, 26, 26, 0.95)';
-            header.style.backdropFilter = 'blur(10px)';
-        } else {
-            header.style.background = 'var(--gradient-primary)';
-            header.style.backdropFilter = 'none';
-        }
-    });
-    
-    // Efecto de contador de jugadores en tiempo real
-    setInterval(() => {
-        const playerCount = document.querySelector('.feature span');
-        if (playerCount && playerCount.textContent.includes('jugadores')) {
-            const currentCount = parseInt(playerCount.textContent.match(/\d+/)[0]);
-            const newCount = currentCount + Math.floor(Math.random() * 5) - 2;
-            playerCount.textContent = `+${Math.max(50000, newCount).toLocaleString()} jugadores activos`;
-        }
-    }, 5000);
-}
-
-// Inicializar efectos adicionales
-addScrollEffects();
-
-// Agregar estilos CSS para modales (solo para ofertas y bonos)
-const modalStyles = `
-<style>
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 15px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 15px 15px 0 0;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: white;
-    font-weight: 700;
-    font-size: 1.5rem;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 2rem;
-    cursor: pointer;
-    color: white;
-    transition: color 0.3s ease;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.modal-body {
-    padding: 2rem;
-}
-
-.offer-details, .bonus-details {
-    text-align: center;
-}
-
-.offer-highlight, .bonus-highlight {
-    margin-bottom: 2rem;
-}
-
-.offer-highlight h3, .bonus-highlight h3 {
-    font-size: 2.5rem;
-    color: #667eea;
-    margin-bottom: 0.5rem;
-}
-
-.offer-terms, .bonus-features {
-    text-align: left;
-    margin-bottom: 2rem;
-}
-
-.offer-terms h4, .bonus-features h4 {
-    margin-bottom: 1rem;
-    color: #2d3748;
-}
-
-.offer-terms ul, .bonus-features ul {
-    list-style: none;
-    padding: 0;
-}
-
-.offer-terms li, .bonus-features li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e2e8f0;
-    color: #718096;
-}
-
-.offer-terms li:before, .bonus-features li:before {
-    content: '✓';
-    color: #667eea;
-    font-weight: bold;
-    margin-right: 0.5rem;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.animate-in {
-    animation: slideUp 0.6s ease forwards;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
+    function updateAnimations() {
+        // Aquí se pueden agregar animaciones que requieran 60fps
+        ticking = false;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateAnimations);
+            ticking = true;
+        }
     }
-}
-</style>
-`;
-
-// Agregar estilos al head
-document.head.insertAdjacentHTML('beforeend', modalStyles);
-
-// Función para cerrar la página de bienvenida y ir al login
-function closeWelcomeAndPlay() {
-    // Marcar que ya visitó la página de bienvenida
-    localStorage.setItem('spainbingo_welcome_visited', 'true');
     
-    // Mostrar mensaje de transición
-    showTransitionMessage();
-    
-    // Redirigir al login después de un breve delay
-    setTimeout(() => {
-        window.location.href = 'login.html';
-    }, 1500);
+    // Escuchar eventos que requieran animaciones suaves
+    window.addEventListener('scroll', requestTick);
+    window.addEventListener('resize', requestTick);
 }
 
-// Mostrar mensaje de transición
-function showTransitionMessage() {
-    const transitionModal = document.createElement('div');
-    transitionModal.className = 'transition-modal';
-    transitionModal.innerHTML = `
-        <div class="transition-content">
-            <div class="transition-icon">
-                <i class="fas fa-dice"></i>
-            </div>
-            <h3>¡Preparando tu juego!</h3>
-            <p>Cargando SpainBingo...</p>
-            <div class="loading-spinner"></div>
-        </div>
-    `;
-    
-    document.body.appendChild(transitionModal);
-    
-    // Agregar estilos para el modal de transición
-    const transitionStyles = `
-        <style>
-        .transition-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #00d4aa 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        .transition-content {
-            text-align: center;
-            color: white;
-        }
-        
-        .transition-icon {
-            font-size: 4rem;
-            color: #00d4aa;
-            margin-bottom: 1rem;
-            animation: diceRoll 2s ease-in-out infinite;
-        }
-        
-        .transition-content h3 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .transition-content p {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 2rem;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #00d4aa;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        </style>
-    `;
-    
-    document.head.insertAdjacentHTML('beforeend', transitionStyles);
-}
+// Inicializar optimizaciones de performance
+optimizePerformance();
 
-console.log('Bingo Spain - Script de bienvenida inicializado correctamente'); 
+console.log('🎯 Welcome script cargado y listo'); 
