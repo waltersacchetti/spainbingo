@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpainBingo - Jugar Bingo Online</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-codere.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- <script src="auth.js"></script> TEMPORALMENTE DESHABILITADO -->
@@ -106,8 +106,8 @@
                                     </div>
                                 </div>
                 <div class="chat-input">
-                    <input type="text" placeholder="Escribe un mensaje..." id="chatInput" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    <button class="btn-send" onclick="sendChatMessage()">
+                    <input type="text" placeholder="Escribe un mensaje..." id="chatInput">
+                    <button class="btn-send">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
@@ -166,17 +166,17 @@
                     <div class="hero-content">
                         <h1>¡El mayor Bote de Bingo en España!</h1>
                         <div class="main-prize-display">
-                            <div class="prize-amount">€67,152.10</div>
-                            <div class="prize-label">Super Bote Compartido</div>
+                            <div id="globalJackpot" class="prize-amount">€67,152.10</div>
+                            <div class="prize-label">Bote Global Acumulado</div>
                         </div>
                         <div class="hero-stats">
                             <div class="stat-item">
-                                <span class="stat-number">1,247</span>
+                                <span id="activePlayers" class="stat-number">0</span>
                                 <span class="stat-text">Jugadores Activos</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number">24/7</span>
-                                <span class="stat-text">Abierto Siempre</span>
+                                <span id="totalPlayers" class="stat-number">0</span>
+                                <span class="stat-text">Total Jugadores</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-number">€1</span>

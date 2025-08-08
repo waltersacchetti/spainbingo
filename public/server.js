@@ -10,6 +10,380 @@ const { sequelize, testConnection } = require('./config/database');
 // Importar modelos
 const User = require('./models/User')(sequelize);
 
+// ===== SISTEMA DE BINGO GLOBAL =====
+class GlobalBingoGame {
+    constructor() {
+        this.gameState = 'waiting'; // waiting, playing, finished
+        this.currentGameId = null;
+        this.calledNumbers = [];
+        this.availableNumbers = [];
+        this.gameStartTime = null;
+        this.nextGameTime = null;
+        this.autoCallInterval = null;
+        this.players = new Map(); // userId -> { cards: [], lastSeen: Date }
+        this.gameHistory = [];
+        this.currentPhase = 'early'; // early, mid, late
+        this.lastNumberCalled = null;
+        this.winners = [];
+        
+        // Configuración del juego
+        this.gameDuration = 2 * 60 * 1000; // 2 minutos
+        this.numberCallInterval = 3000; // 3 segundos entre números
+        this.maxNumbersPerGame = 90;
+        
+        // Inicializar el juego global
+        this.initializeGlobalGame();
+    }
+    
+    initializeGlobalGame() {
+        console.log('🎮 Inicializando Bingo Global...');
+        this.generateNumberPool();
+        this.scheduleNextGame();
+        this.startGameScheduler();
+    }
+    
+    generateNumberPool() {
+        this.availableNumbers = [];
+        for (let i = 1; i <= 90; i++) {
+            this.availableNumbers.push(i);
+        }
+        console.log('🎲 Pool de números generado:', this.availableNumbers.length, 'números');
+    }
+    
+    scheduleNextGame() {
+        const now = new Date();
+        this.nextGameTime = new Date(now.getTime() + this.gameDuration);
+        console.log('⏰ Próxima partida global programada para:', this.nextGameTime);
+    }
+    
+    startGameScheduler() {
+        // Verificar cada segundo si es hora de iniciar una nueva partida
+        setInterval(() => {
+            this.checkGameSchedule();
+        }, 1000);
+    }
+    
+    checkGameSchedule() {
+        if (this.gameState === 'waiting' && this.nextGameTime && new Date() >= this.nextGameTime) {
+            this.startNewGame();
+        }
+    }
+    
+    startNewGame() {
+        if (this.gameState === 'playing') {
+            console.log('⚠️ Ya hay una partida en curso');
+            return;
+        }
+        
+        console.log('🎮 Iniciando nueva partida global...');
+        
+        // Resetear estado
+        this.gameState = 'playing';
+        this.currentGameId = 'global_' + Date.now();
+        this.calledNumbers = [];
+        this.winners = [];
+        this.gameStartTime = new Date();
+        this.currentPhase = 'early';
+        this.lastNumberCalled = null;
+        
+        // Regenerar pool de números
+        this.generateNumberPool();
+        
+        // Iniciar llamada automática de números
+        this.startAutoCalling();
+        
+        // Programar fin de partida
+        setTimeout(() => {
+            this.endGame();
+        }, this.gameDuration);
+        
+        console.log('✅ Nueva partida global iniciada:', this.currentGameId);
+    }
+    
+    startAutoCalling() {
+        if (this.autoCallInterval) {
+            clearInterval(this.autoCallInterval);
+        }
+        
+        this.autoCallInterval = setInterval(() => {
+            this.callNextNumber();
+        }, this.numberCallInterval);
+    }
+    
+    callNextNumber() {
+        if (this.gameState !== 'playing' || this.availableNumbers.length === 0) {
+            return;
+        }
+        
+        // Seleccionar número estratégico
+        const number = this.selectStrategicNumber();
+        
+        if (number) {
+            this.calledNumbers.push(number);
+            this.lastNumberCalled = number;
+            this.updateGamePhase();
+            
+            console.log('🔢 Número llamado globalmente:', number);
+            
+            // Verificar ganadores
+            this.checkWinners();
+        }
+    }
+    
+    selectStrategicNumber() {
+        if (this.availableNumbers.length === 0) return null;
+        
+        // Lógica estratégica basada en la fase del juego
+        let selectedIndex;
+        
+        switch (this.currentPhase) {
+            case 'early':
+                // En fase temprana, llamar números más distribuidos
+                selectedIndex = Math.floor(Math.random() * this.availableNumbers.length);
+                break;
+            case 'mid':
+                // En fase media, llamar números estratégicos
+                selectedIndex = Math.floor(Math.random() * this.availableNumbers.length);
+                break;
+            case 'late':
+                // En fase tardía, llamar números más específicos
+                selectedIndex = Math.floor(Math.random() * this.availableNumbers.length);
+                break;
+            default:
+                selectedIndex = Math.floor(Math.random() * this.availableNumbers.length);
+        }
+        
+        const number = this.availableNumbers[selectedIndex];
+        this.availableNumbers.splice(selectedIndex, 1);
+        
+        return number;
+    }
+    
+    updateGamePhase() {
+        const progress = this.calledNumbers.length / this.maxNumbersPerGame;
+        
+        if (progress < 0.33) {
+            this.currentPhase = 'early';
+        } else if (progress < 0.66) {
+            this.currentPhase = 'mid';
+        } else {
+            this.currentPhase = 'late';
+        }
+    }
+    
+    checkWinners() {
+        // Verificar ganadores entre todos los jugadores
+        for (const [userId, playerData] of this.players) {
+            for (const card of playerData.cards) {
+                const winType = this.checkCardWin(card);
+                if (winType) {
+                    this.winners.push({
+                        userId,
+                        cardId: card.id,
+                        winType,
+                        timestamp: new Date()
+                    });
+                    console.log('🏆 Ganador global detectado:', userId, winType);
+                }
+            }
+        }
+    }
+    
+    checkCardWin(card) {
+        // Verificar líneas completadas
+        const lines = this.checkCompletedLines(card);
+        if (lines.length > 0) {
+            return lines[0]; // Retornar el primer tipo de línea completada
+        }
+        return null;
+    }
+    
+    checkCompletedLines(card) {
+        const completedLines = [];
+        
+        // Verificar filas horizontales
+        for (let row = 0; row < 3; row++) {
+            if (this.isLineComplete(card, 'horizontal', row)) {
+                completedLines.push('line');
+            }
+        }
+        
+        // Verificar columnas verticales
+        for (let col = 0; col < 9; col++) {
+            if (this.isLineComplete(card, 'vertical', col)) {
+                completedLines.push('line');
+            }
+        }
+        
+        // Verificar diagonales
+        if (this.isLineComplete(card, 'diagonal', 0)) {
+            completedLines.push('line');
+        }
+        if (this.isLineComplete(card, 'diagonal', 1)) {
+            completedLines.push('line');
+        }
+        
+        // Verificar bingo completo
+        if (this.isBingoComplete(card)) {
+            completedLines.push('bingo');
+        }
+        
+        return completedLines;
+    }
+    
+    isLineComplete(card, type, index) {
+        const numbers = card.numbers;
+        let positions = [];
+        
+        switch (type) {
+            case 'horizontal':
+                positions = [index * 9, index * 9 + 1, index * 9 + 2, index * 9 + 3, index * 9 + 4, index * 9 + 5, index * 9 + 6, index * 9 + 7, index * 9 + 8];
+                break;
+            case 'vertical':
+                positions = [index, index + 9, index + 18];
+                break;
+            case 'diagonal':
+                if (index === 0) {
+                    positions = [0, 10, 20];
+                } else {
+                    positions = [2, 10, 18];
+                }
+                break;
+        }
+        
+        return positions.every(pos => {
+            const row = Math.floor(pos / 9);
+            const col = pos % 9;
+            const number = numbers[row][col];
+            return number && this.calledNumbers.includes(number);
+        });
+    }
+    
+    isBingoComplete(card) {
+        return card.numbers.flat().every(cell => {
+            if (cell === null) return true; // Espacios vacíos
+            return this.calledNumbers.includes(cell);
+        });
+    }
+    
+    endGame() {
+        console.log('🏁 Finalizando partida global...');
+        
+        this.gameState = 'finished';
+        
+        if (this.autoCallInterval) {
+            clearInterval(this.autoCallInterval);
+            this.autoCallInterval = null;
+        }
+        
+        // Guardar historial
+        this.gameHistory.push({
+            gameId: this.currentGameId,
+            startTime: this.gameStartTime,
+            endTime: new Date(),
+            calledNumbers: [...this.calledNumbers],
+            winners: [...this.winners],
+            totalPlayers: this.players.size
+        });
+        
+        // Limpiar estado
+        this.gameState = 'waiting';
+        this.currentGameId = null;
+        this.calledNumbers = [];
+        this.winners = [];
+        
+        // Programar próxima partida
+        this.scheduleNextGame();
+        
+        console.log('✅ Partida global finalizada');
+    }
+    
+    // Métodos para clientes
+    getGameState() {
+        // Contar jugadores únicos (por userId)
+        const uniquePlayers = this.players.size;
+        
+        // Contar sesiones activas (por sessionId)
+        const activeSessions = Array.from(this.players.values()).length;
+        
+        return {
+            gameState: this.gameState,
+            gameId: this.currentGameId,
+            calledNumbers: [...this.calledNumbers],
+            lastNumberCalled: this.lastNumberCalled,
+            gameStartTime: this.gameStartTime,
+            nextGameTime: this.nextGameTime,
+            currentPhase: this.currentPhase,
+            totalPlayers: uniquePlayers, // Jugadores únicos
+            activeSessions: activeSessions, // Sesiones activas
+            winners: [...this.winners]
+        };
+    }
+    
+    joinPlayer(userId, cards = []) {
+        console.log('🔍 DEBUG: joinPlayer llamado con userId:', userId);
+        console.log('🔍 DEBUG: Tipo de userId:', typeof userId);
+        console.log('🔍 DEBUG: Jugadores actuales:', Array.from(this.players.keys()));
+        
+        // Verificar si el jugador ya existe
+        if (this.players.has(userId)) {
+            // Actualizar la sesión existente
+            const existingPlayer = this.players.get(userId);
+            existingPlayer.cards = cards;
+            existingPlayer.lastSeen = new Date();
+            this.players.set(userId, existingPlayer);
+            console.log('🔄 Sesión actualizada para jugador existente:', userId);
+        } else {
+            // Crear nueva sesión
+            this.players.set(userId, {
+                cards: cards,
+                lastSeen: new Date(),
+                sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+            });
+            console.log('👤 Nuevo jugador unido al bingo global:', userId);
+        }
+        
+        console.log('📊 Total de jugadores únicos conectados:', this.players.size);
+        console.log('🔍 DEBUG: Lista completa de jugadores:', Array.from(this.players.keys()));
+    }
+    
+    updatePlayerCards(userId, cards) {
+        if (this.players.has(userId)) {
+            const playerData = this.players.get(userId);
+            playerData.cards = cards;
+            playerData.lastSeen = new Date();
+            this.players.set(userId, playerData);
+            console.log('🔄 Cartones actualizados para jugador:', userId);
+        } else {
+            console.log('⚠️ Intento de actualizar cartones para jugador inexistente:', userId);
+        }
+    }
+    
+    removePlayer(userId) {
+        this.players.delete(userId);
+        console.log('👋 Jugador salió del bingo global:', userId);
+    }
+    
+    cleanupInactivePlayers() {
+        const now = new Date();
+        const inactiveThreshold = 5 * 60 * 1000; // 5 minutos
+        
+        for (const [userId, playerData] of this.players) {
+            if (now - playerData.lastSeen > inactiveThreshold) {
+                this.removePlayer(userId);
+            }
+        }
+    }
+}
+
+// Instancia global del bingo
+const globalBingo = new GlobalBingoGame();
+
+// Limpiar jugadores inactivos cada minuto
+setInterval(() => {
+    globalBingo.cleanupInactivePlayers();
+}, 60 * 1000);
+
 // Rate limiting simple (sin dependencias externas)
 class RateLimiter {
     constructor(windowMs, max) {
@@ -42,8 +416,8 @@ class RateLimiter {
 }
 
 // Configurar rate limiting
-const loginLimiter = new RateLimiter(15 * 60 * 1000, 5); // 15 minutos, 5 intentos
-const apiLimiter = new RateLimiter(15 * 60 * 1000, 100); // 15 minutos, 100 requests
+const loginLimiter = new RateLimiter(1 * 60 * 1000, 20); // 1 minuto, 20 intentos (menos restrictivo)
+const apiLimiter = new RateLimiter(1 * 60 * 1000, 200); // 1 minuto, 200 requests (menos restrictivo)
 
 // Middleware de rate limiting
 function rateLimitMiddleware(limiter) {
@@ -756,6 +1130,162 @@ app.post('/api/verification/verify', rateLimitMiddleware(loginLimiter), async (r
     }
 });
 
+// ========================================
+// APIS DE BINGO GLOBAL
+// ========================================
+
+// API para obtener el estado actual del juego global
+app.get('/api/bingo/state', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const gameState = globalBingo.getGameState();
+        res.json({
+            success: true,
+            gameState: gameState
+        });
+    } catch (error) {
+        console.error('Error obteniendo estado del bingo global:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error obteniendo estado del juego'
+        });
+    }
+});
+
+// API para unirse al juego global
+app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const { userId, cards } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'userId es requerido'
+            });
+        }
+        
+        globalBingo.joinPlayer(userId, cards || []);
+        
+        res.json({
+            success: true,
+            message: 'Jugador unido al bingo global',
+            gameState: globalBingo.getGameState()
+        });
+    } catch (error) {
+        console.error('Error uniendo jugador al bingo global:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error uniendo al juego'
+        });
+    }
+});
+
+// API para actualizar cartones del jugador
+app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const { userId, cards } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'userId es requerido'
+            });
+        }
+        
+        globalBingo.updatePlayerCards(userId, cards || []);
+        
+        res.json({
+            success: true,
+            message: 'Cartones actualizados'
+        });
+    } catch (error) {
+        console.error('Error actualizando cartones:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error actualizando cartones'
+        });
+    }
+});
+
+// API para salir del juego global
+app.post('/api/bingo/leave', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'userId es requerido'
+            });
+        }
+        
+        globalBingo.removePlayer(userId);
+        
+        res.json({
+            success: true,
+            message: 'Jugador salió del bingo global'
+        });
+    } catch (error) {
+        console.error('Error sacando jugador del bingo global:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error saliendo del juego'
+        });
+    }
+});
+
+// API para obtener estadísticas del juego global
+app.get('/api/bingo/stats', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const stats = {
+            totalPlayers: globalBingo.players.size,
+            gameHistory: globalBingo.gameHistory.length,
+            currentGameId: globalBingo.currentGameId,
+            gameState: globalBingo.gameState,
+            calledNumbersCount: globalBingo.calledNumbers.length,
+            currentPhase: globalBingo.currentPhase,
+            lastNumberCalled: globalBingo.lastNumberCalled,
+            winnersCount: globalBingo.winners.length
+        };
+        
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Error obteniendo estadísticas del bingo global:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error obteniendo estadísticas'
+        });
+    }
+});
+
+// API para forzar inicio de nueva partida (solo para testing)
+app.post('/api/bingo/force-start', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        if (globalBingo.gameState === 'waiting') {
+            globalBingo.startNewGame();
+            res.json({
+                success: true,
+                message: 'Nueva partida forzada',
+                gameState: globalBingo.getGameState()
+            });
+        } else {
+            res.json({
+                success: false,
+                message: 'No se puede forzar inicio, juego en curso',
+                gameState: globalBingo.getGameState()
+            });
+        }
+    } catch (error) {
+        console.error('Error forzando inicio de partida:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error forzando inicio'
+        });
+    }
+});
+
 // Manejo de errores
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -764,8 +1294,9 @@ app.use((err, req, res, next) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🚀 SpainBingo servidor ejecutándose en puerto ${PORT}`);
+    console.log(`🚀 Servidor SpainBingo iniciado en puerto ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
+    console.log(`🎮 Bingo Global inicializado`);
 });
 
 module.exports = app;
