@@ -3148,13 +3148,9 @@ class BingoPro {
             
             // Botones de monto
             else if (e.target.classList.contains('amount-btn')) {
-                document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                const amount = e.target.dataset.amount;
-                const depositAmountElement = document.getElementById('depositAmount');
-                if (depositAmountElement) {
-                    depositAmountElement.textContent = amount;
-                }
+                const amount = parseFloat(e.target.dataset.amount);
+                console.log('Botón monto clickeado:', amount);
+                this.selectAmount(amount);
             }
             
             // Métodos de pago
@@ -3171,14 +3167,14 @@ class BingoPro {
             } else if (e.target.closest('#winModal .btn-confirm')) {
                 this.closeModal('winModal');
             } else if (e.target.closest('#calledNumbersModal .btn-confirm')) {
-                this.closeModal('calledNumbersModal');
+                this.closeCalledNumbersModal();
             } else if (e.target.closest('#bingoCardsModal .btn-confirm')) {
                 this.closeBingoCardsModal();
             }
             
             // Botones de cerrar modal (X)
             else if (e.target.closest('#calledNumbersModal .modal-close')) {
-                this.closeModal('calledNumbersModal');
+                this.closeCalledNumbersModal();
             } else if (e.target.closest('#depositModal .modal-close')) {
                 this.closeModal('depositModal');
             }
@@ -5039,6 +5035,268 @@ class BingoPro {
         if (this.gamificationSystem) {
             this.gamificationSystem.updateMissionProgress('messagesPosted', 1);
         }
+    }
+
+    /**
+     * 🔧 FUNCIONES FALTANTES PARA BOTONES REPARADOS
+     */
+    
+    showGameStats() {
+        console.log('📊 Mostrando estadísticas del juego');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-chart-bar"></i> Estadísticas del Juego</h3>
+                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-value">${this.gameHistory?.length || 0}</span>
+                                <span class="stat-label">Partidas Jugadas</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-value">${this.gameHistory?.filter(g => g.won).length || 0}</span>
+                                <span class="stat-label">Victorias</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-value">${this.calculateWinRate()}%</span>
+                                <span class="stat-label">Tasa de Victoria</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-value">€${this.userBalance?.toFixed(2) || '0.00'}</span>
+                                <span class="stat-label">Balance Actual</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="current-game-stats">
+                        <h4>Partida Actual</h4>
+                        <div class="current-stats">
+                            <div class="current-stat">
+                                <span class="label">Números Llamados:</span>
+                                <span class="value">${this.callHistory?.length || 0}</span>
+                            </div>
+                            <div class="current-stat">
+                                <span class="label">Cartones Activos:</span>
+                                <span class="value">${this.selectedCards?.length || 0}</span>
+                            </div>
+                            <div class="current-stat">
+                                <span class="label">Estado:</span>
+                                <span class="value">${this.gameState || 'Esperando'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    showHelpModal() {
+        console.log('❓ Mostrando ayuda');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-question-circle"></i> Ayuda del Juego</h3>
+                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="help-sections">
+                        <div class="help-section">
+                            <h4><i class="fas fa-gamepad"></i> Controles del Juego</h4>
+                            <ul>
+                                <li><strong>Llamar Número:</strong> Canta el siguiente número en la secuencia</li>
+                                <li><strong>Auto Play:</strong> Activa el juego automático</li>
+                                <li><strong>Nuevo Juego:</strong> Inicia una nueva partida</li>
+                                <li><strong>Ver Números:</strong> Muestra todos los números ya llamados</li>
+                            </ul>
+                        </div>
+                        <div class="help-section">
+                            <h4><i class="fas fa-trophy"></i> Cómo Ganar</h4>
+                            <ul>
+                                <li><strong>Línea:</strong> Marca una línea completa (horizontal, vertical o diagonal)</li>
+                                <li><strong>Bingo:</strong> Marca todos los números de un cartón</li>
+                                <li><strong>Múltiples Cartones:</strong> Juega con varios cartones para más oportunidades</li>
+                            </ul>
+                        </div>
+                        <div class="help-section">
+                            <h4><i class="fas fa-star"></i> Modos de Juego</h4>
+                            <ul>
+                                <li><strong>Clásico:</strong> Bingo tradicional de 2 minutos</li>
+                                <li><strong>Rápido:</strong> Partidas aceleradas de 1 minuto</li>
+                                <li><strong>VIP:</strong> Experiencia premium con mejores premios</li>
+                                <li><strong>Nocturno:</strong> Especial para horarios nocturnos</li>
+                            </ul>
+                        </div>
+                        <div class="help-section">
+                            <h4><i class="fas fa-coins"></i> Sistema de Premios</h4>
+                            <ul>
+                                <li>Los premios varían según el modo de juego</li>
+                                <li>El bote global se acumula entre todas las partidas</li>
+                                <li>Los miembros VIP reciben bonificaciones especiales</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    selectGameMode(mode) {
+        console.log('🎮 Seleccionando modo de juego:', mode);
+        
+        // Actualizar modo actual
+        this.currentGameMode = mode;
+        
+        // Actualizar display
+        const currentModeElement = document.getElementById('currentGameMode');
+        if (currentModeElement) {
+            const modeNames = {
+                'CLASSIC': 'Bingo Clásico',
+                'RAPID': 'Bingo Rápido', 
+                'VIP': 'Bingo VIP',
+                'NIGHT': 'Bingo Nocturno'
+            };
+            currentModeElement.textContent = modeNames[mode] || mode;
+        }
+        
+        // Actualizar precios según el modo
+        const modePrices = {
+            'CLASSIC': 1.00,
+            'RAPID': 1.50,
+            'VIP': 3.00,
+            'NIGHT': 2.00
+        };
+        
+        this.cardPrice = modePrices[mode] || 1.00;
+        this.updateCardPriceDisplay();
+        
+        // Mostrar notificación
+        this.showNotification(`Modo ${modeNames[mode] || mode} seleccionado`, 'success');
+        
+        // Activar botón de unirse si es posible
+        const joinBtn = document.getElementById('joinGameBtn');
+        if (joinBtn) {
+            joinBtn.disabled = false;
+            joinBtn.style.opacity = '1';
+        }
+        
+        // Actualizar estadísticas del modo
+        this.updateModeStatistics(mode);
+        
+        // Guardar preferencia
+        try {
+            localStorage.setItem('bingoroyal_preferred_mode', mode);
+        } catch (error) {
+            console.log('⚠️ Error guardando modo preferido:', error);
+        }
+    }
+    
+    updateModeStatistics(mode) {
+        // Simular estadísticas por modo
+        const modeStats = {
+            'CLASSIC': { players: 1247, prize: 500 },
+            'RAPID': { players: 892, prize: 750 },
+            'VIP': { players: 345, prize: 1500 },
+            'NIGHT': { players: 567, prize: 800 }
+        };
+        
+        const stats = modeStats[mode] || modeStats['CLASSIC'];
+        
+        // Actualizar display de jugadores activos
+        const playersElements = document.querySelectorAll('#activePlayers');
+        playersElements.forEach(el => {
+            if (el) el.textContent = stats.players.toLocaleString();
+        });
+        
+        // Actualizar premio actual
+        const prizeElements = document.querySelectorAll('#currentPrize, #currentPrizeRight');
+        prizeElements.forEach(el => {
+            if (el) el.textContent = `€${stats.prize}`;
+        });
+    }
+    
+    showCalledNumbersModal() {
+        console.log('📋 Mostrando números llamados');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-list"></i> Números Llamados</h3>
+                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="called-numbers-grid">
+                        ${this.callHistory?.length > 0 ? 
+                            this.callHistory.map(num => `
+                                <div class="called-number">
+                                    <span class="number">${num}</span>
+                                    <span class="letter">${this.getNumberLetter(num)}</span>
+                                </div>
+                            `).join('') :
+                            '<div class="no-numbers">No se han llamado números aún</div>'
+                        }
+                    </div>
+                    <div class="numbers-stats">
+                        <div class="stat">
+                            <span class="label">Total Llamados:</span>
+                            <span class="value">${this.callHistory?.length || 0}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Último Número:</span>
+                            <span class="value">${this.lastNumberCalled || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    getNumberLetter(number) {
+        if (number >= 1 && number <= 15) return 'B';
+        if (number >= 16 && number <= 30) return 'I';
+        if (number >= 31 && number <= 45) return 'N';
+        if (number >= 46 && number <= 60) return 'G';
+        if (number >= 61 && number <= 75) return 'O';
+        return '';
     }
 }
 

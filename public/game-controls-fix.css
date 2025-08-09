@@ -1,0 +1,315 @@
+/* ===== ESTILOS PARA CONTROLES DEL JUEGO REPARADOS ===== */
+
+.game-controls-section {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    margin: var(--spacing-lg) 0;
+    overflow: hidden;
+    backdrop-filter: var(--glass-backdrop);
+    box-shadow: var(--shadow-strong);
+}
+
+.controls-container {
+    padding: var(--spacing-lg);
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--premium-gold);
+}
+
+.controls-header h3 {
+    color: var(--premium-gold);
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0;
+}
+
+.game-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.status-text {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-icon.waiting {
+    background: #ffa500;
+    animation: pulse 2s infinite;
+}
+
+.status-icon.active {
+    background: #00ff00;
+}
+
+.status-icon.finished {
+    background: #ff6b6b;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* CONTROLES PRINCIPALES */
+.main-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.main-action-btn,
+.secondary-action-btn,
+.action-btn {
+    background: var(--glass-bg-strong);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    color: white;
+    text-align: left;
+    min-height: 80px;
+}
+
+.main-action-btn {
+    background: var(--gradient-gold);
+    color: var(--premium-royal-blue-dark);
+    border-color: var(--premium-gold);
+    font-weight: 700;
+}
+
+.main-action-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+}
+
+.secondary-action-btn,
+.action-btn {
+    background: var(--premium-royal-blue);
+    border-color: var(--premium-royal-blue-light);
+}
+
+.secondary-action-btn:hover,
+.action-btn:hover {
+    transform: translateY(-2px);
+    background: var(--premium-royal-blue-light);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-icon {
+    font-size: 1.8rem;
+    min-width: 40px;
+    text-align: center;
+}
+
+.btn-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.btn-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.btn-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+/* CONTROLES SECUNDARIOS */
+.secondary-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    border-color: var(--premium-gold);
+}
+
+.control-btn i {
+    font-size: 1rem;
+}
+
+/* ESTADOS DESHABILITADOS */
+.main-action-btn:disabled,
+.secondary-action-btn:disabled,
+.action-btn:disabled,
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    background: rgba(128, 128, 128, 0.3) !important;
+    border-color: rgba(128, 128, 128, 0.5) !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .main-controls {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .main-action-btn,
+    .secondary-action-btn,
+    .action-btn {
+        padding: var(--spacing-md);
+        min-height: 60px;
+    }
+    
+    .btn-icon {
+        font-size: 1.5rem;
+        min-width: 30px;
+    }
+    
+    .btn-title {
+        font-size: 1rem;
+    }
+    
+    .btn-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .secondary-controls {
+        justify-content: center;
+    }
+    
+    .control-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .controls-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+    }
+    
+    .secondary-controls {
+        flex-direction: column;
+    }
+    
+    .control-btn {
+        justify-content: center;
+        padding: var(--spacing-md);
+    }
+}
+
+/* ANIMACIONES DE FEEDBACK */
+.btn-call.calling {
+    animation: callPulse 0.5s ease-in-out;
+}
+
+.btn-auto.active {
+    background: var(--gradient-success) !important;
+    box-shadow: var(--shadow-glow);
+}
+
+.btn-auto.active .btn-icon {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes callPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* INDICADORES VISUALES */
+.main-controls .btn-call::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #00ff00;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.main-controls .btn-call.ready::after {
+    opacity: 1;
+    animation: pulse 1.5s infinite;
+}
+
+/* TOOLTIPS MEJORADOS */
+.main-action-btn,
+.secondary-action-btn,
+.action-btn,
+.control-btn {
+    position: relative;
+}
+
+.main-action-btn[data-tooltip]:hover::before,
+.secondary-action-btn[data-tooltip]:hover::before,
+.action-btn[data-tooltip]:hover::before,
+.control-btn[data-tooltip]:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: var(--spacing-xs);
+} 
