@@ -393,6 +393,11 @@ class BingoPro {
         // 🚀 FASE 2: Inicializar Sistema de Torneos
         this.initializeTournamentSystem();
         
+        // 🔧 REPARAR: Configurar event listeners faltantes
+        setTimeout(() => {
+            this.setupMissingEventListeners();
+        }, 1500);
+        
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
         
@@ -5297,6 +5302,222 @@ class BingoPro {
         if (number >= 46 && number <= 60) return 'G';
         if (number >= 61 && number <= 75) return 'O';
         return '';
+    }
+
+    /**
+     * 🛒 MÉTODO BUYCARDS FALTANTE - Wrapper para purchaseCards
+     */
+    buyCards(quantity) {
+        console.log('🛒 buyCards llamado con cantidad:', quantity);
+        return this.purchaseCards(quantity);
+    }
+
+    /**
+     * 🎮 MÉTODO JOINGAME FALTANTE 
+     */
+    joinGame() {
+        console.log('🎮 Uniéndose al juego...');
+        
+        if (this.selectedCards.length === 0) {
+            this.showNotification('⚠️ Necesitas cartones para unirte al juego', 'warning');
+            return false;
+        }
+        
+        this.isPlayerJoined = true;
+        this.gameState = 'waiting';
+        
+        // Actualizar UI
+        const joinBtn = document.getElementById('joinGameBtn');
+        if (joinBtn) {
+            joinBtn.textContent = 'Esperando...';
+            joinBtn.disabled = true;
+        }
+        
+        this.showNotification('✅ Te has unido al próximo juego', 'success');
+        this.addChatMessage('system', '🎮 Te has unido al próximo juego');
+        
+        // Simular inicio de juego en 5 segundos
+        setTimeout(() => {
+            this.startNewGame();
+        }, 5000);
+        
+        return true;
+    }
+
+    /**
+     * 🔧 REPARAR EVENT LISTENERS FALTANTES
+     */
+    setupMissingEventListeners() {
+        console.log('🔧 Configurando event listeners faltantes...');
+        
+        // Botón comprar cartones
+        const buyCardsBtn = document.querySelector('.btn-buy-cards');
+        if (buyCardsBtn) {
+            buyCardsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🛒 Botón comprar cartones clickeado (event listener)');
+                const quantityInput = document.getElementById('cardQuantity');
+                const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+                this.buyCards(quantity);
+            });
+            console.log('✅ Event listener agregado a btn-buy-cards');
+        }
+        
+        // Botón unirse al juego
+        const joinGameBtn = document.getElementById('joinGameBtn');
+        if (joinGameBtn) {
+            joinGameBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🎮 Botón unirse al juego clickeado (event listener)');
+                this.joinGame();
+            });
+            console.log('✅ Event listener agregado a joinGameBtn');
+        }
+        
+        // Botones de cantidad
+        document.querySelectorAll('.btn-quantity').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const delta = btn.textContent === '+' ? 1 : -1;
+                const quantityInput = document.getElementById('cardQuantity');
+                if (quantityInput) {
+                    let newValue = parseInt(quantityInput.value) + delta;
+                    newValue = Math.max(1, Math.min(20, newValue));
+                    quantityInput.value = newValue;
+                }
+                console.log('🔢 Cantidad actualizada:', quantityInput?.value);
+            });
+        });
+        
+        // Botones de paquetes premium
+        document.querySelectorAll('.btn-buy-modern').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const packageType = btn.dataset.package;
+                console.log('📦 Paquete seleccionado:', packageType);
+                this.buyPackage(packageType);
+            });
+        });
+        
+        // Botones de acciones rápidas
+        document.querySelectorAll('.btn-action-small').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = btn.textContent.trim();
+                console.log('⚡ Acción rápida:', action);
+                
+                if (action === 'Comprar') {
+                    this.buyCards(1);
+                } else if (action === 'Mezclar') {
+                    this.shuffleCards();
+                } else if (action === 'Ver') {
+                    window.open('analytics.html', '_blank');
+                }
+            });
+        });
+        
+        // Botones de filtro de historial
+        document.querySelectorAll('.filter-btn-modern').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.filter-btn-modern').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+                console.log('🔍 Filtro aplicado:', filter);
+                this.filterHistory(filter);
+            });
+        });
+        
+        console.log('✅ Event listeners faltantes configurados');
+    }
+
+    /**
+     * 🔀 Método para mezclar cartones
+     */
+    shuffleCards() {
+        if (this.userCards.length === 0) {
+            this.showNotification('⚠️ No tienes cartones para mezclar', 'warning');
+            return;
+        }
+        
+        // Mezclar array de cartones
+        for (let i = this.userCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.userCards[i], this.userCards[j]] = [this.userCards[j], this.userCards[i]];
+        }
+        
+        this.renderCards();
+        this.showNotification('🔀 Cartones mezclados', 'success');
+        console.log('🔀 Cartones mezclados exitosamente');
+    }
+
+    /**
+     * 🔍 Método para filtrar historial
+     */
+    filterHistory(filter) {
+        console.log('🔍 Filtrando historial por:', filter);
+        
+        let filteredHistory = this.gameHistory || [];
+        
+        switch (filter) {
+            case 'wins':
+                filteredHistory = filteredHistory.filter(game => game.won);
+                break;
+            case 'purchases':
+                filteredHistory = filteredHistory.filter(game => game.type === 'purchase');
+                break;
+            case 'deposits':
+                filteredHistory = filteredHistory.filter(game => game.type === 'deposit');
+                break;
+            case 'withdrawals':
+                filteredHistory = filteredHistory.filter(game => game.type === 'withdrawal');
+                break;
+            default:
+                // 'all' - mostrar todo
+                break;
+        }
+        
+        this.renderFilteredHistory(filteredHistory);
+    }
+
+    /**
+     * 📋 Renderizar historial filtrado
+     */
+    renderFilteredHistory(history) {
+        const historyList = document.getElementById('historyList');
+        if (!historyList) return;
+        
+        if (history.length === 0) {
+            historyList.innerHTML = '<div class="no-history">No hay elementos que coincidan con el filtro</div>';
+            return;
+        }
+        
+        historyList.innerHTML = history.map(item => `
+            <div class="history-item">
+                <div class="history-icon">
+                    <i class="fas ${this.getHistoryIcon(item)}"></i>
+                </div>
+                <div class="history-content">
+                    <h5>${item.title || 'Partida de Bingo'}</h5>
+                    <p>${item.description || `Jugada el ${new Date(item.date).toLocaleDateString()}`}</p>
+                    <span class="history-date">${new Date(item.date).toLocaleString()}</span>
+                </div>
+                <div class="history-result ${item.won ? 'win' : 'loss'}">
+                    ${item.won ? '+€' + item.winnings : '-€' + item.cost}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * 🎨 Obtener icono para historial
+     */
+    getHistoryIcon(item) {
+        if (item.won) return 'fa-trophy';
+        if (item.type === 'purchase') return 'fa-shopping-cart';
+        if (item.type === 'deposit') return 'fa-plus-circle';
+        if (item.type === 'withdrawal') return 'fa-minus-circle';
+        return 'fa-gamepad';
     }
 }
 
