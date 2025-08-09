@@ -4949,6 +4949,97 @@ class BingoPro {
             console.error('❌ Error registrando compra:', error);
         }
     }
+
+    /**
+     * 🚀 FASE 2: Inicializar Sistema de Gamificación
+     */
+    initializeGamificationSystem() {
+        try {
+            console.log('🎯 Inicializando Sistema de Gamificación...');
+            if (window.GamificationSystem) {
+                this.gamificationSystem = new GamificationSystem(this);
+                console.log('✅ Gamification System inicializado correctamente');
+            } else {
+                console.log('⚠️ GamificationSystem no disponible, cargando después...');
+                setTimeout(() => {
+                    if (window.GamificationSystem) {
+                        this.gamificationSystem = new GamificationSystem(this);
+                        console.log('✅ Gamification System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Gamification System:', error);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Eventos de juego para sistemas premium
+     */
+    onGameEvent(eventType, data = {}) {
+        // Notificar al sistema de gamificación
+        if (this.gamificationSystem) {
+            this.gamificationSystem.onGameEvent?.(eventType, data);
+        }
+        
+        // Notificar al sistema VIP
+        if (this.advancedVipSystem) {
+            this.advancedVipSystem.onGameEvent?.(eventType, data);
+        }
+        
+        // Notificar al sistema de torneos
+        if (this.tournamentSystem) {
+            this.tournamentSystem.onGameEvent?.(eventType, data);
+        }
+        
+        console.log(`🎮 Evento de juego: ${eventType}`, data);
+    }
+
+    /**
+     * 🚀 FASE 2: Notificar victoria
+     */
+    onGameWin(winData) {
+        this.onGameEvent('game_won', winData);
+        
+        // Actualizar progreso de misiones
+        if (this.gamificationSystem) {
+            this.gamificationSystem.updateMissionProgress('gamesWon', 1);
+            this.gamificationSystem.checkAchievements();
+        }
+        
+        // Registrar para sistema VIP
+        if (this.advancedVipSystem) {
+            this.advancedVipSystem.onGameWin?.(winData);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Notificar inicio de juego
+     */
+    onGameStart() {
+        this.onGameEvent('game_started', {
+            mode: this.currentGameMode,
+            cardCount: this.selectedCards.length,
+            cardPrice: this.cardPrice
+        });
+        
+        // Actualizar progreso de misiones
+        if (this.gamificationSystem) {
+            this.gamificationSystem.updateMissionProgress('gamesPlayed', 1);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Notificar mensaje de chat
+     */
+    onChatMessage(message) {
+        this.onGameEvent('message_sent', { message });
+        
+        // Actualizar progreso de misiones
+        if (this.gamificationSystem) {
+            this.gamificationSystem.updateMissionProgress('messagesPosted', 1);
+        }
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
