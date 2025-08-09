@@ -1,0 +1,505 @@
+/* ===== ESTILOS ADAPTATIVOS POR DISPOSITIVO BINGOROYAL ===== */
+
+/* Variables base para diferentes dispositivos */
+:root {
+    /* Desktop variables */
+    --desktop-sidebar-width: 300px;
+    --desktop-header-height: 80px;
+    --desktop-spacing: 24px;
+    --desktop-font-base: 16px;
+    --desktop-card-width: 280px;
+    
+    /* Tablet variables */
+    --tablet-spacing: 20px;
+    --tablet-font-base: 16px;
+    --tablet-card-width: 240px;
+    
+    /* Mobile variables */
+    --mobile-spacing: 12px;
+    --mobile-font-base: 14px;
+    --mobile-card-width: 100%;
+}
+
+/* ===== ESTILOS BASE PARA DESKTOP ===== */
+.device-desktop {
+    /* Layout desktop por defecto */
+    
+    /* Header desktop */
+    .main-header {
+        height: var(--desktop-header-height);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--desktop-spacing);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Layout de juego desktop */
+    .game-layout {
+        display: grid;
+        grid-template-columns: var(--desktop-sidebar-width) 1fr var(--desktop-sidebar-width);
+        gap: var(--desktop-spacing);
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--desktop-spacing);
+    }
+    
+    /* Navegación horizontal en desktop */
+    .nav-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: var(--desktop-spacing);
+    }
+    
+    .nav-tab {
+        padding: 12px 24px;
+        font-size: var(--desktop-font-base);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .nav-tab:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Cartones en grid para desktop */
+    .cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(var(--desktop-card-width), 1fr));
+        gap: var(--desktop-spacing);
+        padding: var(--desktop-spacing);
+    }
+    
+    /* Chat lateral en desktop */
+    .chat-section-fixed {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 350px;
+        height: 500px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    /* Estadísticas en sidebar */
+    .stats-sidebar {
+        display: block;
+        padding: var(--desktop-spacing);
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        height: fit-content;
+        position: sticky;
+        top: calc(var(--desktop-header-height) + 20px);
+    }
+    
+    /* Tooltips solo en desktop */
+    .tooltip {
+        position: relative;
+        cursor: help;
+    }
+    
+    .tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1000;
+    }
+    
+    /* Elementos solo desktop */
+    .desktop-only {
+        display: block !important;
+    }
+    
+    .mobile-only {
+        display: none !important;
+    }
+}
+
+/* ===== ESTILOS PARA TABLET ===== */
+.device-tablet {
+    
+    /* Layout híbrido para tablet */
+    .game-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--tablet-spacing);
+        padding: var(--tablet-spacing);
+    }
+    
+    .header-content {
+        padding: 0 var(--tablet-spacing);
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    /* Navegación adaptativa en tablet */
+    .nav-tabs {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 12px;
+        padding: 8px 0;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tab {
+        flex: 0 0 auto;
+        min-width: 120px;
+        padding: 10px 20px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Cartones en grid 2 columnas para tablet */
+    .cards-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--tablet-spacing);
+        padding: var(--tablet-spacing);
+    }
+    
+    /* Chat adaptado para tablet */
+    .chat-section-fixed {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 320px;
+        height: 400px;
+        border-radius: 12px;
+    }
+    
+    /* Estadísticas compactas */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--tablet-spacing);
+    }
+}
+
+/* ===== ORIENTACIÓN TABLET LANDSCAPE ===== */
+.device-tablet.orientation-landscape {
+    
+    /* En landscape, tablet se comporta más como desktop */
+    .game-layout {
+        grid-template-columns: 250px 1fr 250px;
+        gap: var(--tablet-spacing);
+    }
+    
+    .cards-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .nav-tabs {
+        justify-content: center;
+        overflow: visible;
+    }
+    
+    .stats-sidebar {
+        display: block;
+    }
+}
+
+/* ===== ESTILOS PARA MÓVIL ===== */
+.device-mobile {
+    
+    /* Layout móvil completo */
+    .game-layout {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mobile-spacing);
+        padding: var(--mobile-spacing);
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--mobile-spacing);
+        padding: var(--mobile-spacing);
+    }
+    
+    /* Navegación móvil con scroll horizontal */
+    .nav-tabs {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+        padding: 8px 0;
+        margin: 0 calc(-1 * var(--mobile-spacing));
+        padding-left: var(--mobile-spacing);
+        padding-right: var(--mobile-spacing);
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tab {
+        flex: 0 0 auto;
+        min-width: 100px;
+        padding: 8px 16px;
+        font-size: var(--mobile-font-base);
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Cartones en columna única */
+    .cards-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mobile-spacing);
+        padding: var(--mobile-spacing);
+    }
+    
+    .bingo-card {
+        width: 100%;
+        max-width: var(--mobile-card-width);
+        margin: 0 auto;
+    }
+    
+    /* Chat fullscreen en móvil */
+    .chat-section-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        height: 60vh;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .chat-section-fixed.active {
+        transform: translateY(0);
+    }
+    
+    /* Estadísticas en grid compacto */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--mobile-spacing);
+        font-size: var(--mobile-font-base);
+    }
+    
+    /* Sidebar oculto en móvil */
+    .stats-sidebar {
+        display: none;
+    }
+    
+    /* Elementos específicos móvil */
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .desktop-only {
+        display: none !important;
+    }
+    
+    /* Menú hamburguesa visible */
+    .mobile-menu-toggle {
+        display: block !important;
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+    }
+}
+
+/* ===== OPTIMIZACIONES POR CAPACIDADES ===== */
+
+/* Dispositivos con touch */
+.touch-device {
+    
+    /* Elementos táctiles más grandes */
+    .btn, .nav-tab, .bingo-card .number {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Desactivar hover en touch */
+    .btn:hover,
+    .nav-tab:hover {
+        transform: none;
+    }
+    
+    /* Estados active para feedback táctil */
+    .btn:active,
+    .nav-tab:active,
+    .bingo-card .number:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+}
+
+/* Dispositivos sin touch (desktop) */
+.no-touch {
+    
+    /* Habilitar todos los efectos hover */
+    .hover-enabled .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .hover-enabled .bingo-card .number:hover {
+        transform: scale(1.1);
+        border-color: var(--secondary-color);
+    }
+    
+    /* Cursor personalizado */
+    .bingo-card .number {
+        cursor: pointer;
+    }
+    
+    .btn {
+        cursor: pointer;
+    }
+}
+
+/* ===== OPTIMIZACIONES POR PERFORMANCE ===== */
+
+/* Dispositivos de gama baja */
+.device-mobile.low-performance {
+    
+    /* Reducir animaciones */
+    * {
+        animation-duration: 0.1s !important;
+        transition-duration: 0.1s !important;
+    }
+    
+    /* Desactivar efectos costosos */
+    .glow-effect,
+    .pulse-effect {
+        animation: none !important;
+    }
+    
+    /* Simplificar sombras */
+    .card,
+    .btn,
+    .modal-content {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Gradientes simples */
+    .gradient {
+        background: var(--primary-color) !important;
+    }
+}
+
+/* Pantallas retina */
+.retina {
+    
+    /* Bordes más finos en retina */
+    .border {
+        border-width: 0.5px;
+    }
+    
+    /* Textos más nítidos */
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* ===== CONEXIÓN LENTA ===== */
+.slow-connection {
+    
+    /* Preload reducido */
+    img {
+        loading: lazy;
+    }
+    
+    /* Animaciones mínimas */
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    /* Simplificar efectos visuales */
+    .visual-effect {
+        display: none !important;
+    }
+}
+
+/* ===== MODO AHORRO DE DATOS ===== */
+.save-data {
+    
+    /* Ocultar imágenes no esenciales */
+    .decorative-image {
+        display: none;
+    }
+    
+    /* Simplificar fondos */
+    .background-image {
+        background: var(--bg-primary) !important;
+    }
+    
+    /* Reducir efectos */
+    .expensive-effect {
+        display: none !important;
+    }
+}
+
+/* ===== ORIENTACIÓN ESPECÍFICA ===== */
+
+/* Portrait móvil */
+.device-mobile.orientation-portrait {
+    
+    /* Aprovechar altura en portrait */
+    .main-content {
+        min-height: calc(100vh - 80px);
+    }
+    
+    /* Chat más alto en portrait */
+    .chat-section-fixed {
+        height: 70vh;
+    }
+}
+
+/* Landscape móvil */
+.device-mobile.orientation-landscape {
+    
+    /* Compactar header en landscape */
+    .header-content {
+        padding: 8px var(--mobile-spacing);
+    }
+    
+    .hero-section {
+        padding: var(--mobile-spacing);
+        margin-bottom: var(--mobile-spacing);
+    }
+    
+    /* Chat más bajo en landscape */
+    .chat-section-fixed {
+        height: 50vh;
+    }
+    
+    /* Cartones más compactos */
+    .bingo-card .number {
+        min-height: 32px;
+        min-width: 32px;
+        font-size: 13px;
+    }
+} 

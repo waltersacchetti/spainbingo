@@ -1,0 +1,584 @@
+/* ===== OPTIMIZACIONES MÓVILES PARA BINGOROYAL (SIN AFECTAR DESKTOP) ===== */
+
+/* Variables específicas para móvil */
+:root {
+    --mobile-min-touch: 44px; /* Mínimo recomendado por Apple/Google */
+    --mobile-spacing: 12px;
+    --mobile-font-base: 16px;
+    --mobile-font-small: 14px;
+    --mobile-font-large: 18px;
+}
+
+/* SOLO aplicar en dispositivos móviles (max-width: 768px) */
+/* DESKTOP: Preservar layout original */
+@media (min-width: 769px) {
+    /* Asegurar que desktop mantenga layout original */
+    .header-content {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+    
+    .user-section {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-lg, 24px) !important;
+    }
+    
+    .balance-section {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-md, 16px) !important;
+    }
+    
+    /* Ocultar menú móvil en desktop */
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+}
+
+/* MÓVIL: Aplicar optimizaciones solo cuando sea necesario */
+@media (max-width: 768px) {
+    
+    /* Prevenir zoom accidental y mejorar performance SOLO EN MÓVIL */
+    * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Permitir selección en campos de texto */
+    input, textarea, [contenteditable] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+
+    /* ===== OPTIMIZACIONES PARA TÁCTIL ===== */
+    
+    /* Botones principales */
+    .btn, button, .nav-tab, .mode-btn {
+        min-height: var(--mobile-min-touch) !important;
+        min-width: var(--mobile-min-touch) !important;
+        padding: 12px 16px !important;
+        font-size: var(--mobile-font-base) !important;
+        border-radius: 8px !important;
+        touch-action: manipulation;
+    }
+    
+    /* Botones de acción principales */
+    .btn-primary, .btn-secondary, .btn-success {
+        min-height: 50px !important;
+        font-size: var(--mobile-font-large) !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Navegación por pestañas */
+    .nav-tabs {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 8px 0 !important;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tab {
+        flex: 0 0 auto;
+        margin-right: 8px !important;
+        white-space: nowrap;
+        min-width: 120px !important;
+        text-align: center;
+    }
+    
+    /* Headers y títulos - SOLO EN MÓVIL */
+    .header-content {
+        flex-direction: column !important;
+        gap: var(--mobile-spacing) !important;
+        text-align: center !important;
+        padding: var(--mobile-spacing) !important;
+        min-height: 60px !important;
+    }
+    
+    .logo-section {
+        margin-bottom: var(--mobile-spacing) !important;
+    }
+    
+    .logo {
+        font-size: 1.5rem !important;
+    }
+    
+    /* User section en móvil */
+    .user-section {
+        flex-direction: column !important;
+        gap: var(--mobile-spacing) !important;
+    }
+    
+    /* User info en móvil */
+    .user-info {
+        padding: 8px 12px !important;
+    }
+    
+    /* Balance section móvil */
+    .balance-section {
+        flex-direction: column !important;
+        gap: var(--mobile-spacing) !important;
+    }
+    
+    /* Controles de juego */
+    .game-controls {
+        padding: var(--mobile-spacing) !important;
+        gap: var(--mobile-spacing) !important;
+    }
+    
+    .control-btn {
+        min-height: var(--mobile-min-touch) !important;
+        padding: 12px 20px !important;
+        font-size: var(--mobile-font-base) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Estadísticas y números llamados */
+    .stats-grid,
+    .hero-stats {
+        grid-template-columns: 1fr 1fr !important;
+        gap: var(--mobile-spacing) !important;
+    }
+    
+    .stat-card,
+    .stat-item {
+        padding: var(--mobile-spacing) !important;
+        min-height: 60px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+    }
+    
+    .stat-label {
+        font-size: var(--mobile-font-small) !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Números llamados */
+    .called-numbers-container {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    .called-number {
+        min-height: 40px !important;
+        min-width: 40px !important;
+        font-size: var(--mobile-font-base) !important;
+        font-weight: 600 !important;
+        margin: 4px !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Modales optimizados para móvil */
+    .modal-content {
+        width: 95vw !important;
+        max-width: 400px !important;
+        margin: 5vh auto !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .modal-header {
+        padding: var(--mobile-spacing) !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: var(--bg-primary) !important;
+        z-index: 1000 !important;
+    }
+    
+    .modal-body {
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    .modal-footer {
+        padding: var(--mobile-spacing) !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        background: var(--bg-primary) !important;
+    }
+    
+    /* Formularios móviles */
+    .form-group {
+        margin-bottom: var(--mobile-spacing) !important;
+    }
+    
+    .form-control {
+        min-height: var(--mobile-min-touch) !important;
+        padding: 12px 16px !important;
+        font-size: var(--mobile-font-base) !important;
+        border-radius: 8px !important;
+    }
+    
+    .form-label {
+        font-size: var(--mobile-font-base) !important;
+        margin-bottom: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Chat móvil */
+    .chat-section-fixed {
+        width: 100vw !important;
+        right: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        border-radius: 12px 12px 0 0 !important;
+        max-height: 60vh !important;
+    }
+    
+    .chat-header {
+        padding: var(--mobile-spacing) !important;
+        min-height: var(--mobile-min-touch) !important;
+    }
+    
+    .chat-messages {
+        max-height: 40vh !important;
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    .chat-input-container {
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    .chat-input {
+        min-height: var(--mobile-min-touch) !important;
+        font-size: var(--mobile-font-base) !important;
+    }
+    
+    .chat-toggle-btn-fixed {
+        width: 56px !important;
+        height: 56px !important;
+        font-size: 1.4rem !important;
+        right: 16px !important;
+        bottom: 16px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* Espaciado general */
+    .main-content {
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    .section {
+        margin-bottom: var(--mobile-spacing) !important;
+        padding: var(--mobile-spacing) !important;
+    }
+    
+    /* Ocultar elementos innecesarios en móvil */
+    .desktop-only {
+        display: none !important;
+    }
+    
+    /* Scroll suave en iOS */
+    .scrollable {
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Animaciones reducidas para mejor performance */
+    * {
+        animation-duration: 0.2s !important;
+        transition-duration: 0.2s !important;
+    }
+    
+    /* Hover states para táctil */
+    .btn:active,
+    .nav-tab:active,
+    .bingo-card .number:active {
+        transform: scale(0.95) !important;
+        opacity: 0.8 !important;
+    }
+    
+    /* Mostrar menú hamburguesa solo en móvil */
+    .mobile-menu-toggle {
+        display: block !important;
+    }
+}
+
+/* ===== CARTONES DE BINGO MÓVIL ===== */
+@media (max-width: 768px) {
+    /* Contenedor de cartones */
+    .cards-container {
+        padding: var(--mobile-spacing) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--mobile-spacing) !important;
+    }
+    
+    /* Cartón individual optimizado */
+    .bingo-card {
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 0 auto var(--mobile-spacing) !important;
+        background: var(--bg-secondary) !important;
+        border: 2px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transform: translateZ(0) !important; /* GPU acceleration */
+    }
+    
+    /* Grid de números */
+    .bingo-card .numbers-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 2px !important;
+        padding: 8px !important;
+        background: var(--bg-primary) !important;
+    }
+    
+    /* Números individuales */
+    .bingo-card .number {
+        aspect-ratio: 1 !important;
+        min-height: 40px !important;
+        min-width: 40px !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--bg-secondary) !important;
+        border: 2px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        color: var(--text-primary) !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    /* Estados de hover/focus para números */
+    .bingo-card .number:hover,
+    .bingo-card .number:focus {
+        transform: scale(1.05) !important;
+        border-color: var(--secondary-color) !important;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.4) !important;
+        z-index: 10 !important;
+    }
+    
+    /* Número marcado */
+    .bingo-card .number.marked {
+        background: linear-gradient(135deg, var(--secondary-color), #f4c430) !important;
+        color: var(--primary-color) !important;
+        border-color: var(--secondary-color) !important;
+        transform: scale(1.02) !important;
+        font-weight: 800 !important;
+    }
+    
+    /* Estados activos para táctil */
+    .bingo-card .number:active {
+        transform: scale(0.95) !important;
+        transition: all 0.1s ease !important;
+    }
+}
+
+/* ===== PANTALLAS MUY PEQUEÑAS ===== */
+@media (max-width: 480px) {
+    :root {
+        --mobile-spacing: 8px;
+        --mobile-font-small: 12px;
+        --mobile-font-base: 14px;
+        --mobile-font-large: 16px;
+    }
+    
+    .bingo-card .number {
+        min-height: 35px !important;
+        min-width: 35px !important;
+        font-size: 14px !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 1.4rem !important;
+    }
+    
+    .prize-amount {
+        font-size: 1.8rem !important;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .nav-tab {
+        min-width: 100px !important;
+        font-size: var(--mobile-font-small) !important;
+    }
+    
+    .modal-content {
+        width: 98vw !important;
+        margin: 2vh auto !important;
+    }
+}
+
+/* ===== MEJORAS DE PERFORMANCE ===== */
+@media (max-width: 768px) {
+    /* Reducir efectos costosos */
+    .glow-effect,
+    .pulse-effect {
+        animation: none !important;
+    }
+    
+    /* Optimizar transforms para GPU */
+    .bingo-card,
+    .btn,
+    .modal-content,
+    .chat-section-fixed {
+        will-change: transform !important;
+        transform: translateZ(0) !important;
+    }
+    
+    /* Reducir sombras complejas */
+    .card,
+    .stat-card,
+    .btn {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Simplified gradients */
+    .gradient {
+        background: var(--primary-color) !important;
+    }
+}
+
+/* ===== ORIENTACIÓN LANDSCAPE ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header-content {
+        padding: 8px !important;
+    }
+    
+    .hero-section {
+        padding: var(--mobile-spacing) !important;
+        margin-bottom: var(--mobile-spacing) !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 1.2rem !important;
+    }
+    
+    .prize-amount {
+        font-size: 1.5rem !important;
+    }
+    
+    .chat-section-fixed {
+        max-height: 40vh !important;
+    }
+    
+    .modal-content {
+        max-height: 80vh !important;
+    }
+}
+
+/* ===== ESTILOS CRÍTICOS PARA MENÚ MÓVIL ===== */
+
+/* Asegurar que el menú hamburguesa NO aparezca en desktop */
+.mobile-menu-toggle {
+    display: none !important;
+    position: fixed !important;
+    top: 16px !important;
+    right: 16px !important;
+    z-index: 9999 !important;
+    background: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.2rem !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.95) !important;
+}
+
+/* Mostrar en móvil SOLAMENTE */
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block !important;
+    }
+}
+
+/* Menú móvil */
+.mobile-menu {
+    position: fixed !important;
+    top: 0 !important;
+    right: -100% !important;
+    width: 80vw !important;
+    max-width: 300px !important;
+    height: 100vh !important;
+    background: var(--bg-primary) !important;
+    z-index: 9998 !important;
+    transition: right 0.3s ease !important;
+    padding: 60px 20px 20px !important;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.3) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.mobile-menu.active {
+    right: 0 !important;
+}
+
+/* Items del menú móvil */
+.mobile-menu-item {
+    display: block !important;
+    padding: 16px 0 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.mobile-menu-item:hover,
+.mobile-menu-item:active {
+    background: var(--bg-secondary) !important;
+    padding-left: 10px !important;
+}
+
+/* Overlay del menú móvil */
+.mobile-menu-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.5) !important;
+    z-index: 9997 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+}
+
+.mobile-menu-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+} 

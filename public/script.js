@@ -67,6 +67,38 @@ class BingoPro {
         this.globalJackpot = 67152.10; // Bote global acumulado
         this.jackpotUpdateInterval = null;
         
+        // ===== SISTEMA DE NIVELES Y PROGRESIÓN =====
+        this.userProgression = {
+            // Sistema de niveles inspirado en bingos españoles
+            levels: {
+                1: { name: 'Novato', requiredXP: 0, benefits: [], color: '#8B4513', icon: 'fa-seedling' },
+                2: { name: 'Aficionado', requiredXP: 100, benefits: ['Descuento 5%'], color: '#CD7F32', icon: 'fa-star' },
+                3: { name: 'Bronce', requiredXP: 250, benefits: ['Descuento 10%', 'Botes +5%'], color: '#CD7F32', icon: 'fa-medal' },
+                4: { name: 'Plata', requiredXP: 500, benefits: ['Descuento 15%', 'Botes +10%', 'Chat VIP'], color: '#C0C0C0', icon: 'fa-award' },
+                5: { name: 'Oro', requiredXP: 1000, benefits: ['Descuento 20%', 'Botes +15%', 'Soporte Premium'], color: '#FFD700', icon: 'fa-crown' },
+                6: { name: 'Platino', requiredXP: 2000, benefits: ['Descuento 25%', 'Botes +20%', 'Cartones Gratis'], color: '#E5E4E2', icon: 'fa-gem' },
+                7: { name: 'Diamante', requiredXP: 4000, benefits: ['Descuento 30%', 'Botes +25%', 'Acceso VIP'], color: '#B9F2FF', icon: 'fa-diamond' },
+                8: { name: 'Master', requiredXP: 8000, benefits: ['Descuento 35%', 'Botes +30%', 'Partidas Privadas'], color: '#9932CC', icon: 'fa-chess-king' },
+                9: { name: 'Leyenda', requiredXP: 15000, benefits: ['Descuento 40%', 'Botes +35%', 'Torneos Exclusivos'], color: '#FF4500', icon: 'fa-fire' },
+                10: { name: 'Campeón', requiredXP: 30000, benefits: ['Descuento 50%', 'Botes +50%', 'Todas las ventajas'], color: '#FF0000', icon: 'fa-trophy' }
+            },
+            
+            // Métodos para ganar experiencia
+            xpRewards: {
+                playGame: 10,           // Por participar en una partida
+                buyCard: 5,             // Por comprar un cartón
+                markNumber: 1,          // Por marcar un número
+                winLine: 20,            // Por ganar línea
+                winTwoLines: 35,        // Por ganar dos líneas
+                winBingo: 50,           // Por ganar bingo
+                winJackpot: 200,        // Por ganar bote progresivo
+                dailyLogin: 15,         // Por login diario
+                weeklyBonus: 100,       // Bonus semanal por actividad
+                monthlyBonus: 300,      // Bonus mensual
+                referFriend: 500        // Por referir un amigo
+            }
+        };
+        
         // ===== MODOS DE JUEGO =====
         this.gameModes = {
             CLASSIC: {
@@ -84,11 +116,12 @@ class BingoPro {
                     timeOfDay: 'any'
                 },
                 prizes: {
-                    line: 10,
-                    twoLines: 25,
-                    bingo: 100
+                    line: 15,           // Aumentado de 10 a 15€
+                    twoLines: 40,       // Aumentado de 25 a 40€
+                    bingo: 150,         // Aumentado de 100 a 150€
+                    jackpot: 2500       // Bote progresivo mínimo
                 },
-                features: ['Números del 1-90', 'Partidas automáticas', 'Bote compartido'],
+                features: ['Números del 1-90', 'Partidas automáticas', 'Bote progresivo desde 2.500€'],
                 isActive: true
             },
             RAPID: {
@@ -101,16 +134,17 @@ class BingoPro {
                 minPlayers: 3,
                 maxCards: 20,
                 requirements: {
-                    level: 5,
-                    balance: 10,
+                    level: 2,           // Aumentado de 5 a 2 (más accesible)
+                    balance: 5,         // Reducido de 10 a 5€
                     timeOfDay: 'any'
                 },
                 prizes: {
-                    line: 15,
-                    twoLines: 40,
-                    bingo: 150
+                    line: 25,           // Aumentado de 15 a 25€
+                    twoLines: 60,       // Aumentado de 40 a 60€
+                    bingo: 200,         // Aumentado de 150 a 200€
+                    jackpot: 3500       // Bote progresivo mínimo
                 },
-                features: ['Partidas rápidas', 'Premios aumentados', 'Números más frecuentes'],
+                features: ['Partidas express', 'Premios aumentados', 'Adrenalina máxima'],
                 isActive: true
             },
             VIP: {
@@ -123,39 +157,41 @@ class BingoPro {
                 minPlayers: 5,
                 maxCards: 50,
                 requirements: {
-                    level: 10,
-                    balance: 50,
+                    level: 7,           // Nivel Diamante para acceso VIP
+                    balance: 25,        // Reducido de 50 a 25€
                     timeOfDay: 'any',
                     vipStatus: true
                 },
                 prizes: {
-                    line: 25,
-                    twoLines: 75,
-                    bingo: 300
+                    line: 50,           // Aumentado de 25 a 50€
+                    twoLines: 120,      // Aumentado de 75 a 120€
+                    bingo: 400,         // Aumentado de 300 a 400€
+                    jackpot: 10000      // Bote progresivo VIP mínimo
                 },
-                features: ['Cartones VIP', 'Premios exclusivos', 'Chat privado', 'Soporte prioritario'],
+                features: ['Cartones premium', 'Premios exclusivos', 'Chat privado', 'Soporte prioritario'],
                 isActive: true
             },
             NIGHT: {
                 id: 'NIGHT',
                 name: 'Bingo Nocturno',
-                description: 'Partidas especiales solo disponibles por la noche',
+                description: 'Partidas especiales solo disponibles por la noche (22h-6h)',
                 duration: 2.5 * 60 * 1000, // 2.5 minutos
                 numberCallInterval: 3500, // 3.5 segundos
                 cardPrice: 2.00,
                 minPlayers: 2,
                 maxCards: 25,
                 requirements: {
-                    level: 3,
-                    balance: 20,
+                    level: 3,           // Nivel Bronce
+                    balance: 10,        // Reducido de 20 a 10€
                     timeOfDay: 'night'
                 },
                 prizes: {
-                    line: 20,
-                    twoLines: 60,
-                    bingo: 200
+                    line: 30,           // Aumentado de 20 a 30€
+                    twoLines: 75,       // Aumentado de 60 a 75€
+                    bingo: 250,         // Aumentado de 200 a 250€
+                    jackpot: 5000       // Bote progresivo nocturno
                 },
-                features: ['Solo por la noche', 'Ambiente especial', 'Premios nocturnos', 'Números mágicos'],
+                features: ['Solo 22h-6h', 'Ambiente misterioso', 'Bonificaciones nocturnas', 'Números de la suerte'],
                 isActive: true
             }
         };
@@ -330,18 +366,31 @@ class BingoPro {
         // Inicializar modos de juego
         this.initializeGameModes();
         
+        // ✨ NUEVO: Inicializar sistema de usuario y progresión
+        this.initializeUserProgression();
+        
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
         
         // Inicializar contadores de modo independientes con delay reducido
         setTimeout(() => {
             this.updateAllModeCountdowns();
-        }, 500); // Reducido de 1000ms a 500ms
+            
+            // Configurar intervalo para actualizar contadores por modo cada 5 segundos
+            this.modeCountdownInterval = setInterval(() => {
+                this.updateAllModeCountdowns();
+            }, 5000);
+            
+            console.log('✅ Intervalo de contadores por modo configurado (cada 5s)');
+        }, 500);
         
-        // Actualizar contadores cada 60 segundos (mantener para evitar rate limiting)
-        setInterval(() => {
-            this.updateAllModeCountdowns();
-        }, 60000);
+        // Configurar intervalo adicional para actualización de precios cada 10 segundos
+        setTimeout(() => {
+            setInterval(() => {
+                this.updateCardPriceDisplay();
+            }, 10000);
+            console.log('✅ Intervalo de actualización de precios configurado (cada 10s)');
+        }, 1000);
         
         console.log('✅ Inicialización optimizada completada');
     }
@@ -1912,6 +1961,23 @@ class BingoPro {
         this.gameHistory.push(winRecord);
         card.winHistory.push(winRecord);
         
+        // ✨ NUEVO: Agregar experiencia por victoria
+        switch (winType) {
+            case 'line':
+                this.addUserExperience('winLine');
+                break;
+            case 'twoLines':
+                this.addUserExperience('winTwoLines');
+                break;
+            case 'bingo':
+                this.addUserExperience('winBingo');
+                // Verificar si es bote progresivo
+                if (this.calledNumbers.size <= 36) { // Bingo temprano = jackpot
+                    this.addUserExperience('winJackpot');
+                }
+                break;
+        }
+        
         // Update analytics
         this.updateAnalytics('win', {
             cardId: card.id,
@@ -2050,221 +2116,71 @@ class BingoPro {
         }
 
         this.isPlayerJoined = true;
+        
+        // ✨ NUEVO: Agregar experiencia por participar en partida
+        this.addUserExperience('playGame');
+        
         this.addChatMessage('system', `¡Te has unido a la partida con ${this.selectedCards.length} cartón(es)!`);
         console.log('Jugador unido a la partida');
         return true;
     }
 
-    buyCards(quantity) {
-        // Validación de entrada estricta
-        if (!Number.isInteger(quantity) || quantity <= 0) {
-            console.warn('⚠️ Intento de compra con cantidad inválida:', quantity);
-            alert('❌ Cantidad inválida. Debe ser un número entero positivo.');
-            return false;
-        }
-
-        // Validación de tipo de datos
-        if (typeof quantity !== 'number' || isNaN(quantity)) {
-            console.warn('⚠️ Intento de compra con tipo de datos inválido:', typeof quantity);
-            alert('❌ Tipo de datos inválido para la cantidad.');
-            return false;
-        }
-
-        // Obtener precio del modo actual
+    async purchaseCards(quantity = 1) {
         const currentMode = this.getCurrentGameMode();
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
-        
-        console.log('Intentando comprar cartones:', quantity, 'Estado del juego:', this.gameState);
-        
-        // Validaciones profesionales con límites estrictos
-        if (quantity > 20) {
-            console.warn('⚠️ Intento de compra excesiva:', quantity);
-            alert('❌ Cantidad inválida. Puedes comprar entre 1 y 20 cartones por transacción.');
+
+        // Validaciones existentes
+        console.log(`💳 Intentando comprar ${quantity} cartón(es) a €${cardPrice} cada uno (Total: €${totalCost})`);
+
+        if (quantity < 1 || quantity > 10) {
+            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
             return false;
         }
-        
-        // Validación de saldo con precisión decimal
+
         if (this.userBalance < totalCost) {
-            console.warn('⚠️ Intento de compra con saldo insuficiente:', this.userBalance, '<', totalCost);
-            alert(`❌ Saldo insuficiente.\n💰 Necesitas: €${totalCost.toFixed(2)}\n💳 Tienes: €${this.userBalance.toFixed(2)}`);
+            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
             return false;
         }
 
-        // Validar estado del juego
-        if (this.gameState === 'playing') {
-            console.warn('⚠️ Intento de compra durante partida en curso');
-            alert('❌ No puedes comprar cartones durante una partida en curso.\n⏰ Espera a que termine la partida actual.');
-            return false;
-        }
-        
-        // Validar límite de cartones por juego con configuración de seguridad
-        const maxCardsPerGame = this._securitySettings ? this._securitySettings.maxCardsPerGame : 50;
-        if (this.userCards.length + quantity > maxCardsPerGame) {
-            console.warn('⚠️ Intento de compra excediendo límite:', this.userCards.length + quantity, '>', maxCardsPerGame);
-            alert(`❌ Límite de cartones alcanzado.\n📊 Máximo ${maxCardsPerGame} cartones por juego.\n🎯 Ya tienes ${this.userCards.length} cartones.`);
+        if (this.userCards.length + quantity > currentMode.maxCards) {
+            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
             return false;
         }
 
-        // Validación adicional de seguridad
-        if (this.userBalance < 0 || totalCost < 0) {
-            console.error('🚨 Valores negativos detectados en compra:', { balance: this.userBalance, cost: totalCost });
-            alert('❌ Error de seguridad detectado. Contacta al soporte.');
-            return false;
-        }
+        try {
+            // Descontar dinero
+            this.userBalance -= totalCost;
+            this.updateBalanceDisplay();
 
-        // Procesar compra profesional
-        this.userBalance -= totalCost;
-        
-        // Generar cartones únicos
-        const newCards = [];
-        for (let i = 0; i < quantity; i++) {
-            const card = this.addCard();
-            if (card) {
-                card.purchaseTime = new Date();
-                card.purchasePrice = cardPrice; // Usar precio del modo actual
-                card.gameMode = currentMode.id; // Guardar modo de juego
-                newCards.push(card);
+            // Crear cartones
+            for (let i = 0; i < quantity; i++) {
+                const card = this.generateCard();
+                card.purchasePrice = cardPrice;
+                card.mode = currentMode.id;
+                this.userCards.push(card);
+                this.selectedCards.push(card.id);
+                
+                // ✨ NUEVO: Agregar experiencia por comprar cartón
+                this.addUserExperience('buyCard');
             }
+
+            // Guardar y actualizar UI
+            this.saveUserCards();
+            this.renderCards();
+            this.updateCardInfo();
+
+            this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
+            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
+
+            console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error en la compra:', error);
+            this.showNotification('Error al procesar la compra', 'error');
+            return false;
         }
-        
-        // Seleccionar automáticamente los nuevos cartones
-        this.selectedCards.push(...newCards);
-        
-        // Registrar transacción
-        this.gameHistory.push({
-            type: 'card_purchase',
-            quantity: quantity,
-            totalCost: totalCost,
-            timestamp: new Date(),
-            gameId: this.currentGameId
-        });
-        
-        // Update analytics
-        this.updateAnalytics('card_purchased', {
-            quantity: quantity,
-            cost: totalCost,
-            balance_after: this.userBalance
-        });
-        
-        // Actualizar interfaz
-        this.updateUI();
-        this.updateDisplay();
-        
-        // Notificación profesional
-        this.addChatMessage('system', `✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}\n💰 Saldo restante: €${this.userBalance.toFixed(2)}`);
-        
-        // Guardar cartones en localStorage
-        this.saveUserCards();
-        
-        // Mostrar confirmación visual
-        console.log('🔔 Llamando a showPurchaseConfirmation...');
-        this.showPurchaseConfirmation(quantity, totalCost);
-        
-        console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
-        return true;
-    }
-
-    showPurchaseConfirmation(quantity, totalCost) {
-        console.log('🔔 Mostrando notificación de compra:', quantity, totalCost);
-        
-        // Crear notificación temporal
-        const notification = document.createElement('div');
-        notification.className = 'purchase-notification';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-check-circle"></i>
-                <div class="notification-text">
-                    <h4>✅ Compra Exitosa</h4>
-                    <p>${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}</p>
-                    <small>Saldo restante: €${this.userBalance.toFixed(2)}</small>
-                </div>
-            </div>
-        `;
-        
-        console.log('🔔 Notificación creada, agregando al DOM...');
-        document.body.appendChild(notification);
-        
-        // Animar entrada
-        setTimeout(() => {
-            console.log('🔔 Agregando clase show...');
-            notification.classList.add('show');
-        }, 100);
-        
-        // Remover después de 3 segundos
-        setTimeout(() => {
-            console.log('🔔 Removiendo notificación...');
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                    console.log('🔔 Notificación removida del DOM');
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    buyPackage(packageType) {
-        console.log('Comprando paquete:', packageType);
-        
-        // Validar límite de velocidad para compras
-        if (!securityManager.validateRateLimit('purchases')) {
-            alert('Demasiadas compras rápidas. Espere un momento.');
-            return;
-        }
-        
-        const packageInfo = this.packages[packageType];
-        if (!packageInfo) {
-            console.log('Paquete no encontrado');
-            securityManager.logSecurityEvent('invalid_package', `Paquete inválido: ${packageType}`);
-            return;
-        }
-
-        // Validaciones de seguridad
-        if (this.userBalance < packageInfo.price) {
-            alert('Saldo insuficiente. Por favor, deposita más fondos.');
-            return;
-        }
-
-        if (this.userCards.length + packageInfo.cards > this.securitySettings.maxCardsPerGame) {
-            alert('Límite de cartones alcanzado para este juego.');
-            return;
-        }
-
-        // Validar límite de saldo
-        if (this.userBalance > securityManager.securityConfig.validationRules.maxBalance) {
-            alert('Límite de saldo alcanzado.');
-            securityManager.logSecurityEvent('balance_limit_exceeded', `Saldo: ${this.userBalance}`);
-            return;
-        }
-
-        this.userBalance -= packageInfo.price;
-        
-        for (let i = 0; i < packageInfo.cards; i++) {
-            this.addCard();
-        }
-
-        this.gameHistory.push({
-            type: 'purchase',
-            package: packageType,
-            price: packageInfo.price,
-            cards: packageInfo.cards,
-            timestamp: new Date(),
-            gameId: this.currentGameId
-        });
-
-        // Registrar evento de auditoría
-        securityManager.logEvent('package_purchased', {
-            package: packageType,
-            price: packageInfo.price,
-            cards: packageInfo.cards,
-            gameId: this.currentGameId
-        });
-
-        this.updateUI();
-        this.updateDisplay();
-        this.addChatMessage('system', `Compra realizada: ${packageInfo.cards} cartones por €${packageInfo.price}`);
-        console.log(`Compra exitosa: ${packageInfo.cards} cartones por €${packageInfo.price}`);
     }
 
     showDepositModal() {
@@ -4139,19 +4055,22 @@ class BingoPro {
      */
     async updateAllModeCountdowns() {
         try {
+            console.log('🔄 Actualizando contadores de todos los modos...');
+            
             // Usar una sola petición para obtener estadísticas globales que incluyen todos los modos
             const response = await fetch('/api/bingo/global-stats');
             const data = await response.json();
             
             if (data.success && data.stats) {
                 const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+                let updatedCount = 0;
                 
                 for (const mode of modes) {
                     const modeStats = data.stats[mode];
                     const countdownElement = document.getElementById(`countdown-${mode}`);
                     
-                    if (countdownElement && modeStats) {
-                        if (modeStats.gameState === 'waiting' && modeStats.nextGameTime) {
+                    if (countdownElement) {
+                        if (modeStats && modeStats.gameState === 'waiting' && modeStats.nextGameTime) {
                             const nextGameTime = new Date(modeStats.nextGameTime);
                             const now = new Date();
                             const timeLeft = nextGameTime.getTime() - now.getTime();
@@ -4161,19 +4080,69 @@ class BingoPro {
                                 const seconds = Math.floor((timeLeft % 60000) / 1000);
                                 const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                                 countdownElement.textContent = countdownText;
+                                console.log(`✅ Countdown ${mode}: ${countdownText}`);
                             } else {
                                 countdownElement.textContent = '0:00';
+                                console.log(`⏰ Countdown ${mode}: Tiempo agotado`);
                             }
-                        } else if (modeStats.gameState === 'playing') {
+                            updatedCount++;
+                        } else if (modeStats && modeStats.gameState === 'playing') {
                             countdownElement.textContent = 'En curso';
+                            console.log(`🎮 Countdown ${mode}: En curso`);
+                            updatedCount++;
                         } else {
-                            countdownElement.textContent = '--:--';
+                            // Si no hay datos del servidor, calcular basado en la duración del modo
+                            const modeConfig = this.gameModes[mode];
+                            if (modeConfig) {
+                                const duration = modeConfig.duration;
+                                const minutes = Math.floor(duration / 60000);
+                                const seconds = Math.floor((duration % 60000) / 1000);
+                                const fallbackText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                countdownElement.textContent = fallbackText;
+                                console.log(`🔄 Countdown ${mode}: Fallback (${fallbackText})`);
+                            } else {
+                                countdownElement.textContent = '--:--';
+                                console.log(`❓ Countdown ${mode}: Sin datos`);
+                            }
+                            updatedCount++;
                         }
+                    } else {
+                        console.log(`⚠️ Elemento countdown-${mode} no encontrado`);
                     }
                 }
+                
+                console.log(`✅ Contadores actualizados: ${updatedCount}/${modes.length}`);
+            } else {
+                console.log('⚠️ No se pudieron obtener estadísticas del servidor');
+                // Fallback: usar duraciones de configuración local
+                this.updateCountdownsFallback();
             }
         } catch (error) {
             console.log('⚠️ Error actualizando countdowns:', error);
+            // Fallback: usar duraciones de configuración local
+            this.updateCountdownsFallback();
+        }
+    }
+
+    /**
+     * Actualizar contadores usando configuración local como fallback
+     */
+    updateCountdownsFallback() {
+        console.log('🔄 Usando fallback para contadores...');
+        const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+        
+        for (const mode of modes) {
+            const countdownElement = document.getElementById(`countdown-${mode}`);
+            const modeConfig = this.gameModes[mode];
+            
+            if (countdownElement && modeConfig) {
+                const duration = modeConfig.duration;
+                const minutes = Math.floor(duration / 60000);
+                const seconds = Math.floor((duration % 60000) / 1000);
+                const fallbackText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                countdownElement.textContent = fallbackText;
+                console.log(`🔄 Fallback countdown ${mode}: ${fallbackText}`);
+            }
         }
     }
 
@@ -4204,6 +4173,402 @@ class BingoPro {
             }
         } catch (error) {
             console.error('❌ Error cambiando contenedor de números llamados:', error);
+        }
+    }
+
+    /**
+     * ===== SISTEMA DE PROGRESIÓN DE USUARIO =====
+     */
+
+    /**
+     * Calcular nivel del usuario basado en XP
+     */
+    calculateUserLevel(xp) {
+        let level = 1;
+        for (let i = 10; i >= 1; i--) {
+            if (xp >= this.userProgression.levels[i].requiredXP) {
+                level = i;
+                break;
+            }
+        }
+        return level;
+    }
+
+    /**
+     * Obtener información del nivel actual
+     */
+    getCurrentLevelInfo(xp) {
+        const currentLevel = this.calculateUserLevel(xp);
+        const levelData = this.userProgression.levels[currentLevel];
+        const nextLevelData = this.userProgression.levels[currentLevel + 1];
+        
+        return {
+            level: currentLevel,
+            name: levelData.name,
+            color: levelData.color,
+            icon: levelData.icon,
+            benefits: levelData.benefits,
+            currentXP: xp,
+            requiredXP: levelData.requiredXP,
+            nextLevelXP: nextLevelData ? nextLevelData.requiredXP : null,
+            xpToNext: nextLevelData ? nextLevelData.requiredXP - xp : 0,
+            isMaxLevel: !nextLevelData
+        };
+    }
+
+    /**
+     * Agregar experiencia al usuario
+     */
+    addUserExperience(action, amount = null) {
+        try {
+            // Obtener usuario actual
+            const userInfo = this.getUserInfo();
+            if (!userInfo) {
+                console.log('⚠️ No hay usuario logueado para agregar XP');
+                return;
+            }
+
+            // Calcular XP a agregar
+            const xpAmount = amount || this.userProgression.xpRewards[action] || 0;
+            if (xpAmount <= 0) {
+                console.log(`⚠️ No hay XP configurado para la acción: ${action}`);
+                return;
+            }
+
+            // XP actual y nivel antes
+            const currentXP = userInfo.experience || 0;
+            const oldLevel = this.calculateUserLevel(currentXP);
+
+            // Nuevo XP y nivel
+            const newXP = currentXP + xpAmount;
+            const newLevel = this.calculateUserLevel(newXP);
+
+            // Actualizar usuario
+            userInfo.experience = newXP;
+            userInfo.level = newLevel;
+
+            // Verificar si ha subido de nivel
+            if (newLevel > oldLevel) {
+                this.handleLevelUp(oldLevel, newLevel, userInfo);
+            }
+
+            // Verificar acceso VIP
+            if (newLevel >= 7 && !userInfo.vipStatus) {
+                userInfo.vipStatus = true;
+                this.handleVIPUnlock(userInfo);
+            }
+
+            // Guardar en localStorage
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+            // Actualizar UI
+            this.updateUserDisplay(userInfo);
+
+            // Log de la acción
+            console.log(`✨ +${xpAmount} XP por ${action}. Total: ${newXP} XP (Nivel ${newLevel})`);
+
+            // Mostrar notificación
+            this.showXPNotification(action, xpAmount);
+
+        } catch (error) {
+            console.error('❌ Error agregando experiencia:', error);
+        }
+    }
+
+    /**
+     * Manejar subida de nivel
+     */
+    handleLevelUp(oldLevel, newLevel, userInfo) {
+        const levelInfo = this.getCurrentLevelInfo(userInfo.experience);
+        
+        console.log(`🎉 ¡SUBIDA DE NIVEL! ${oldLevel} → ${newLevel} (${levelInfo.name})`);
+        
+        // Mostrar modal de subida de nivel
+        this.showLevelUpModal(oldLevel, newLevel, levelInfo);
+        
+        // Agregar bonus por subir de nivel
+        const levelBonus = newLevel * 50; // 50€ por nivel
+        this.userBalance += levelBonus;
+        this.updateBalanceDisplay();
+        
+        // Sonido de victoria
+        this.playLevelUpSound();
+        
+        // Analytics
+        this.gameAnalytics.levelUps++;
+        this.saveAnalytics();
+    }
+
+    /**
+     * Manejar desbloqueo de VIP
+     */
+    handleVIPUnlock(userInfo) {
+        console.log('💎 ¡ACCESO VIP DESBLOQUEADO!');
+        
+        // Mostrar modal VIP
+        this.showVIPUnlockModal();
+        
+        // Bonus VIP de bienvenida
+        const vipBonus = 500; // 500€ de bonus VIP
+        this.userBalance += vipBonus;
+        this.updateBalanceDisplay();
+        
+        // Mensaje en chat
+        this.addChatMessage('system', '💎 ¡Has desbloqueado el acceso VIP! Disfruta de premios exclusivos y beneficios especiales.');
+    }
+
+    /**
+     * Actualizar visualización del usuario
+     */
+    updateUserDisplay(userInfo) {
+        const levelInfo = this.getCurrentLevelInfo(userInfo.experience || 0);
+        
+        // Actualizar nombre de usuario
+        const usernameElement = document.querySelector('.username');
+        if (usernameElement) {
+            usernameElement.textContent = userInfo.firstName || 'Jugador';
+        }
+        
+        // Actualizar nivel con nuevo estilo
+        const levelElement = document.querySelector('.user-level');
+        if (levelElement) {
+            levelElement.innerHTML = `
+                <i class="fas ${levelInfo.icon}" style="color: ${levelInfo.color}"></i>
+                <span>${levelInfo.name}</span>
+                ${userInfo.vipStatus ? '<i class="fas fa-crown" style="color: gold; margin-left: 4px;" title="VIP"></i>' : ''}
+            `;
+            levelElement.style.color = levelInfo.color;
+        }
+        
+        // Actualizar avatar con color del nivel
+        const avatarElement = document.querySelector('.user-avatar');
+        if (avatarElement) {
+            avatarElement.style.background = `linear-gradient(135deg, ${levelInfo.color}20, ${levelInfo.color}40)`;
+            avatarElement.style.borderColor = levelInfo.color;
+        }
+        
+        // Actualizar barra de progreso (si existe)
+        this.updateProgressBar(levelInfo);
+    }
+
+    /**
+     * Actualizar barra de progreso de nivel
+     */
+    updateProgressBar(levelInfo) {
+        const progressContainer = document.getElementById('levelProgress');
+        if (!progressContainer && !levelInfo.isMaxLevel) {
+            // Crear barra de progreso si no existe
+            this.createProgressBar();
+        }
+        
+        if (progressContainer && !levelInfo.isMaxLevel) {
+            const progress = ((levelInfo.currentXP - levelInfo.requiredXP) / (levelInfo.nextLevelXP - levelInfo.requiredXP)) * 100;
+            const progressBar = progressContainer.querySelector('.progress-fill');
+            const progressText = progressContainer.querySelector('.progress-text');
+            
+            if (progressBar) {
+                progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+                progressBar.style.background = levelInfo.color;
+            }
+            
+            if (progressText) {
+                progressText.textContent = `${levelInfo.xpToNext} XP para ${this.userProgression.levels[levelInfo.level + 1].name}`;
+            }
+        }
+    }
+
+    /**
+     * Mostrar notificación de XP
+     */
+    showXPNotification(action, amount) {
+        const notification = document.createElement('div');
+        notification.className = 'xp-notification';
+        notification.innerHTML = `
+            <i class="fas fa-star"></i>
+            <span>+${amount} XP</span>
+            <small>${this.getActionName(action)}</small>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animación
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+
+    /**
+     * Obtener nombre amigable de la acción
+     */
+    getActionName(action) {
+        const names = {
+            playGame: 'Participar en partida',
+            buyCard: 'Comprar cartón',
+            markNumber: 'Marcar número',
+            winLine: '¡Línea!',
+            winTwoLines: '¡Dos líneas!',
+            winBingo: '¡BINGO!',
+            winJackpot: '¡BOTE PROGRESIVO!',
+            dailyLogin: 'Login diario',
+            weeklyBonus: 'Bonus semanal',
+            monthlyBonus: 'Bonus mensual',
+            referFriend: 'Referir amigo'
+        };
+        return names[action] || action;
+    }
+
+    /**
+     * Reproducir sonido de subida de nivel
+     */
+    playLevelUpSound() {
+        if (this.soundsEnabled && this.audioContext) {
+            try {
+                // Sonido épico de subida de nivel
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // Secuencia de notas ascendentes
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C (una octava más alta)
+                let currentNote = 0;
+                
+                const playNote = () => {
+                    if (currentNote < notes.length) {
+                        oscillator.frequency.setValueAtTime(notes[currentNote], this.audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                        
+                        currentNote++;
+                        if (currentNote < notes.length) {
+                            setTimeout(playNote, 200);
+                        } else {
+                            oscillator.stop(this.audioContext.currentTime + 0.2);
+                        }
+                    }
+                };
+                
+                oscillator.start();
+                playNote();
+                
+            } catch (error) {
+                console.log('⚠️ Error reproduciendo sonido de nivel:', error);
+            }
+        }
+    }
+
+    markNumber(number) {
+        console.log(`🎯 Marcando número: ${number}`);
+        
+        let marked = false;
+        this.selectedCards.forEach(cardId => {
+            const card = this.userCards.find(c => c.id === cardId);
+            if (card && !card.markedNumbers.includes(number)) {
+                // Verificar si el número está en el cartón
+                const hasNumber = card.numbers.flat().includes(number);
+                if (hasNumber) {
+                    card.markedNumbers.push(number);
+                    marked = true;
+                    console.log(`✅ Número ${number} marcado en cartón ${card.id}`);
+                    
+                    // ✨ NUEVO: Agregar experiencia por marcar número
+                    this.addUserExperience('markNumber');
+                }
+            }
+        });
+
+        if (marked) {
+            this.checkVictoryConditions();
+            this.updateCards();
+            this.saveUserCards();
+        }
+
+        return marked;
+    }
+
+    /**
+     * Inicializar sistema de progresión de usuario
+     */
+    initializeUserProgression() {
+        try {
+            console.log('🚀 Inicializando sistema de progresión...');
+            
+            // Obtener información del usuario
+            const userInfo = this.getUserInfo();
+            if (!userInfo) {
+                console.log('⚠️ No hay usuario logueado');
+                return;
+            }
+            
+            // Inicializar campos si no existen
+            if (typeof userInfo.experience === 'undefined') {
+                userInfo.experience = 0;
+                userInfo.level = 1;
+                userInfo.lastLogin = null;
+                userInfo.vipStatus = false;
+            }
+            
+            // Verificar login diario
+            const today = new Date().toDateString();
+            const lastLogin = userInfo.lastLogin ? new Date(userInfo.lastLogin).toDateString() : null;
+            
+            if (lastLogin !== today) {
+                // Nuevo día, dar XP de login diario
+                this.addUserExperience('dailyLogin');
+                userInfo.lastLogin = new Date().toISOString();
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                console.log('🎁 Bonus de login diario otorgado');
+            }
+            
+            // Actualizar visualización del usuario
+            this.updateUserDisplay(userInfo);
+            
+            // Verificar logros semanales/mensuales
+            this.checkBonusRewards(userInfo);
+            
+            console.log('✅ Sistema de progresión inicializado');
+            
+        } catch (error) {
+            console.error('❌ Error inicializando progresión:', error);
+        }
+    }
+
+    /**
+     * Verificar y otorgar recompensas bonus
+     */
+    checkBonusRewards(userInfo) {
+        try {
+            const now = new Date();
+            const lastWeeklyBonus = userInfo.lastWeeklyBonus ? new Date(userInfo.lastWeeklyBonus) : null;
+            const lastMonthlyBonus = userInfo.lastMonthlyBonus ? new Date(userInfo.lastMonthlyBonus) : null;
+            
+            // Bonus semanal (cada 7 días)
+            if (!lastWeeklyBonus || (now.getTime() - lastWeeklyBonus.getTime()) >= 7 * 24 * 60 * 60 * 1000) {
+                this.addUserExperience('weeklyBonus');
+                userInfo.lastWeeklyBonus = now.toISOString();
+                this.showNotification('🎁 ¡Bonus semanal recibido! +100 XP', 'success');
+                console.log('🎁 Bonus semanal otorgado');
+            }
+            
+            // Bonus mensual (cada 30 días)
+            if (!lastMonthlyBonus || (now.getTime() - lastMonthlyBonus.getTime()) >= 30 * 24 * 60 * 60 * 1000) {
+                this.addUserExperience('monthlyBonus');
+                userInfo.lastMonthlyBonus = now.toISOString();
+                const monthlyBonus = 1000; // 1000€ bonus mensual
+                this.userBalance += monthlyBonus;
+                this.updateBalanceDisplay();
+                this.showNotification('💎 ¡Bonus mensual recibido! +300 XP + €1000', 'success');
+                console.log('💎 Bonus mensual otorgado');
+            }
+            
+            // Guardar cambios
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            
+        } catch (error) {
+            console.error('❌ Error verificando bonus:', error);
         }
     }
 }

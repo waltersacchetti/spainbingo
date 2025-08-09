@@ -1,0 +1,61 @@
+/* ===== CORRECCIÓN FINA PARA USER-INFO ===== */
+/* Ajuste fino: más compacto, mejor centrado, letra más pequeña */
+
+.user-info {
+    padding: 8px 12px !important; /* Reducido para más compacto */
+    max-height: 52px !important; /* Reducido ligeramente */
+    min-height: 44px !important; /* Altura mínima más compacta */
+    margin: 6px 0 !important; /* Margen aumentado para mejor centrado */
+    box-sizing: border-box !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-tertiary) !important;
+    border-radius: var(--radius-lg) !important;
+    display: flex !important;
+    align-items: center !important; /* Centrado vertical perfecto */
+}
+
+/* Avatar más compacto */
+.user-avatar {
+    width: 32px !important; /* Más pequeño */
+    height: 32px !important;
+    font-size: 0.95rem !important; /* Icono más pequeño */
+    flex-shrink: 0 !important;
+}
+
+/* Texto del usuario más pequeño */
+.user-details {
+    gap: 1px !important; /* Gap mínimo entre líneas */
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important; /* Centrado vertical del texto */
+}
+
+.username {
+    font-size: 0.8rem !important; /* Letra más pequeña */
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    font-weight: 600 !important;
+}
+
+.user-level {
+    font-size: 0.7rem !important; /* Aún más pequeña */
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    opacity: 0.8 !important;
+}
+
+/* Asegurar centrado en user-section */
+.user-section {
+    align-items: center !important;
+    gap: var(--spacing-lg) !important;
+    display: flex !important;
+}
+
+/* Mejorar centrado en header */
+.header-content {
+    padding-bottom: 6px !important; /* Ajustado para mejor balance */
+    display: flex !important;
+    align-items: center !important; /* Centrado vertical en header */
+    justify-content: space-between !important;
+} 

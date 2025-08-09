@@ -4822,3 +4822,373 @@ body {
     min-height: 350px !important;
     margin-bottom: var(--spacing-md) !important;
 }
+
+/* ===== CORRECCIÓN URGENTE DESKTOP LAYOUT ===== */
+/* ESTAS REGLAS DEBEN IR AL FINAL PARA SOBRESCRIBIR TODO */
+
+/* FORZAR LAYOUT DESKTOP - MÁXIMA PRIORIDAD */
+@media (min-width: 769px) {
+    /* FORZAR header horizontal con máxima especificidad */
+    .main-header .header-content,
+    body .main-header .header-content,
+    html body .main-header .header-content {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: var(--spacing-lg) !important;
+        text-align: left !important;
+    }
+    
+    /* FORZAR user section horizontal */
+    .user-section,
+    body .user-section,
+    html body .user-section,
+    .header-content .user-section {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-lg) !important;
+    }
+    
+    /* FORZAR balance section horizontal */
+    .balance-section,
+    body .balance-section,
+    html body .balance-section,
+    .user-section .balance-section {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-md) !important;
+    }
+    
+    /* FORZAR logo section horizontal */
+    .logo-section,
+    body .logo-section,
+    html body .logo-section {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-md) !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* ASEGURAR que el botón hamburguesa NO aparezca */
+    .mobile-menu-toggle,
+    body .mobile-menu-toggle,
+    html body .mobile-menu-toggle {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* FORZAR user info en línea */
+    .user-info,
+    body .user-info,
+    html body .user-info {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: var(--spacing-md) !important;
+        padding: var(--spacing-sm) var(--spacing-md) !important;
+    }
+}
+
+/* ===== SISTEMA DE PROGRESIÓN Y EXPERIENCIA ===== */
+
+/* Notificaciones de XP */
+.xp-notification {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.xp-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.xp-notification i {
+    font-size: 1.2rem;
+    animation: starPulse 1s infinite;
+}
+
+.xp-notification span {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.xp-notification small {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 4px;
+}
+
+@keyframes starPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Mejoras en la información del usuario */
+.user-info {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0.6;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.user-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.username {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.user-level {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.user-level i {
+    font-size: 0.9rem;
+}
+
+/* Barra de progreso de nivel */
+.level-progress {
+    margin-top: 8px;
+    padding: 0 16px;
+}
+
+.progress-container {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    height: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: progressShine 2s infinite;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-align: center;
+}
+
+@keyframes progressShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Colores específicos por nivel */
+.user-level.novato { color: #8B4513; }
+.user-level.aficionado { color: #CD7F32; }
+.user-level.bronce { color: #CD7F32; }
+.user-level.plata { color: #C0C0C0; }
+.user-level.oro { color: #FFD700; }
+.user-level.platino { color: #E5E4E2; }
+.user-level.diamante { color: #B9F2FF; }
+.user-level.master { color: #9932CC; }
+.user-level.leyenda { color: #FF4500; }
+.user-level.campeon { color: #FF0000; }
+
+/* VIP Crown */
+.vip-crown {
+    color: #FFD700;
+    margin-left: 4px;
+    animation: crownGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes crownGlow {
+    from { text-shadow: 0 0 5px #FFD700; }
+    to { text-shadow: 0 0 10px #FFD700, 0 0 15px #FFD700; }
+}
+
+/* Modal de subida de nivel */
+.level-up-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+
+.level-up-content {
+    background: linear-gradient(135deg, #1a237e, #3949ab);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border: 2px solid #FFD700;
+    position: relative;
+    overflow: hidden;
+}
+
+.level-up-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+    animation: levelUpShine 3s ease-in-out infinite;
+}
+
+.level-up-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px #FFD700;
+    animation: levelUpPulse 1.5s ease-in-out infinite;
+}
+
+.level-up-details {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+.level-benefits {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.level-benefits h4 {
+    color: #FFD700;
+    margin-bottom: 15px;
+}
+
+.benefits-list {
+    list-style: none;
+    padding: 0;
+}
+
+.benefits-list li {
+    padding: 5px 0;
+    position: relative;
+    padding-left: 25px;
+}
+
+.benefits-list li::before {
+    content: '✨';
+    position: absolute;
+    left: 0;
+    top: 5px;
+}
+
+@keyframes levelUpShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+@keyframes levelUpPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .xp-notification {
+        top: 80px;
+        right: 10px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .level-up-content {
+        margin: 20px;
+        padding: 30px 20px;
+    }
+    
+    .level-up-title {
+        font-size: 2rem;
+    }
+    
+    .level-up-details {
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <title>BingoRoyal - Prueba Móvil</title>
+    <link rel="stylesheet" href="styles-codere.css">
+    <link rel="stylesheet" href="mobile-optimizations.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Menú móvil hamburguesa -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Overlay para menú móvil -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        
+        <!-- Menú móvil deslizante -->
+        <nav class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <a href="#" class="mobile-menu-item" onclick="showSection('home'); closeMobileMenu();">🏠 Inicio</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('cards'); closeMobileMenu();">🎫 Mis Cartones</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('shop'); closeMobileMenu();">🛒 Comprar</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('profile'); closeMobileMenu();">👤 Perfil</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('wallet'); closeMobileMenu();">💰 Billetera</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('history'); closeMobileMenu();">📊 Historial</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('help'); closeMobileMenu();">❓ Ayuda</a>
+                <a href="index.html" class="mobile-menu-item">🎯 Volver al Juego</a>
+            </div>
+        </nav>
+
+        <!-- Header móvil -->
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">
+                        <i class="fas fa-dice"></i>
+                        <span>BingoRoyal</span>
+                    </div>
+                    <div class="subtitle">Prueba Móvil</div>
+                </div>
+                <div class="user-section">
+                    <div class="user-info">
+                        <span class="user-name">👤 Usuario Test</span>
+                        <span class="user-balance">💰 €125.50</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            
+            <!-- Sección de navegación por pestañas -->
+            <section class="nav-section">
+                <h2>📱 Navegación Móvil</h2>
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="showTestSection('nav')">🧭 Navegación</button>
+                    <button class="nav-tab" onclick="showTestSection('cartones')">🎫 Cartones</button>
+                    <button class="nav-tab" onclick="showTestSection('botones')">🔘 Botones</button>
+                    <button class="nav-tab" onclick="showTestSection('formularios')">📝 Formularios</button>
+                    <button class="nav-tab" onclick="showTestSection('chat')">💬 Chat</button>
+                </div>
+            </section>
+
+            <!-- Sección de prueba de navegación -->
+            <section id="test-nav" class="test-section active">
+                <h3>🧭 Prueba de Navegación</h3>
+                <div class="test-card">
+                    <p>✅ <strong>Menú hamburguesa:</strong> Toca el botón ☰ en la esquina superior derecha</p>
+                    <p>✅ <strong>Swipe gestures:</strong> Desliza desde el borde izquierdo para abrir el menú</p>
+                    <p>✅ <strong>Navegación por pestañas:</strong> Las pestañas se desplazan horizontalmente</p>
+                    <p>✅ <strong>Swipe entre pestañas:</strong> Desliza horizontalmente para cambiar de pestaña</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">768px</div>
+                        <div class="stat-label">Breakpoint Principal</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">44px</div>
+                        <div class="stat-label">Tamaño Mínimo Táctil</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">16px</div>
+                        <div class="stat-label">Fuente Base Móvil</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">12px</div>
+                        <div class="stat-label">Espaciado Móvil</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de prueba de cartones -->
+            <section id="test-cartones" class="test-section" style="display: none;">
+                <h3>🎫 Prueba de Cartones</h3>
+                <div class="test-card">
+                    <p>✅ <strong>Tamaño optimizado:</strong> Cartones adaptados para pantallas pequeñas</p>
+                    <p>✅ <strong>Números táctiles:</strong> Números más grandes y fáciles de tocar</p>
+                    <p>✅ <strong>Feedback visual:</strong> Animaciones al marcar números</p>
+                    <p>✅ <strong>Vibración:</strong> Feedback háptico al marcar (si está disponible)</p>
+                </div>
+
+                <!-- Cartón de prueba -->
+                <div class="cards-container">
+                    <div class="bingo-card">
+                        <div class="bingo-card-header">
+                            Cartón #1 - Clásico
+                        </div>
+                        <div class="numbers-grid">
+                            <div class="number" onclick="toggleNumber(this)">5</div>
+                            <div class="number" onclick="toggleNumber(this)">18</div>
+                            <div class="number" onclick="toggleNumber(this)">32</div>
+                            <div class="number" onclick="toggleNumber(this)">47</div>
+                            <div class="number" onclick="toggleNumber(this)">61</div>
+                            
+                            <div class="number" onclick="toggleNumber(this)">12</div>
+                            <div class="number" onclick="toggleNumber(this)">24</div>
+                            <div class="number" onclick="toggleNumber(this)">38</div>
+                            <div class="number" onclick="toggleNumber(this)">52</div>
+                            <div class="number" onclick="toggleNumber(this)">68</div>
+                            
+                            <div class="number marked" onclick="toggleNumber(this)">7</div>
+                            <div class="number" onclick="toggleNumber(this)">29</div>
+                            <div class="number free">FREE</div>
+                            <div class="number called" onclick="toggleNumber(this)">49</div>
+                            <div class="number" onclick="toggleNumber(this)">73</div>
+                            
+                            <div class="number" onclick="toggleNumber(this)">14</div>
+                            <div class="number marked" onclick="toggleNumber(this)">26</div>
+                            <div class="number" onclick="toggleNumber(this)">41</div>
+                            <div class="number" onclick="toggleNumber(this)">58</div>
+                            <div class="number" onclick="toggleNumber(this)">70</div>
+                            
+                            <div class="number" onclick="toggleNumber(this)">9</div>
+                            <div class="number" onclick="toggleNumber(this)">22</div>
+                            <div class="number marked" onclick="toggleNumber(this)">36</div>
+                            <div class="number" onclick="toggleNumber(this)">54</div>
+                            <div class="number" onclick="toggleNumber(this)">67</div>
+                        </div>
+                        <div class="card-stats-mobile">
+                            <div class="card-stat">
+                                <div class="card-stat-value">3</div>
+                                <div class="card-stat-label">Marcados</div>
+                            </div>
+                            <div class="card-stat">
+                                <div class="card-stat-value">21</div>
+                                <div class="card-stat-label">Restantes</div>
+                            </div>
+                            <div class="card-stat">
+                                <div class="card-stat-value">12%</div>
+                                <div class="card-stat-label">Progreso</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de prueba de botones -->
+            <section id="test-botones" class="test-section" style="display: none;">
+                <h3>🔘 Prueba de Botones</h3>
+                <div class="test-card">
+                    <p>✅ <strong>Tamaño mínimo:</strong> Todos los botones tienen al menos 44px</p>
+                    <p>✅ <strong>Feedback táctil:</strong> Animación al tocar</p>
+                    <p>✅ <strong>Estados claros:</strong> Hover, active y disabled optimizados</p>
+                </div>
+
+                <div class="controls-grid">
+                    <button class="btn btn-primary" onclick="showMobileNotification('Botón primario tocado!', 'success')">
+                        Botón Primario
+                    </button>
+                    <button class="btn btn-secondary" onclick="mobileVibrate([100, 50, 100])">
+                        Vibrar
+                    </button>
+                    <button class="btn btn-success" onclick="showMobileNotification('¡Éxito!', 'success')">
+                        Éxito
+                    </button>
+                    <button class="btn btn-warning" onclick="showMobileNotification('Advertencia', 'warning')">
+                        Advertencia
+                    </button>
+                    <button class="btn btn-danger" onclick="showMobileNotification('Error', 'error')">
+                        Peligro
+                    </button>
+                    <button class="btn" disabled>
+                        Deshabilitado
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sección de prueba de formularios -->
+            <section id="test-formularios" class="test-section" style="display: none;">
+                <h3>📝 Prueba de Formularios</h3>
+                <div class="test-card">
+                    <p>✅ <strong>Campos optimizados:</strong> Altura mínima de 44px</p>
+                    <p>✅ <strong>Teclado apropiado:</strong> Tipo de input correcto</p>
+                    <p>✅ <strong>Labels claros:</strong> Texto legible en móvil</p>
+                </div>
+
+                <form class="mobile-form">
+                    <div class="form-group">
+                        <label class="form-label">Nombre de usuario</label>
+                        <input type="text" class="form-control" placeholder="Ingresa tu nombre de usuario">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" placeholder="ejemplo@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" placeholder="+34 123 456 789">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" placeholder="0" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mensaje</label>
+                        <textarea class="form-control" rows="3" placeholder="Escribe tu mensaje aquí..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" onclick="event.preventDefault(); showMobileNotification('Formulario enviado!', 'success');">
+                        Enviar Formulario
+                    </button>
+                </form>
+            </section>
+
+            <!-- Sección de prueba de chat -->
+            <section id="test-chat" class="test-section" style="display: none;">
+                <h3>💬 Prueba de Chat</h3>
+                <div class="test-card">
+                    <p>✅ <strong>Posición optimizada:</strong> Chat en la parte inferior</p>
+                    <p>✅ <strong>Tamaño adaptable:</strong> Se ajusta al contenido</p>
+                    <p>✅ <strong>Botón flotante:</strong> Fácil acceso desde cualquier lugar</p>
+                </div>
+
+                <button class="btn btn-primary" onclick="toggleChat()">
+                    Activar Chat Móvil
+                </button>
+                
+                <div class="test-info">
+                    <p><strong>Instrucciones:</strong></p>
+                    <ul>
+                        <li>Toca el botón flotante de chat en la esquina inferior derecha</li>
+                        <li>El chat se abrirá desde abajo ocupando parte de la pantalla</li>
+                        <li>Toca fuera del chat o el botón X para cerrarlo</li>
+                        <li>En landscape el chat se adapta a menor altura</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Información del dispositivo -->
+            <section class="device-info">
+                <h3>📱 Información del Dispositivo</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Ancho de pantalla:</strong>
+                        <span id="screenWidth">-</span>px
+                    </div>
+                    <div class="info-item">
+                        <strong>Alto de pantalla:</strong>
+                        <span id="screenHeight">-</span>px
+                    </div>
+                    <div class="info-item">
+                        <strong>Orientación:</strong>
+                        <span id="orientation">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>User Agent:</strong>
+                        <span id="userAgent">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Touch Support:</strong>
+                        <span id="touchSupport">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Vibration Support:</strong>
+                        <span id="vibrationSupport">-</span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Chat flotante (será activado por el JavaScript) -->
+        <div class="chat-section-fixed" id="chatSection" style="display: none;">
+            <div class="chat-header">
+                <h4>💬 Chat Móvil</h4>
+                <button class="chat-close" onclick="toggleChat()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-messages scrollable">
+                <div class="chat-message bot">
+                    <span class="message-time">14:30</span>
+                    <span class="message-user">BingoBot:</span>
+                    <span class="message-text">¡Bienvenido al chat móvil optimizado!</span>
+                </div>
+                <div class="chat-message user">
+                    <span class="message-time">14:31</span>
+                    <span class="message-user">Tú:</span>
+                    <span class="message-text">¡Se ve genial en móvil!</span>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" placeholder="Escribe tu mensaje...">
+                <button class="chat-send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Botón de chat flotante -->
+        <button class="chat-toggle-btn-fixed" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </button>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="mobile-mobile.js"></script>
+    <script>
+        // JavaScript específico para la página de prueba
+        
+        function showTestSection(sectionName) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.test-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remover clase active de todas las pestañas
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar sección seleccionada
+            document.getElementById('test-' + sectionName).style.display = 'block';
+            
+            // Activar pestaña correspondiente
+            event.target.classList.add('active');
+        }
+        
+        function toggleNumber(element) {
+            element.classList.toggle('marked');
+            
+            // Vibrar al marcar
+            if (typeof mobileVibrate === 'function') {
+                mobileVibrate([50]);
+            }
+            
+            // Actualizar stats
+            updateCardStats();
+        }
+        
+        function updateCardStats() {
+            const markedNumbers = document.querySelectorAll('.bingo-card .number.marked').length;
+            const totalNumbers = document.querySelectorAll('.bingo-card .number:not(.free)').length;
+            const remaining = totalNumbers - markedNumbers;
+            const progress = Math.round((markedNumbers / totalNumbers) * 100);
+            
+            document.querySelector('.card-stat-value').textContent = markedNumbers;
+            document.querySelectorAll('.card-stat-value')[1].textContent = remaining;
+            document.querySelectorAll('.card-stat-value')[2].textContent = progress + '%';
+        }
+        
+        function toggleChat() {
+            const chatSection = document.getElementById('chatSection');
+            if (chatSection.style.display === 'none' || !chatSection.style.display) {
+                chatSection.style.display = 'block';
+            } else {
+                chatSection.style.display = 'none';
+            }
+        }
+        
+        function updateDeviceInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('screenHeight').textContent = window.innerHeight;
+            document.getElementById('orientation').textContent = 
+                window.innerHeight > window.innerWidth ? 'Portrait' : 'Landscape';
+            document.getElementById('userAgent').textContent = 
+                navigator.userAgent.length > 50 ? 
+                navigator.userAgent.substring(0, 50) + '...' : 
+                navigator.userAgent;
+            document.getElementById('touchSupport').textContent = 
+                'ontouchstart' in window ? 'Sí' : 'No';
+            document.getElementById('vibrationSupport').textContent = 
+                'vibrate' in navigator ? 'Sí' : 'No';
+        }
+        
+        // Actualizar información del dispositivo
+        updateDeviceInfo();
+        window.addEventListener('resize', updateDeviceInfo);
+        window.addEventListener('orientationchange', updateDeviceInfo);
+        
+        console.log('📱 Página de prueba móvil cargada completamente');
+    </script>
+</body>
+</html> 

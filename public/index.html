@@ -2,16 +2,49 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
     <title>BingoRoyal - Jugar Bingo Online</title>
     <link rel="stylesheet" href="styles-codere.css">
+    <link rel="stylesheet" href="mobile-optimizations.css">
+    <link rel="stylesheet" href="adaptive-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- CORRECCIÓN ESPECÍFICA SOLO PARA USER-INFO -->
+    <link rel="stylesheet" href="user-fix.css">
     <!-- <script src="auth.js"></script> TEMPORALMENTE DESHABILITADO -->
     <script src="security.js"></script>
+    <script src="device-detection.js"></script>
+    <script src="mobile-mobile.js"></script>
 </head>
 <body>
     <div class="app-container">
+        <!-- Menú móvil hamburguesa -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" style="display: none;">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Overlay para menú móvil -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        
+        <!-- Menú móvil deslizante -->
+        <nav class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <a href="#" class="mobile-menu-item" onclick="showSection('home'); closeMobileMenu();">🏠 Inicio</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('cards'); closeMobileMenu();">🎫 Mis Cartones</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('shop'); closeMobileMenu();">🛒 Comprar</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('profile'); closeMobileMenu();">👤 Perfil</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('wallet'); closeMobileMenu();">💰 Billetera</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('history'); closeMobileMenu();">📊 Historial</a>
+                <a href="#" class="mobile-menu-item" onclick="showSection('help'); closeMobileMenu();">❓ Ayuda</a>
+                <a href="#" class="mobile-menu-item" onclick="logout(); closeMobileMenu();">🚪 Salir</a>
+            </div>
+        </nav>
+
         <!-- Header Profesional -->
         <header class="main-header">
             <div class="header-content">
@@ -149,10 +182,7 @@
                         <i class="fas fa-trophy"></i>
                         <span id="currentPrize">€500</span> premio
                     </div>
-                    <div class="status-item game-countdown">
-                        <i class="fas fa-clock"></i>
-                        <span>Próxima partida: <span id="gameCountdown">2:00</span></span>
-                    </div>
+                    <!-- Contador global eliminado - cada modo tiene el suyo -->
                 </div>
             </div>
         </nav>
