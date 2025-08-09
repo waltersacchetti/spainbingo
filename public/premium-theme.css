@@ -724,203 +724,203 @@ body::before {
     }
 }
 
-/* ===== LAYOUT OPTIMIZADO ===== */
+/* ===== LAYOUT OPTIMIZADO CON PRIORIDAD ===== */
 .game-layout {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr 0.8fr;
-    gap: var(--spacing-lg);
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-lg);
-    min-height: 80vh;
+    display: grid !important;
+    grid-template-columns: 1fr 1.2fr 0.8fr !important;
+    gap: var(--spacing-lg) !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: var(--spacing-lg) !important;
+    min-height: 80vh !important;
 }
 
 .left-panel, .center-panel, .right-panel {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    backdrop-filter: blur(20px);
-    animation: slideInUp 0.8s ease-out;
-    height: fit-content;
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-lg) !important;
+    backdrop-filter: blur(20px) !important;
+    animation: slideInUp 0.8s ease-out !important;
+    height: fit-content !important;
 }
 
 /* Panel izquierdo - Números llamados más ancho */
 .left-panel {
-    min-height: 600px;
+    min-height: 600px !important;
 }
 
 /* Panel central - Mis cartones más ancho */
 .center-panel {
-    min-height: 600px;
+    min-height: 600px !important;
 }
 
 /* Panel derecho - Estadísticas optimizado */
 .right-panel {
-    width: 100%;
-    max-width: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-top: 0; /* Eliminar margen superior */
+    width: 100% !important;
+    max-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--spacing-md) !important;
+    margin-top: 0 !important; /* Eliminar margen superior */
 }
 
 /* Estadísticas movidas arriba */
 .stats-section {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    backdrop-filter: blur(20px);
-    animation: slideInRight 0.8s ease-out;
-    order: 1; /* Primero */
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-md) !important;
+    margin-bottom: var(--spacing-md) !important;
+    backdrop-filter: blur(20px) !important;
+    animation: slideInRight 0.8s ease-out !important;
+    order: 1 !important; /* Primero */
 }
 
 .advanced-chat-section {
-    order: 2; /* Segundo */
-    flex: 1;
+    order: 2 !important; /* Segundo */
+    flex: 1 !important;
 }
 
 /* Grid de estadísticas más compacto */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
-    margin-bottom: 0;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--spacing-sm) !important;
+    margin-bottom: 0 !important;
 }
 
 .stat-card {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    transition: all var(--transition-medium);
-    color: white;
-    min-height: 60px;
+    background: var(--glass-bg-strong) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-sm) !important;
+    transition: all var(--transition-medium) !important;
+    color: white !important;
+    min-height: 60px !important;
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow);
-    border-color: var(--premium-gold);
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-glow) !important;
+    border-color: var(--premium-gold) !important;
 }
 
 .stat-icon {
-    width: 35px;
-    height: 35px;
-    background: var(--gradient-gold);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--premium-royal-blue-dark);
-    font-size: 1rem;
-    font-weight: bold;
-    min-width: 35px;
+    width: 35px !important;
+    height: 35px !important;
+    background: var(--gradient-gold) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--premium-royal-blue-dark) !important;
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    min-width: 35px !important;
 }
 
 .stat-info {
-    flex: 1;
-    min-width: 0;
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
 .stat-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--premium-gold);
-    margin-bottom: 2px;
-    line-height: 1;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    color: var(--premium-gold) !important;
+    margin-bottom: 2px !important;
+    line-height: 1 !important;
 }
 
 .stat-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1;
+    font-size: 0.75rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1 !important;
 }
 
 /* Panel headers optimizados */
 .panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--glass-border);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: var(--spacing-md) !important;
+    padding-bottom: var(--spacing-sm) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
 }
 
 .panel-header h3 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-sm) !important;
 }
 
 .panel-header h3 i {
-    color: var(--premium-gold);
+    color: var(--premium-gold) !important;
 }
 
 /* ===== RESPONSIVE LAYOUT OPTIMIZADO ===== */
 @media (max-width: 1200px) {
     .game-layout {
-        grid-template-columns: 1fr 1fr 0.8fr;
-        gap: var(--spacing-md);
-        padding: var(--spacing-md);
+        grid-template-columns: 1fr 1fr 0.8fr !important;
+        gap: var(--spacing-md) !important;
+        padding: var(--spacing-md) !important;
     }
 }
 
 @media (max-width: 768px) {
     .game-layout {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-sm);
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-sm) !important;
+        padding: var(--spacing-sm) !important;
     }
     
     .left-panel, .center-panel, .right-panel {
-        min-height: auto;
-        padding: var(--spacing-md);
+        min-height: auto !important;
+        padding: var(--spacing-md) !important;
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-xs);
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-xs) !important;
     }
     
     .stat-card {
-        padding: var(--spacing-sm);
-        min-height: 50px;
+        padding: var(--spacing-sm) !important;
+        min-height: 50px !important;
     }
     
     .stat-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 0.9rem;
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.9rem !important;
     }
     
     .stat-value {
-        font-size: 1.1rem;
+        font-size: 1.1rem !important;
     }
     
     .stat-label {
-        font-size: 0.7rem;
+        font-size: 0.7rem !important;
     }
 }
 
 @media (max-width: 480px) {
     .panel-header h3 {
-        font-size: 1rem;
+        font-size: 1rem !important;
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
     }
 }
 
