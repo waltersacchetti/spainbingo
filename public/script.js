@@ -4571,6 +4571,72 @@ class BingoPro {
             console.warn('⚠️ Elemento userBalance no encontrado en DOM');
         }
     }
+
+    // ✅ MÉTODO BUYCARDS ORIGINAL RESTAURADO
+    buyCards(quantity = 1) {
+        console.log(`🛒 Comprando ${quantity} cartón(es)...`);
+        
+        const currentMode = this.getCurrentGameMode();
+        const cardPrice = currentMode.cardPrice;
+        const totalCost = quantity * cardPrice;
+
+        // Validaciones básicas
+        if (quantity < 1 || quantity > 10) {
+            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
+            return false;
+        }
+
+        if (this.userBalance < totalCost) {
+            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
+            return false;
+        }
+
+        if (this.userCards.length + quantity > currentMode.maxCards) {
+            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
+            return false;
+        }
+
+        try {
+            // Descontar dinero
+            this.userBalance -= totalCost;
+            this.updateBalanceDisplay();
+
+            // Crear cartones
+            for (let i = 0; i < quantity; i++) {
+                const card = this.addCard();
+                if (card) {
+                    card.purchasePrice = cardPrice;
+                    card.mode = currentMode.id;
+                    this.selectedCards.push(card.id);
+                    
+                    // Agregar experiencia
+                    this.addUserExperience('buyCard');
+                }
+            }
+
+            // Guardar y actualizar UI
+            this.saveUserCards();
+            this.renderCards();
+            this.updateCardInfo();
+
+            // Mostrar notificación de éxito
+            this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
+            
+            // Mostrar confirmación
+            this.showPurchaseConfirmation(quantity, totalCost);
+            
+            // Mensaje de chat
+            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
+
+            console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error en la compra:', error);
+            this.showNotification('Error al procesar la compra', 'error');
+            return false;
+        }
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
