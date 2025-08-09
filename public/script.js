@@ -5762,81 +5762,124 @@ class BingoPro {
      * 🛒 MOSTRAR CONFIRMACIÓN DE COMPRA ESPECÍFICA
      */
     showPurchaseConfirmation(quantity, totalCost) {
-        console.log('🛒 Mostrando confirmación de compra:', quantity, totalCost);
+        console.log(`🎉 Confirmación de compra: ${quantity} cartones por €${totalCost}`);
         
-        const notification = document.createElement('div');
-        notification.className = 'purchase-confirmation-notification';
-        
-        notification.innerHTML = `
-            <div class="purchase-content">
-                <div class="purchase-icon">
+        const confirmation = document.createElement('div');
+        confirmation.className = 'purchase-confirmation-notification';
+        confirmation.innerHTML = `
+            <div class="confirmation-content">
+                <div class="confirmation-icon">
                     <i class="fas fa-shopping-cart"></i>
                 </div>
-                <div class="purchase-details">
-                    <div class="purchase-title">¡Compra Exitosa!</div>
-                    <div class="purchase-info">
-                        <span class="purchase-quantity">${quantity} cartón${quantity > 1 ? 'es' : ''}</span>
-                        <span class="purchase-cost">€${totalCost.toFixed(2)}</span>
-                    </div>
-                    <div class="purchase-balance">
-                        Saldo restante: €${this.userBalance.toFixed(2)}
-                    </div>
-                </div>
-                <div class="purchase-animation">
-                    <div class="success-checkmark">✓</div>
-                </div>
+                <h3>¡Compra Exitosa!</h3>
+                <p><strong>${quantity}</strong> cartón${quantity > 1 ? 'es' : ''} comprado${quantity > 1 ? 's' : ''}</p>
+                <p class="price">Total: <span>€${totalCost.toFixed(2)}</span></p>
+                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
         
-        notification.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-lg);
-            color: white;
-            text-align: center;
-            z-index: 10001;
-            min-width: 300px;
-            box-shadow: 0 10px 40px rgba(40, 167, 69, 0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            opacity: 0;
+        document.body.appendChild(confirmation);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (confirmation.parentNode) {
+                confirmation.remove();
+            }
+        }, 5000);
+        
+        return true;
+    }
+
+    // ✅ MÉTODO BUYPACKAGE FALTANTE - Wrapper para compra de paquetes
+    buyPackage(packageType) {
+        console.log('🛒 Comprando paquete:', packageType);
+        
+        // Definir paquetes disponibles
+        const packages = {
+            '1-card': { cards: 1, price: 1.00, name: '1 Cartón' },
+            '3-cards': { cards: 3, price: 2.50, name: '3 Cartones' },
+            '5-cards': { cards: 5, price: 4.00, name: '5 Cartones' },
+            '10-cards': { cards: 10, price: 7.50, name: '10 Cartones' }
+        };
+        
+        const packageInfo = packages[packageType];
+        if (!packageInfo) {
+            console.error('❌ Paquete no encontrado:', packageType);
+            this.showNotification('Paquete no válido', 'error');
+            return false;
+        }
+        
+        console.log(`📦 Paquete seleccionado: ${packageInfo.name} - €${packageInfo.price}`);
+        
+        // Usar purchaseCards para la lógica real
+        return this.purchaseCards(packageInfo.cards);
+    }
+
+    // ✅ MÉTODO SHOWNOTIFICATION MEJORADO
+    showNotification(message, type = 'info') {
+        console.log(`📢 Notificación ${type}:`, message);
+        
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `game-notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            </div>
         `;
         
+        // Agregar al DOM
         document.body.appendChild(notification);
         
-        // Animar entrada
-        setTimeout(() => {
-            notification.style.transform = 'translate(-50%, -50%) scale(1)';
-            notification.style.opacity = '1';
-        }, 100);
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 100);
         
-        // Remover después de 4 segundos
+        // Auto remove
         setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.transform = 'translate(-50%, -50%) scale(0)';
-                notification.style.opacity = '0';
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 500);
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+        
+        return true;
+    }
+
+    // ✅ MÉTODO SHOWPURCHASECONFIRMATION MEJORADO
+    showPurchaseConfirmation(quantity, totalCost) {
+        console.log(`🎉 Confirmación de compra: ${quantity} cartones por €${totalCost}`);
+        
+        const confirmation = document.createElement('div');
+        confirmation.className = 'purchase-confirmation-notification';
+        confirmation.innerHTML = `
+            <div class="confirmation-content">
+                <div class="confirmation-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3>¡Compra Exitosa!</h3>
+                <p><strong>${quantity}</strong> cartón${quantity > 1 ? 'es' : ''} comprado${quantity > 1 ? 's' : ''}</p>
+                <p class="price">Total: <span>€${totalCost.toFixed(2)}</span></p>
+                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(confirmation);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (confirmation.parentNode) {
+                confirmation.remove();
             }
-        }, 4000);
+        }, 5000);
         
-        // Reproducir sonido de compra
-        if (this.premiumSoundSystem) {
-            this.premiumSoundSystem.onPurchase();
-        }
-        
-        // Vibración en móviles
-        if (navigator.vibrate) {
-            navigator.vibrate([100, 50, 100]);
-        }
+        return true;
     }
 }
 
