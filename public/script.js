@@ -42,9 +42,6 @@ class BingoPro {
         this.selectedCards = [];
         this.cardPrice = 1.00; // 1 euro por cartón
         
-        // Auto-Daub System
-        this.autoDaubSystem = null;
-        
         // Variables para juego global
         this.globalGameState = {
             gameId: null,
@@ -371,32 +368,6 @@ class BingoPro {
         
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
-        
-        // ✨ NUEVO: Inicializar sistema Auto-Daub
-        this.initializeAutoDaub();
-        
-        // ✨ NUEVO: Inicializar sistema de Salas Múltiples
-        this.initializeMultiRoomSystem();
-        
-        // ✨ NUEVO: Inicializar Chat Social Avanzado
-        this.initializeAdvancedChat();
-        
-        // ✨ NUEVO: Inicializar Sistema de Sonidos Premium
-        this.initializePremiumSound();
-        
-        // ✨ NUEVO: Inicializar Sistema de Animaciones Premium
-        this.initializePremiumAnimations();
-        
-        // 🚀 FASE 2: Inicializar Sistema VIP Avanzado
-        this.initializeAdvancedVipSystem();
-        
-        // 🚀 FASE 2: Inicializar Sistema de Torneos
-        this.initializeTournamentSystem();
-        
-        // 🔧 REPARAR: Configurar event listeners faltantes
-        setTimeout(() => {
-            this.setupMissingEventListeners();
-        }, 1500);
         
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
@@ -2184,15 +2155,14 @@ class BingoPro {
 
             // Crear cartones
             for (let i = 0; i < quantity; i++) {
-                const card = this.addCard();
-                if (card) {
-                    card.purchasePrice = cardPrice;
-                    card.mode = currentMode.id;
-                    this.selectedCards.push(card.id);
-                    
-                    // ✨ NUEVO: Agregar experiencia por comprar cartón
-                    this.addUserExperience('buyCard');
-                }
+                const card = this.generateCard();
+                card.purchasePrice = cardPrice;
+                card.mode = currentMode.id;
+                this.userCards.push(card);
+                this.selectedCards.push(card.id);
+                
+                // ✨ NUEVO: Agregar experiencia por comprar cartón
+                this.addUserExperience('buyCard');
             }
 
             // Guardar y actualizar UI
@@ -2201,7 +2171,6 @@ class BingoPro {
             this.updateCardInfo();
 
             this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
-            this.showPurchaseConfirmation(quantity, totalCost);
             this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
 
             console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
@@ -3126,14 +3095,12 @@ class BingoPro {
             }
             
             // Botones de compra
-            else if (e.target.closest('.btn-buy') || e.target.closest('.btn-buy-modern')) {
-                const btn = e.target.closest('.btn-buy') || e.target.closest('.btn-buy-modern');
+            else if (e.target.closest('.btn-buy')) {
+                const btn = e.target.closest('.btn-buy');
                 const packageType = btn.getAttribute('data-package');
-                console.log('🛒 Botón comprar paquete clickeado:', packageType);
+                console.log('Botón comprar clickeado:', packageType);
                 if (packageType) {
                     this.buyPackage(packageType);
-                } else {
-                    console.log('⚠️ Paquete no especificado en data-package');
                 }
             }
             
@@ -3157,9 +3124,13 @@ class BingoPro {
             
             // Botones de monto
             else if (e.target.classList.contains('amount-btn')) {
-                const amount = parseFloat(e.target.dataset.amount);
-                console.log('Botón monto clickeado:', amount);
-                this.selectAmount(amount);
+                document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                const amount = e.target.dataset.amount;
+                const depositAmountElement = document.getElementById('depositAmount');
+                if (depositAmountElement) {
+                    depositAmountElement.textContent = amount;
+                }
             }
             
             // Métodos de pago
@@ -3176,14 +3147,14 @@ class BingoPro {
             } else if (e.target.closest('#winModal .btn-confirm')) {
                 this.closeModal('winModal');
             } else if (e.target.closest('#calledNumbersModal .btn-confirm')) {
-                this.closeCalledNumbersModal();
+                this.closeModal('calledNumbersModal');
             } else if (e.target.closest('#bingoCardsModal .btn-confirm')) {
                 this.closeBingoCardsModal();
             }
             
             // Botones de cerrar modal (X)
             else if (e.target.closest('#calledNumbersModal .modal-close')) {
-                this.closeCalledNumbersModal();
+                this.closeModal('calledNumbersModal');
             } else if (e.target.closest('#depositModal .modal-close')) {
                 this.closeModal('depositModal');
             }
@@ -4601,1350 +4572,14 @@ class BingoPro {
         }
     }
 
-    /**
-     * Inicializar sistema Auto-Daub
-     */
-    initializeAutoDaub() {
-        try {
-            console.log('🎯 Inicializando sistema Auto-Daub...');
-            
-            // Crear instancia del sistema Auto-Daub
-            if (window.AutoDaubSystem) {
-                this.autoDaubSystem = new AutoDaubSystem(this);
-                this.autoDaubSystem.loadSettings();
-                console.log('✅ Auto-Daub System inicializado correctamente');
-            } else {
-                console.log('⚠️ AutoDaubSystem no disponible, cargando después...');
-                // Intentar cargar después si el script aún no está disponible
-                setTimeout(() => {
-                    if (window.AutoDaubSystem) {
-                        this.autoDaubSystem = new AutoDaubSystem(this);
-                        this.autoDaubSystem.loadSettings();
-                        console.log('✅ Auto-Daub System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Auto-Daub:', error);
-        }
-    }
-
-    /**
-     * Verificar condiciones de victoria con integración Auto-Daub
-     */
-
-    /**
-     * Inicializar sistema de Salas Múltiples
-     */
-    initializeMultiRoomSystem() {
-        try {
-            console.log('🏟️ Inicializando sistema de Salas Múltiples...');
-            
-            // Crear instancia del sistema Multi-Room
-            if (window.MultiRoomSystem) {
-                this.multiRoomSystem = new MultiRoomSystem(this);
-                console.log('✅ Multi-Room System inicializado correctamente');
-            } else {
-                console.log('⚠️ MultiRoomSystem no disponible, cargando después...');
-                // Intentar cargar después si el script aún no está disponible
-                setTimeout(() => {
-                    if (window.MultiRoomSystem) {
-                        this.multiRoomSystem = new MultiRoomSystem(this);
-                        console.log('✅ Multi-Room System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Multi-Room System:', error);
-        }
-    }
-
-    /**
-     * Inicializar Chat Social Avanzado
-     */
-    initializeAdvancedChat() {
-        try {
-            console.log('💬 Inicializando Chat Social Avanzado...');
-            
-            // Crear instancia del Chat Avanzado
-            if (window.AdvancedChatSystem) {
-                this.advancedChatSystem = new AdvancedChatSystem(this);
-                console.log('✅ Advanced Chat System inicializado correctamente');
-            } else {
-                console.log('⚠️ AdvancedChatSystem no disponible, cargando después...');
-                // Intentar cargar después si el script aún no está disponible
-                setTimeout(() => {
-                    if (window.AdvancedChatSystem) {
-                        this.advancedChatSystem = new AdvancedChatSystem(this);
-                        console.log('✅ Advanced Chat System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Advanced Chat System:', error);
-        }
-    }
-
-    /**
-     * Inicializar Sistema de Sonidos Premium
-     */
-    initializePremiumSound() {
-        try {
-            console.log('🔊 Inicializando Sistema de Sonidos Premium...');
-            
-            // Crear instancia del Sistema de Sonidos
-            if (window.PremiumSoundSystem) {
-                this.premiumSoundSystem = new PremiumSoundSystem(this);
-                console.log('✅ Premium Sound System inicializado correctamente');
-            } else {
-                console.log('⚠️ PremiumSoundSystem no disponible, cargando después...');
-                // Intentar cargar después si el script aún no está disponible
-                setTimeout(() => {
-                    if (window.PremiumSoundSystem) {
-                        this.premiumSoundSystem = new PremiumSoundSystem(this);
-                        console.log('✅ Premium Sound System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Premium Sound System:', error);
-        }
-    }
-
-    /**
-     * Inicializar Sistema de Animaciones Premium
-     */
-    initializePremiumAnimations() {
-        try {
-            console.log('✨ Inicializando Sistema de Animaciones Premium...');
-            
-            // Crear instancia del Sistema de Animaciones
-            if (window.PremiumAnimationSystem) {
-                this.premiumAnimationSystem = new PremiumAnimationSystem(this);
-                console.log('✅ Premium Animation System inicializado correctamente');
-            } else {
-                console.log('⚠️ PremiumAnimationSystem no disponible, cargando después...');
-                // Intentar cargar después si el script aún no está disponible
-                setTimeout(() => {
-                    if (window.PremiumAnimationSystem) {
-                        this.premiumAnimationSystem = new PremiumAnimationSystem(this);
-                        console.log('✅ Premium Animation System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Premium Animation System:', error);
-        }
-    }
-
-    /**
-     * Obtener información del usuario para sistemas premium
-     */
-    getUserInfo() {
-        return {
-            username: this.username || 'Usuario',
-            level: this.currentLevel || 1,
-            vipStatus: this.currentLevel >= 7, // VIP desde nivel 7 (Diamante)
-            balance: this.userBalance || 0,
-            experience: this.currentXP || 0
-        };
-    }
-
-    /**
-     * Actualizar precio de cartón en display (usado por Multi-Room)
-     */
-    updateCardPriceDisplay() {
-        const priceElements = document.querySelectorAll('.card-price, .price-display');
-        priceElements.forEach(element => {
-            element.textContent = `€${this.cardPrice.toFixed(2)}`;
-        });
-        
-        // Actualizar también el bote global si está visible
-        this.updateGlobalJackpotDisplay();
-    }
-
-    /**
-     * 🚀 FASE 2: Inicializar Sistema VIP Avanzado
-     */
-    initializeAdvancedVipSystem() {
-        try {
-            console.log('👑 Inicializando Sistema VIP Avanzado...');
-            if (window.AdvancedVipSystem) {
-                this.advancedVipSystem = new AdvancedVipSystem(this);
-                console.log('✅ Advanced VIP System inicializado correctamente');
-            } else {
-                console.log('⚠️ AdvancedVipSystem no disponible, cargando después...');
-                setTimeout(() => {
-                    if (window.AdvancedVipSystem) {
-                        this.advancedVipSystem = new AdvancedVipSystem(this);
-                        console.log('✅ Advanced VIP System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Advanced VIP System:', error);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Inicializar Sistema de Torneos
-     */
-    initializeTournamentSystem() {
-        try {
-            console.log('🏆 Inicializando Sistema de Torneos...');
-            if (window.TournamentSystem) {
-                this.tournamentSystem = new TournamentSystem(this);
-                console.log('✅ Tournament System inicializado correctamente');
-            } else {
-                console.log('⚠️ TournamentSystem no disponible, cargando después...');
-                setTimeout(() => {
-                    if (window.TournamentSystem) {
-                        this.tournamentSystem = new TournamentSystem(this);
-                        console.log('✅ Tournament System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Tournament System:', error);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Callback cuando usuario mejora su VIP
-     */
-    onVipUpgrade(newTier) {
-        console.log(`🎉 Usuario mejorado a VIP ${newTier}`);
-        
-        // Actualizar beneficios en tiempo real
-        this.applyVipBenefits(newTier);
-        
-        // Mostrar celebración
-        if (this.premiumAnimationSystem) {
-            this.premiumAnimationSystem.playVipUpgradeAnimation(newTier);
-        }
-        
-        // Reproducir sonido de celebración
-        if (this.premiumSoundSystem) {
-            this.premiumSoundSystem.playVipUpgradeSound(newTier);
-        }
-        
-        // Notificar a otros sistemas
-        if (this.tournamentSystem) {
-            this.tournamentSystem.onVipStatusChange(newTier);
-        }
-        
-        // Guardar evento de analytics
-        this.logEvent('vip_upgrade', { 
-            newTier, 
-            timestamp: new Date().toISOString(),
-            previousTier: this.previousVipTier || 'none'
-        });
-        
-        this.previousVipTier = newTier;
-    }
-
-    /**
-     * 🚀 FASE 2: Aplicar beneficios VIP al juego
-     */
-    applyVipBenefits(tier) {
-        const vipTiers = {
-            bronze: { discount: 20, potBonus: 50, xpBonus: 25 },
-            silver: { discount: 30, potBonus: 75, xpBonus: 40 },
-            gold: { discount: 40, potBonus: 100, xpBonus: 60 },
-            platinum: { discount: 50, potBonus: 150, xpBonus: 80 },
-            diamond: { discount: 60, potBonus: 200, xpBonus: 100 }
-        };
-        
-        const benefits = vipTiers[tier];
-        if (benefits) {
-            this.vipDiscount = benefits.discount;
-            this.vipPotBonus = benefits.potBonus;
-            this.vipXpBonus = benefits.xpBonus;
-            
-            console.log(`👑 Beneficios VIP ${tier} aplicados:`, benefits);
-            
-            // Actualizar precios con descuento
-            this.updateCardPriceDisplay();
-            
-            // Actualizar bote con bonus
-            this.updateGlobalJackpotDisplay();
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Obtener información del usuario para sistemas premium
-     */
-    getUserInfo() {
-        return {
-            username: this.username || 'Usuario',
-            level: this.currentLevel || 1,
-            vipStatus: this.currentVipTier !== 'none',
-            vipTier: this.currentVipTier || 'none',
-            balance: this.userBalance || 0,
-            experience: this.currentXP || 0,
-            gamesPlayed: this.gameHistory?.length || 0,
-            totalSpent: this.calculateTotalSpent(),
-            winRate: this.calculateWinRate(),
-            favoriteGameMode: this.getFavoriteGameMode()
-        };
-    }
-
-    /**
-     * 🚀 FASE 2: Calcular gasto total del usuario
-     */
-    calculateTotalSpent() {
-        try {
-            const purchases = JSON.parse(localStorage.getItem('bingoroyal_purchases') || '[]');
-            return purchases.reduce((total, purchase) => total + purchase.amount, 0);
-        } catch (error) {
-            return 0;
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Calcular win rate del usuario
-     */
-    calculateWinRate() {
-        if (!this.gameHistory || this.gameHistory.length === 0) return 0;
-        const wins = this.gameHistory.filter(game => game.won).length;
-        return Math.round((wins / this.gameHistory.length) * 100);
-    }
-
-    /**
-     * 🚀 FASE 2: Obtener modo de juego favorito
-     */
-    getFavoriteGameMode() {
-        if (!this.gameHistory || this.gameHistory.length === 0) return 'CLASSIC';
-        
-        const modeCounts = {};
-        this.gameHistory.forEach(game => {
-            modeCounts[game.mode] = (modeCounts[game.mode] || 0) + 1;
-        });
-        
-        return Object.keys(modeCounts).reduce((a, b) => 
-            modeCounts[a] > modeCounts[b] ? a : b
-        );
-    }
-
-    /**
-     * 🚀 FASE 2: Registrar compra para tracking VIP
-     */
-    recordPurchase(amount, type, details = {}) {
-        try {
-            const purchases = JSON.parse(localStorage.getItem('bingoroyal_purchases') || '[]');
-            const purchase = {
-                id: Date.now().toString(),
-                amount: amount,
-                type: type,
-                details: details,
-                timestamp: new Date().toISOString(),
-                vipTier: this.currentVipTier || 'none'
-            };
-            
-            purchases.push(purchase);
-            localStorage.setItem('bingoroyal_purchases', JSON.stringify(purchases));
-            
-            // Notificar al sistema VIP
-            if (this.advancedVipSystem) {
-                this.advancedVipSystem.onPurchase(purchase);
-            }
-            
-            console.log('💰 Compra registrada:', purchase);
-        } catch (error) {
-            console.error('❌ Error registrando compra:', error);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Inicializar Sistema de Gamificación
-     */
-    initializeGamificationSystem() {
-        try {
-            console.log('🎯 Inicializando Sistema de Gamificación...');
-            if (window.GamificationSystem) {
-                this.gamificationSystem = new GamificationSystem(this);
-                console.log('✅ Gamification System inicializado correctamente');
-            } else {
-                console.log('⚠️ GamificationSystem no disponible, cargando después...');
-                setTimeout(() => {
-                    if (window.GamificationSystem) {
-                        this.gamificationSystem = new GamificationSystem(this);
-                        console.log('✅ Gamification System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Gamification System:', error);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Eventos de juego para sistemas premium
-     */
-    onGameEvent(eventType, data = {}) {
-        // Notificar al sistema de gamificación
-        if (this.gamificationSystem) {
-            this.gamificationSystem.onGameEvent?.(eventType, data);
-        }
-        
-        // Notificar al sistema VIP
-        if (this.advancedVipSystem) {
-            this.advancedVipSystem.onGameEvent?.(eventType, data);
-        }
-        
-        // Notificar al sistema de torneos
-        if (this.tournamentSystem) {
-            this.tournamentSystem.onGameEvent?.(eventType, data);
-        }
-        
-        console.log(`🎮 Evento de juego: ${eventType}`, data);
-    }
-
-    /**
-     * 🚀 FASE 2: Notificar victoria
-     */
-    onGameWin(winData) {
-        this.onGameEvent('game_won', winData);
-        
-        // Actualizar progreso de misiones
-        if (this.gamificationSystem) {
-            this.gamificationSystem.updateMissionProgress('gamesWon', 1);
-            this.gamificationSystem.checkAchievements();
-        }
-        
-        // Registrar para sistema VIP
-        if (this.advancedVipSystem) {
-            this.advancedVipSystem.onGameWin?.(winData);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Notificar inicio de juego
-     */
-    onGameStart() {
-        this.onGameEvent('game_started', {
-            mode: this.currentGameMode,
-            cardCount: this.selectedCards.length,
-            cardPrice: this.cardPrice
-        });
-        
-        // Actualizar progreso de misiones
-        if (this.gamificationSystem) {
-            this.gamificationSystem.updateMissionProgress('gamesPlayed', 1);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Notificar mensaje de chat
-     */
-    onChatMessage(message) {
-        this.onGameEvent('message_sent', { message });
-        
-        // Actualizar progreso de misiones
-        if (this.gamificationSystem) {
-            this.gamificationSystem.updateMissionProgress('messagesPosted', 1);
-        }
-    }
-
-    /**
-     * 🔧 FUNCIONES FALTANTES PARA BOTONES REPARADOS
-     */
-    
-    showGameStats() {
-        console.log('📊 Mostrando estadísticas del juego');
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-chart-bar"></i> Estadísticas del Juego</h3>
-                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-gamepad"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value">${this.gameHistory?.length || 0}</span>
-                                <span class="stat-label">Partidas Jugadas</span>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value">${this.gameHistory?.filter(g => g.won).length || 0}</span>
-                                <span class="stat-label">Victorias</span>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-percentage"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value">${this.calculateWinRate()}%</span>
-                                <span class="stat-label">Tasa de Victoria</span>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-coins"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value">€${this.userBalance?.toFixed(2) || '0.00'}</span>
-                                <span class="stat-label">Balance Actual</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="current-game-stats">
-                        <h4>Partida Actual</h4>
-                        <div class="current-stats">
-                            <div class="current-stat">
-                                <span class="label">Números Llamados:</span>
-                                <span class="value">${this.callHistory?.length || 0}</span>
-                            </div>
-                            <div class="current-stat">
-                                <span class="label">Cartones Activos:</span>
-                                <span class="value">${this.selectedCards?.length || 0}</span>
-                            </div>
-                            <div class="current-stat">
-                                <span class="label">Estado:</span>
-                                <span class="value">${this.gameState || 'Esperando'}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-    }
-    
-    showHelpModal() {
-        console.log('❓ Mostrando ayuda');
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-question-circle"></i> Ayuda del Juego</h3>
-                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="help-sections">
-                        <div class="help-section">
-                            <h4><i class="fas fa-gamepad"></i> Controles del Juego</h4>
-                            <ul>
-                                <li><strong>Llamar Número:</strong> Canta el siguiente número en la secuencia</li>
-                                <li><strong>Auto Play:</strong> Activa el juego automático</li>
-                                <li><strong>Nuevo Juego:</strong> Inicia una nueva partida</li>
-                                <li><strong>Ver Números:</strong> Muestra todos los números ya llamados</li>
-                            </ul>
-                        </div>
-                        <div class="help-section">
-                            <h4><i class="fas fa-trophy"></i> Cómo Ganar</h4>
-                            <ul>
-                                <li><strong>Línea:</strong> Marca una línea completa (horizontal, vertical o diagonal)</li>
-                                <li><strong>Bingo:</strong> Marca todos los números de un cartón</li>
-                                <li><strong>Múltiples Cartones:</strong> Juega con varios cartones para más oportunidades</li>
-                            </ul>
-                        </div>
-                        <div class="help-section">
-                            <h4><i class="fas fa-star"></i> Modos de Juego</h4>
-                            <ul>
-                                <li><strong>Clásico:</strong> Bingo tradicional de 2 minutos</li>
-                                <li><strong>Rápido:</strong> Partidas aceleradas de 1 minuto</li>
-                                <li><strong>VIP:</strong> Experiencia premium con mejores premios</li>
-                                <li><strong>Nocturno:</strong> Especial para horarios nocturnos</li>
-                            </ul>
-                        </div>
-                        <div class="help-section">
-                            <h4><i class="fas fa-coins"></i> Sistema de Premios</h4>
-                            <ul>
-                                <li>Los premios varían según el modo de juego</li>
-                                <li>El bote global se acumula entre todas las partidas</li>
-                                <li>Los miembros VIP reciben bonificaciones especiales</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-    }
-    
-    selectGameMode(mode) {
-        console.log('🎮 Seleccionando modo de juego:', mode);
-        
-        // Actualizar modo actual
-        this.currentGameMode = mode;
-        
-        // Actualizar display
-        const currentModeElement = document.getElementById('currentGameMode');
-        if (currentModeElement) {
-            const modeNames = {
-                'CLASSIC': 'Bingo Clásico',
-                'RAPID': 'Bingo Rápido', 
-                'VIP': 'Bingo VIP',
-                'NIGHT': 'Bingo Nocturno'
-            };
-            currentModeElement.textContent = modeNames[mode] || mode;
-        }
-        
-        // Actualizar precios según el modo
-        const modePrices = {
-            'CLASSIC': 1.00,
-            'RAPID': 1.50,
-            'VIP': 3.00,
-            'NIGHT': 2.00
-        };
-        
-        this.cardPrice = modePrices[mode] || 1.00;
-        this.updateCardPriceDisplay();
-        
-        // Mostrar notificación
-        this.showNotification(`Modo ${modeNames[mode] || mode} seleccionado`, 'success');
-        
-        // Activar botón de unirse si es posible
-        const joinBtn = document.getElementById('joinGameBtn');
-        if (joinBtn) {
-            joinBtn.disabled = false;
-            joinBtn.style.opacity = '1';
-        }
-        
-        // Actualizar estadísticas del modo
-        this.updateModeStatistics(mode);
-        
-        // Guardar preferencia
-        try {
-            localStorage.setItem('bingoroyal_preferred_mode', mode);
-        } catch (error) {
-            console.log('⚠️ Error guardando modo preferido:', error);
-        }
-    }
-    
-    updateModeStatistics(mode) {
-        // Simular estadísticas por modo
-        const modeStats = {
-            'CLASSIC': { players: 1247, prize: 500 },
-            'RAPID': { players: 892, prize: 750 },
-            'VIP': { players: 345, prize: 1500 },
-            'NIGHT': { players: 567, prize: 800 }
-        };
-        
-        const stats = modeStats[mode] || modeStats['CLASSIC'];
-        
-        // Actualizar display de jugadores activos
-        const playersElements = document.querySelectorAll('#activePlayers');
-        playersElements.forEach(el => {
-            if (el) el.textContent = stats.players.toLocaleString();
-        });
-        
-        // Actualizar premio actual
-        const prizeElements = document.querySelectorAll('#currentPrize, #currentPrizeRight');
-        prizeElements.forEach(el => {
-            if (el) el.textContent = `€${stats.prize}`;
-        });
-    }
-    
-    showCalledNumbersModal() {
-        console.log('📋 Mostrando números llamados');
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-list"></i> Números Llamados</h3>
-                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="called-numbers-grid">
-                        ${this.callHistory?.length > 0 ? 
-                            this.callHistory.map(num => `
-                                <div class="called-number">
-                                    <span class="number">${num}</span>
-                                    <span class="letter">${this.getNumberLetter(num)}</span>
-                                </div>
-                            `).join('') :
-                            '<div class="no-numbers">No se han llamado números aún</div>'
-                        }
-                    </div>
-                    <div class="numbers-stats">
-                        <div class="stat">
-                            <span class="label">Total Llamados:</span>
-                            <span class="value">${this.callHistory?.length || 0}</span>
-                        </div>
-                        <div class="stat">
-                            <span class="label">Último Número:</span>
-                            <span class="value">${this.lastNumberCalled || 'N/A'}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-    }
-    
-    getNumberLetter(number) {
-        if (number >= 1 && number <= 15) return 'B';
-        if (number >= 16 && number <= 30) return 'I';
-        if (number >= 31 && number <= 45) return 'N';
-        if (number >= 46 && number <= 60) return 'G';
-        if (number >= 61 && number <= 75) return 'O';
-        return '';
-    }
-
-    /**
-     * 🛒 MÉTODO BUYCARDS FALTANTE - Wrapper para purchaseCards
-     */
-    buyCards(quantity) {
-        console.log('🛒 buyCards llamado con cantidad:', quantity);
-        return this.purchaseCards(quantity);
-    }
-
-    /**
-     * 🎮 MÉTODO JOINGAME FALTANTE 
-     */
-    joinGame() {
-        console.log('🎮 Uniéndose al juego...');
-        
-        if (this.selectedCards.length === 0) {
-            this.showNotification('⚠️ Necesitas cartones para unirte al juego', 'warning');
-            return false;
-        }
-        
-        this.isPlayerJoined = true;
-        this.gameState = 'waiting';
-        
-        // Actualizar UI
-        const joinBtn = document.getElementById('joinGameBtn');
-        if (joinBtn) {
-            joinBtn.textContent = 'Esperando...';
-            joinBtn.disabled = true;
-        }
-        
-        this.showNotification('✅ Te has unido al próximo juego', 'success');
-        this.addChatMessage('system', '🎮 Te has unido al próximo juego');
-        
-        // Simular inicio de juego en 5 segundos
-        setTimeout(() => {
-            this.startNewGame();
-        }, 5000);
-        
-        return true;
-    }
-
-    /**
-     * 🔧 REPARAR EVENT LISTENERS FALTANTES
-     */
-    setupMissingEventListeners() {
-        console.log('🔧 Configurando event listeners faltantes...');
-        
-        // Botón comprar cartones
-        const buyCardsBtn = document.querySelector('.btn-buy-cards');
-        if (buyCardsBtn) {
-            buyCardsBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('🛒 Botón comprar cartones clickeado (event listener)');
-                const quantityInput = document.getElementById('cardQuantity');
-                const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
-                this.buyCards(quantity);
-            });
-            console.log('✅ Event listener agregado a btn-buy-cards');
-        }
-        
-        // Botón unirse al juego
-        const joinGameBtn = document.getElementById('joinGameBtn');
-        if (joinGameBtn) {
-            joinGameBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('🎮 Botón unirse al juego clickeado (event listener)');
-                this.joinGame();
-            });
-            console.log('✅ Event listener agregado a joinGameBtn');
-        }
-        
-        // Botones de cantidad
-        document.querySelectorAll('.btn-quantity').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const delta = btn.textContent === '+' ? 1 : -1;
-                const quantityInput = document.getElementById('cardQuantity');
-                if (quantityInput) {
-                    let newValue = parseInt(quantityInput.value) + delta;
-                    newValue = Math.max(1, Math.min(20, newValue));
-                    quantityInput.value = newValue;
-                }
-                console.log('🔢 Cantidad actualizada:', quantityInput?.value);
-            });
-        });
-        
-        // Botones de paquetes premium
-        document.querySelectorAll('.btn-buy-modern').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const packageType = btn.dataset.package;
-                console.log('📦 Paquete seleccionado:', packageType);
-                this.buyPackage(packageType);
-            });
-        });
-        
-        // Botones de acciones rápidas
-        document.querySelectorAll('.btn-action-small').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const action = btn.textContent.trim();
-                console.log('⚡ Acción rápida:', action);
-                
-                if (action === 'Comprar') {
-                    this.buyCards(1);
-                } else if (action === 'Mezclar') {
-                    this.shuffleCards();
-                } else if (action === 'Ver') {
-                    window.open('analytics.html', '_blank');
-                }
-            });
-        });
-        
-        // Botones de filtro de historial
-        document.querySelectorAll('.filter-btn-modern').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.filter-btn-modern').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const filter = btn.dataset.filter;
-                console.log('🔍 Filtro aplicado:', filter);
-                this.filterHistory(filter);
-            });
-        });
-        
-        console.log('✅ Event listeners faltantes configurados');
-    }
-
-    /**
-     * 🔀 Método para mezclar cartones
-     */
-    shuffleCards() {
-        if (this.userCards.length === 0) {
-            this.showNotification('⚠️ No tienes cartones para mezclar', 'warning');
-            return;
-        }
-        
-        // Mezclar array de cartones
-        for (let i = this.userCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [this.userCards[i], this.userCards[j]] = [this.userCards[j], this.userCards[i]];
-        }
-        
-        this.renderCards();
-        this.showNotification('🔀 Cartones mezclados', 'success');
-        console.log('🔀 Cartones mezclados exitosamente');
-    }
-
-    /**
-     * 🔍 Método para filtrar historial
-     */
-    filterHistory(filter) {
-        console.log('🔍 Filtrando historial por:', filter);
-        
-        let filteredHistory = this.gameHistory || [];
-        
-        switch (filter) {
-            case 'wins':
-                filteredHistory = filteredHistory.filter(game => game.won);
-                break;
-            case 'purchases':
-                filteredHistory = filteredHistory.filter(game => game.type === 'purchase');
-                break;
-            case 'deposits':
-                filteredHistory = filteredHistory.filter(game => game.type === 'deposit');
-                break;
-            case 'withdrawals':
-                filteredHistory = filteredHistory.filter(game => game.type === 'withdrawal');
-                break;
-            default:
-                // 'all' - mostrar todo
-                break;
-        }
-        
-        this.renderFilteredHistory(filteredHistory);
-    }
-
-    /**
-     * 📋 Renderizar historial filtrado
-     */
-    renderFilteredHistory(history) {
-        const historyList = document.getElementById('historyList');
-        if (!historyList) return;
-        
-        if (history.length === 0) {
-            historyList.innerHTML = '<div class="no-history">No hay elementos que coincidan con el filtro</div>';
-            return;
-        }
-        
-        historyList.innerHTML = history.map(item => `
-            <div class="history-item">
-                <div class="history-icon">
-                    <i class="fas ${this.getHistoryIcon(item)}"></i>
-                </div>
-                <div class="history-content">
-                    <h5>${item.title || 'Partida de Bingo'}</h5>
-                    <p>${item.description || `Jugada el ${new Date(item.date).toLocaleDateString()}`}</p>
-                    <span class="history-date">${new Date(item.date).toLocaleString()}</span>
-                </div>
-                <div class="history-result ${item.won ? 'win' : 'loss'}">
-                    ${item.won ? '+€' + item.winnings : '-€' + item.cost}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    /**
-     * 🎨 Obtener icono para historial
-     */
-    getHistoryIcon(item) {
-        if (item.won) return 'fa-trophy';
-        if (item.type === 'purchase') return 'fa-shopping-cart';
-        if (item.type === 'deposit') return 'fa-plus-circle';
-        if (item.type === 'withdrawal') return 'fa-minus-circle';
-        return 'fa-gamepad';
-    }
-
-    /**
-     * 🚀 FASE 2: Inicializar Sistema de Temporadas
-     */
-    initializeSeasonsSystem() {
-        try {
-            console.log('🌟 Inicializando Sistema de Temporadas...');
-            if (window.SeasonsSystem) {
-                this.seasonsSystem = new SeasonsSystem(this);
-                console.log('✅ Seasons System inicializado correctamente');
-            } else {
-                console.log('⚠️ SeasonsSystem no disponible, cargando después...');
-                setTimeout(() => {
-                    if (window.SeasonsSystem) {
-                        this.seasonsSystem = new SeasonsSystem(this);
-                        console.log('✅ Seasons System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Seasons System:', error);
-        }
-    }
-
-    /**
-     * 🚀 FASE 2: Inicializar Sistema de Moneda Virtual
-     */
-    initializeVirtualCurrencySystem() {
-        try {
-            console.log('💰 Inicializando Sistema de Moneda Virtual...');
-            if (window.VirtualCurrencySystem) {
-                this.virtualCurrencySystem = new VirtualCurrencySystem(this);
-                console.log('✅ Virtual Currency System inicializado correctamente');
-            } else {
-                console.log('⚠️ VirtualCurrencySystem no disponible, cargando después...');
-                setTimeout(() => {
-                    if (window.VirtualCurrencySystem) {
-                        this.virtualCurrencySystem = new VirtualCurrencySystem(this);
-                        console.log('✅ Virtual Currency System inicializado (delayed)');
-                    }
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('❌ Error inicializando Virtual Currency System:', error);
-        }
-    }
-
-    /**
-     * 🎉 FASE 2: Eventos de progreso y recompensas
-     */
-    onPlayerProgressEvent(eventType, data = {}) {
-        console.log(`🎉 Evento de progreso: ${eventType}`, data);
-        
-        // Notificar al sistema de gamificación
-        if (this.gamificationSystem) {
-            this.gamificationSystem.onProgressEvent?.(eventType, data);
-        }
-        
-        // Ganar BingoCoins según el evento
-        if (this.virtualCurrencySystem) {
-            const coinRewards = {
-                'game_won': 25,
-                'line_completed': 10,
-                'achievement_unlocked': 50,
-                'daily_login': 15,
-                'tournament_participation': 40,
-                'vip_upgrade': 100,
-                'friend_referred': 300
-            };
-            
-            const coins = coinRewards[eventType] || 0;
-            if (coins > 0) {
-                this.virtualCurrencySystem.earnCoins(coins, eventType);
-                this.showNotification(`+${coins} BingoCoins ganados!`, 'success');
-            }
-        }
-        
-        // Actualizar progreso de temporada
-        if (this.seasonsSystem) {
-            this.seasonsSystem.onProgressEvent?.(eventType, data);
-        }
-        
-        // Aplicar bonus VIP
-        if (this.advancedVipSystem && eventType === 'game_won') {
-            this.advancedVipSystem.onGameWin?.(data);
-        }
-    }
-
-    /**
-     * 🎮 FASE 2: Override del método de victoria para incluir sistemas
-     */
-    onGameWinEnhanced(winData) {
-        // Llamar método original
-        this.onGameWin(winData);
-        
-        // Eventos adicionales de FASE 2
-        this.onPlayerProgressEvent('game_won', winData);
-        
-        // Registrar para analytics de temporada
-        if (this.seasonsSystem && this.seasonsSystem.currentSeason) {
-            winData.season = this.seasonsSystem.currentSeason.id;
-        }
-        
-        // Bonus VIP aplicados
-        if (this.advancedVipSystem && this.currentVipTier !== 'none') {
-            const vipBonus = this.applyVipWinBonus(winData);
-            if (vipBonus > 0) {
-                this.showNotification(`🎉 Bonus VIP: +€${vipBonus.toFixed(2)}`, 'vip');
-            }
-        }
-        
-        console.log('🎉 Victoria mejorada procesada con sistemas FASE 2');
-    }
-
-    /**
-     * 💰 FASE 2: Aplicar bonus VIP a victorias
-     */
-    applyVipWinBonus(winData) {
-        if (!this.advancedVipSystem || this.currentVipTier === 'none') return 0;
-        
-        const vipTiers = {
-            bronze: 0.1,   // 10% bonus
-            silver: 0.15,  // 15% bonus
-            gold: 0.25,    // 25% bonus
-            platinum: 0.35, // 35% bonus
-            diamond: 0.5   // 50% bonus
-        };
-        
-        const bonusMultiplier = vipTiers[this.currentVipTier] || 0;
-        const bonus = (winData.winnings || 0) * bonusMultiplier;
-        
-        if (bonus > 0) {
-            this.userBalance += bonus;
-            this.updateBalanceDisplay();
-        }
-        
-        return bonus;
-    }
-
-    /**
-     * 📢 MOSTRAR NOTIFICACIONES SISTEMA
-     */
-    showNotification(message, type = 'info', duration = 4000) {
-        console.log('📢 Mostrando notificación:', message, type);
-        
-        // Crear elemento de notificación
-        const notification = document.createElement('div');
-        notification.className = `game-notification ${type}`;
-        
-        // Determinar icono según tipo
-        let icon = 'fa-info-circle';
-        let color = '#17a2b8';
-        
-        switch (type) {
-            case 'success':
-                icon = 'fa-check-circle';
-                color = '#28a745';
-                break;
-            case 'error':
-                icon = 'fa-exclamation-circle';
-                color = '#dc3545';
-                break;
-            case 'warning':
-                icon = 'fa-exclamation-triangle';
-                color = '#ffc107';
-                break;
-            case 'vip':
-                icon = 'fa-crown';
-                color = '#ffd700';
-                break;
-        }
-        
-        notification.innerHTML = `
-            <div class="notification-content">
-                <div class="notification-icon" style="color: ${color}">
-                    <i class="fas ${icon}"></i>
-                </div>
-                <div class="notification-message">
-                    ${message}
-                </div>
-                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        // Estilos CSS en línea
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--glass-bg-strong);
-            border: 1px solid ${color};
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-md);
-            color: white;
-            font-weight: 600;
-            z-index: 10000;
-            min-width: 300px;
-            max-width: 400px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-            opacity: 0.95;
-        `;
-        
-        // Agregar al DOM
-        document.body.appendChild(notification);
-        
-        // Animar entrada
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Auto-remover después del tiempo especificado
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 300);
-            }
-        }, duration);
-        
-        // Reproducir sonido si está disponible
-        if (this.premiumSoundSystem) {
-            this.premiumSoundSystem.onNotification();
-        }
-        
-        return notification;
-    }
-
-    /**
-     * 🛒 MOSTRAR CONFIRMACIÓN DE COMPRA ESPECÍFICA
-     */
-    showPurchaseConfirmation(quantity, totalCost) {
-        console.log(`🎉 Confirmación de compra: ${quantity} cartones por €${totalCost}`);
-        
-        const confirmation = document.createElement('div');
-        confirmation.className = 'purchase-confirmation-notification';
-        confirmation.innerHTML = `
-            <div class="confirmation-content">
-                <div class="confirmation-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <h3>¡Compra Exitosa!</h3>
-                <p><strong>${quantity}</strong> cartón${quantity > 1 ? 'es' : ''} comprado${quantity > 1 ? 's' : ''}</p>
-                <p class="price">Total: <span>€${totalCost.toFixed(2)}</span></p>
-                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        document.body.appendChild(confirmation);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (confirmation.parentNode) {
-                confirmation.remove();
-            }
-        }, 5000);
-        
-        return true;
-    }
-
-    // ✅ MÉTODO BUYPACKAGE FALTANTE - Wrapper para compra de paquetes
-    buyPackage(packageType) {
-        console.log('🛒 Comprando paquete:', packageType);
-        
-        // Definir paquetes disponibles
-        const packages = {
-            '1-card': { cards: 1, price: 1.00, name: '1 Cartón' },
-            '3-cards': { cards: 3, price: 2.50, name: '3 Cartones' },
-            '5-cards': { cards: 5, price: 4.00, name: '5 Cartones' },
-            '10-cards': { cards: 10, price: 7.50, name: '10 Cartones' }
-        };
-        
-        const packageInfo = packages[packageType];
-        if (!packageInfo) {
-            console.error('❌ Paquete no encontrado:', packageType);
-            this.showNotification('Paquete no válido', 'error');
-            return false;
-        }
-        
-        console.log(`📦 Paquete seleccionado: ${packageInfo.name} - €${packageInfo.price}`);
-        
-        // Usar purchaseCards para la lógica real
-        return this.purchaseCards(packageInfo.cards);
-    }
-
-    // ✅ MÉTODO SHOWNOTIFICATION MEJORADO
-    showNotification(message, type = 'info') {
-        console.log(`📢 Notificación ${type}:`, message);
-        
-        // Crear elemento de notificación
-        const notification = document.createElement('div');
-        notification.className = `game-notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        // Agregar al DOM
-        document.body.appendChild(notification);
-        
-        // Trigger animation
-        setTimeout(() => notification.classList.add('show'), 100);
-        
-        // Auto remove
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-        
-        return true;
-    }
-
-    // ✅ MÉTODO SHOWPURCHASECONFIRMATION MEJORADO
-    showPurchaseConfirmation(quantity, totalCost) {
-        console.log(`🎉 Confirmación de compra: ${quantity} cartones por €${totalCost}`);
-        
-        const confirmation = document.createElement('div');
-        confirmation.className = 'purchase-confirmation-notification';
-        confirmation.innerHTML = `
-            <div class="confirmation-content">
-                <div class="confirmation-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <h3>¡Compra Exitosa!</h3>
-                <p><strong>${quantity}</strong> cartón${quantity > 1 ? 'es' : ''} comprado${quantity > 1 ? 's' : ''}</p>
-                <p class="price">Total: <span>€${totalCost.toFixed(2)}</span></p>
-                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        document.body.appendChild(confirmation);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (confirmation.parentNode) {
-                confirmation.remove();
-            }
-        }, 5000);
-        
-        return true;
-    }
-
-    // ✅ MÉTODO BUYCARDS ORIGINAL - Como funcionaba en versión estable
-    buyCards(quantity = 1) {
-        console.log(`🛒 Comprando ${quantity} cartón(es)...`);
-        
-        const currentMode = this.getCurrentGameMode();
-        const cardPrice = currentMode.cardPrice;
-        const totalCost = quantity * cardPrice;
-
-        // Validaciones básicas
-        if (quantity < 1 || quantity > 10) {
-            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
-            return false;
-        }
-
-        if (this.userBalance < totalCost) {
-            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
-            return false;
-        }
-
-        if (this.userCards.length + quantity > currentMode.maxCards) {
-            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
-            return false;
-        }
-
-        try {
-            // Descontar dinero
-            this.userBalance -= totalCost;
-            this.updateBalanceDisplay();
-
-            // Crear cartones
-            for (let i = 0; i < quantity; i++) {
-                const card = this.addCard();
-                if (card) {
-                    card.purchasePrice = cardPrice;
-                    card.mode = currentMode.id;
-                    this.selectedCards.push(card.id);
-                    
-                    // Agregar experiencia
-                    this.addUserExperience('buyCard');
-                }
-            }
-
-            // Guardar y actualizar UI
-            this.saveUserCards();
-            this.renderCards();
-            this.updateCardInfo();
-
-            // Mostrar notificación de éxito
-            this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
-            
-            // Mostrar confirmación
-            this.showPurchaseConfirmation(quantity, totalCost);
-            
-            // Mensaje de chat
-            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
-
-            console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
-            return true;
-
-        } catch (error) {
-            console.error('❌ Error en la compra:', error);
-            this.showNotification('Error al procesar la compra', 'error');
-            return false;
+    // ✅ FUNCIÓN UPDATEBALANCEDISPLAY FALTANTE
+    updateBalanceDisplay() {
+        const balanceElement = document.getElementById('userBalance');
+        if (balanceElement) {
+            balanceElement.textContent = `€${this.userBalance.toFixed(2)}`;
+            console.log('💰 Balance actualizado en UI:', this.userBalance);
+        } else {
+            console.warn('⚠️ Elemento userBalance no encontrado en DOM');
         }
     }
 }
@@ -5987,7 +4622,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Inicializar el juego
             window.bingoGame = new BingoPro();
-            window.game = window.bingoGame; // ✅ ALIAS PARA HTML ONCLICK
             window.bingoGame.initializeGame();
             
             // Configuración adicional del chat después de la inicialización
@@ -6161,56 +4795,325 @@ function changeQuantity(delta) {
 function buySelectedCards() {
     const quantityInput = document.getElementById('cardQuantity');
     if (quantityInput && window.bingoGame) {
-        const quantity = parseInt(quantityInput.value) || 1;
-        console.log('🛒 buySelectedCards called with quantity:', quantity);
-        return window.bingoGame.buyCards(quantity);
-    } else {
-        console.error('❌ No se pudo ejecutar buySelectedCards - Missing elements');
-        return false;
+        const quantity = parseInt(quantityInput.value);
+        window.bingoGame.buyCards(quantity);
     }
 }
 
 function joinCurrentGame() {
     if (window.bingoGame) {
-        return window.bingoGame.joinGame();
-    }
-    return false;
-}
-
-// También crear alias window.game para compatibilidad
-window.buySelectedCards = buySelectedCards;
-window.joinCurrentGame = joinCurrentGame;
-
-function changeQuantity(delta) {
-    const quantityInput = document.getElementById('cardQuantity');
-    if (quantityInput) {
-        let newValue = parseInt(quantityInput.value) + delta;
-        if (newValue < 1) newValue = 1;
-        if (newValue > 10) newValue = 10;
-        quantityInput.value = newValue;
-        
-        // Actualizar el precio total
-        updatePurchaseTotal();
-        
-        console.log('🔄 Cantidad cambiada a:', newValue);
+        window.bingoGame.joinGame();
     }
 }
 
-function updatePurchaseTotal() {
-    const quantityInput = document.getElementById('cardQuantity');
-    const totalSpan = document.getElementById('purchase-total');
+// Función para alternar el chat
+function toggleChat() {
+    const chatSection = document.getElementById('chatSectionFixed');
+    const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
     
-    if (quantityInput && totalSpan && window.bingoGame) {
-        const quantity = parseInt(quantityInput.value) || 1;
-        const currentMode = window.bingoGame.getCurrentGameMode();
-        const cardPrice = currentMode ? currentMode.cardPrice : 1.00;
-        const total = quantity * cardPrice;
+    console.log('🔧 Toggle chat clicked');
+    console.log('Chat section:', chatSection);
+    console.log('Toggle button:', toggleBtn);
+    
+    if (!chatSection || !toggleBtn) {
+        console.error('❌ Chat elements not found');
+        return;
+    }
+    
+    const isExpanded = chatSection.classList.contains('expanded');
+    
+    if (isExpanded) {
+        // Colapsar el chat
+        chatSection.classList.remove('expanded');
+        toggleBtn.classList.remove('active');
+        console.log('🔽 Chat collapsed');
         
-        totalSpan.textContent = `€${total.toFixed(2)}`;
-        console.log('💰 Total actualizado:', total);
+        // Limpiar el input cuando se colapsa
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.blur();
+        }
+    } else {
+        // Expandir el chat
+        chatSection.classList.add('expanded');
+        toggleBtn.classList.add('active');
+        console.log('🔼 Chat expanded');
+        
+        // Configurar el input del chat después de expandir
+        setTimeout(() => {
+            const chatInput = document.getElementById('chatInput');
+            const btnSend = document.querySelector('.btn-send');
+            
+            if (chatInput && btnSend) {
+                console.log('🔧 Reconfigurando event listeners del chat...');
+                
+                // Forzar que el input sea editable
+                chatInput.readOnly = false;
+                chatInput.disabled = false;
+                chatInput.style.pointerEvents = 'auto';
+                chatInput.style.userSelect = 'text';
+                chatInput.style.webkitUserSelect = 'text';
+                
+                // Enfocar y seleccionar
+                chatInput.focus();
+                chatInput.select();
+                
+                // Función para enviar mensaje
+                const sendMessage = () => {
+                    const message = chatInput.value.trim();
+                    console.log('📤 Intentando enviar mensaje:', message);
+                    if (message && window.bingoGame) {
+                        window.bingoGame.sendChatMessage(message);
+                        chatInput.value = '';
+                        chatInput.focus();
+                        console.log('✅ Mensaje enviado correctamente');
+                    }
+                };
+                
+                // Remover event listeners anteriores para evitar duplicados
+                chatInput.removeEventListener('keypress', chatInput._keypressHandler);
+                chatInput.removeEventListener('click', chatInput._clickHandler);
+                btnSend.removeEventListener('click', btnSend._clickHandler);
+                
+                // Crear nuevos event listeners
+                chatInput._keypressHandler = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('⌨️ Enter presionado en chat (reconfigurado)');
+                        sendMessage();
+                        return false;
+                    }
+                };
+                
+                chatInput._clickHandler = function() {
+                    this.focus();
+                    this.select();
+                };
+                
+                btnSend._clickHandler = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📤 Click en botón enviar (reconfigurado)');
+                    sendMessage();
+                    return false;
+                };
+                
+                // Agregar los nuevos event listeners
+                chatInput.addEventListener('keypress', chatInput._keypressHandler);
+                chatInput.addEventListener('click', chatInput._clickHandler);
+                btnSend.addEventListener('click', btnSend._clickHandler);
+                
+                // Enviar mensaje de bienvenida automático solo si es la primera vez
+                if (!chatSection.dataset.welcomeSent) {
+                    setTimeout(() => {
+                        if (window.bingoGame) {
+                            window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
+                            chatSection.dataset.welcomeSent = 'true';
+                        }
+                    }, 500);
+                }
+                
+                console.log('✅ Chat event listeners reconfigurados correctamente');
+            } else {
+                console.log('❌ Elementos del chat no encontrados para reconfigurar');
+            }
+        }, 100);
     }
 }
 
-// También crear alias globales
-window.changeQuantity = changeQuantity;
-window.updatePurchaseTotal = updatePurchaseTotal;
+// Función para enviar mensaje de chat
+function sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const message = chatInput.value.trim();
+    
+    console.log('📤 Sending chat message:', message);
+    console.log('BingoGame available:', !!window.bingoGame);
+    
+    if (message && window.bingoGame) {
+        window.bingoGame.sendChatMessage(message);
+        chatInput.value = '';
+        console.log('✅ Message sent successfully');
+    } else if (!message) {
+        console.log('⚠️ Empty message, not sending');
+    } else {
+        console.log('❌ BingoGame not available');
+    }
+}
+
+// Función para generar números llamados dinámicamente
+function generateCalledNumbers() {
+    console.log('🔄 Generando números llamados...');
+    const numbersContainer = document.getElementById('calledNumbers');
+    if (!numbersContainer) {
+        console.log('❌ Contenedor de números no encontrado');
+        return;
+    }
+    
+    console.log('✅ Contenedor encontrado, limpiando...');
+    // Limpiar contenedor
+    numbersContainer.innerHTML = '';
+    
+    // Generar números del 1 al 90
+    for (let i = 1; i <= 90; i++) {
+        const numberElement = document.createElement('div');
+        numberElement.className = 'called-number';
+        numberElement.textContent = i.toString();
+        numberElement.dataset.number = i;
+        
+        // Agregar evento click para marcar como llamado
+        numberElement.addEventListener('click', function() {
+            this.classList.toggle('called');
+            if (this.classList.contains('called')) {
+                this.style.background = '#ff6b6b';
+                this.style.color = '#ffffff';
+                this.style.borderColor = '#ff6b6b';
+                this.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 300);
+            } else {
+                this.style.background = '#16213e';
+                this.style.color = '#ffffff';
+                this.style.borderColor = '#333';
+            }
+        });
+        
+        numbersContainer.appendChild(numberElement);
+    }
+    
+    console.log('✅ Números generados:', numbersContainer.children.length);
+}
+
+// Función para marcar números como llamados
+function markNumberAsCalled(number) {
+    const numberElement = document.querySelector(`[data-number="${number}"]`);
+    if (numberElement) {
+        numberElement.classList.add('called', 'recent');
+        setTimeout(() => {
+            numberElement.classList.remove('recent');
+        }, 1000);
+    }
+}
+
+// Función para actualizar el último número llamado
+function updateLastCalledNumber(number) {
+    const lastNumberDisplay = document.getElementById('lastNumber');
+    if (lastNumberDisplay) {
+        lastNumberDisplay.textContent = number || '-';
+        if (number) {
+            lastNumberDisplay.classList.add('recent');
+            setTimeout(() => {
+                lastNumberDisplay.classList.remove('recent');
+            }, 2000);
+        }
+    }
+}
+
+// Inicializar números llamados cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Inicializando números llamados...');
+    
+    // Debug inmediato
+    const numbersContainer = document.getElementById('calledNumbers');
+    console.log('🔍 Estado inicial del contenedor:', {
+        exists: !!numbersContainer,
+        id: numbersContainer?.id,
+        className: numbersContainer?.className,
+        children: numbersContainer?.children?.length || 0
+    });
+    
+    generateCalledNumbers();
+    
+    // Verificar después de generar
+    setTimeout(() => {
+        const container = document.getElementById('calledNumbers');
+        console.log('🔍 Estado después de generar:', {
+            children: container?.children?.length || 0,
+            firstChild: container?.children[0]?.textContent,
+            lastChild: container?.children[89]?.textContent
+        });
+    }, 100);
+});
+
+// También inicializar cuando se carga el juego
+window.addEventListener('load', function() {
+    console.log('🎮 Página cargada, verificando números llamados...');
+    setTimeout(() => {
+        const numbersContainer = document.getElementById('calledNumbers');
+        if (numbersContainer && numbersContainer.children.length === 0) {
+            console.log('⚠️ Contenedor vacío, regenerando números...');
+            generateCalledNumbers();
+        } else {
+            console.log('✅ Números llamados ya generados:', numbersContainer?.children.length || 0);
+        }
+        
+        // Debug adicional
+        if (numbersContainer) {
+            console.log('🔍 Debug contenedor:', {
+                id: numbersContainer.id,
+                className: numbersContainer.className,
+                children: numbersContainer.children.length,
+                innerHTML: numbersContainer.innerHTML.substring(0, 200) + '...'
+            });
+        }
+    }, 500);
+}); 
+
+/**
+ * Función global para seleccionar modo de juego
+ */
+function selectGameMode(modeId) {
+    if (typeof bingoGame !== 'undefined' && bingoGame) {
+        const success = bingoGame.changeGameMode(modeId);
+        if (success) {
+            // Actualizar estado visual de las tarjetas
+            updateModeCardsVisualState();
+        }
+    } else {
+        console.error('❌ BingoGame no está inicializado');
+    }
+}
+
+/**
+ * Actualizar estado visual de las tarjetas de modo
+ */
+function updateModeCardsVisualState() {
+    const modeCards = document.querySelectorAll('.mode-card');
+    const currentMode = bingoGame ? bingoGame.getCurrentGameMode() : null;
+    
+    modeCards.forEach(card => {
+        const modeId = card.dataset.mode;
+        const availableModes = bingoGame ? bingoGame.getAvailableGameModes() : [];
+        const modeInfo = availableModes.find(mode => mode.id === modeId);
+        
+        if (modeInfo) {
+            if (modeInfo.canPlay) {
+                card.classList.remove('disabled');
+            } else {
+                card.classList.add('disabled');
+            }
+            
+            // Marcar como activo el modo actual
+            if (currentMode && modeId === currentMode.id) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        }
+    });
+}
+
+/**
+ * Inicializar estado de las tarjetas de modo al cargar la página
+ */
+function initializeModeCards() {
+    setTimeout(() => {
+        updateModeCardsVisualState();
+    }, 1000); // Esperar a que BingoGame se inicialice
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    initializeModeCards();
+});
