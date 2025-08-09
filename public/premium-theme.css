@@ -724,52 +724,203 @@ body::before {
     }
 }
 
-/* ===== RESPONSIVE PREMIUM ===== */
-@media (max-width: 768px) {
-    :root {
-        --spacing-xs: 3px;
-        --spacing-sm: 6px;
-        --spacing-md: 12px;
-        --spacing-lg: 18px;
-        --spacing-xl: 24px;
-        --spacing-2xl: 36px;
-    }
-    
-    .bingo-card {
-        margin: var(--spacing-sm);
-        padding: var(--spacing-md);
-        transform: none;
-    }
-    
-    .bingo-cell {
-        font-size: 0.8rem;
-    }
-    
-    .btn-premium {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: 0.8rem;
-    }
+/* ===== LAYOUT OPTIMIZADO ===== */
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 0.8fr;
+    gap: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    min-height: 80vh;
+}
 
-    .right-panel {
-        max-width: 100%;
+.left-panel, .center-panel, .right-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    backdrop-filter: blur(20px);
+    animation: slideInUp 0.8s ease-out;
+    height: fit-content;
+}
+
+/* Panel izquierdo - Números llamados más ancho */
+.left-panel {
+    min-height: 600px;
+}
+
+/* Panel central - Mis cartones más ancho */
+.center-panel {
+    min-height: 600px;
+}
+
+/* Panel derecho - Estadísticas optimizado */
+.right-panel {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: 0; /* Eliminar margen superior */
+}
+
+/* Estadísticas movidas arriba */
+.stats-section {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    backdrop-filter: blur(20px);
+    animation: slideInRight 0.8s ease-out;
+    order: 1; /* Primero */
+}
+
+.advanced-chat-section {
+    order: 2; /* Segundo */
+    flex: 1;
+}
+
+/* Grid de estadísticas más compacto */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: 0;
+}
+
+.stat-card {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-medium);
+    color: white;
+    min-height: 60px;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--premium-gold);
+}
+
+.stat-icon {
+    width: 35px;
+    height: 35px;
+    background: var(--gradient-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--premium-royal-blue-dark);
+    font-size: 1rem;
+    font-weight: bold;
+    min-width: 35px;
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--premium-gold);
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+/* Panel headers optimizados */
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.panel-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.panel-header h3 i {
+    color: var(--premium-gold);
+}
+
+/* ===== RESPONSIVE LAYOUT OPTIMIZADO ===== */
+@media (max-width: 1200px) {
+    .game-layout {
+        grid-template-columns: 1fr 1fr 0.8fr;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    .game-layout {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+    
+    .left-panel, .center-panel, .right-panel {
+        min-height: auto;
+        padding: var(--spacing-md);
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+    
+    .stat-card {
+        padding: var(--spacing-sm);
+        min-height: 50px;
+    }
+    
+    .stat-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .stat-value {
+        font-size: 1.1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
     }
 }
 
 @media (max-width: 480px) {
-    .game-actions {
+    .panel-header h3 {
+        font-size: 1rem;
+    }
+    
+    .stats-grid {
         grid-template-columns: 1fr;
-    }
-    
-    .game-actions button {
-        flex-direction: row;
-        justify-content: flex-start;
-        min-height: 50px;
-        text-align: left;
-    }
-    
-    .game-actions button i {
-        margin-bottom: 0;
-        margin-right: var(--spacing-sm);
     }
 }
 

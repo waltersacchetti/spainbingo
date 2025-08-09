@@ -2184,14 +2184,15 @@ class BingoPro {
 
             // Crear cartones
             for (let i = 0; i < quantity; i++) {
-                const card = this.generateCard();
-                card.purchasePrice = cardPrice;
-                card.mode = currentMode.id;
-                this.userCards.push(card);
-                this.selectedCards.push(card.id);
-                
-                // ✨ NUEVO: Agregar experiencia por comprar cartón
-                this.addUserExperience('buyCard');
+                const card = this.addCard();
+                if (card) {
+                    card.purchasePrice = cardPrice;
+                    card.mode = currentMode.id;
+                    this.selectedCards.push(card.id);
+                    
+                    // ✨ NUEVO: Agregar experiencia por comprar cartón
+                    this.addUserExperience('buyCard');
+                }
             }
 
             // Guardar y actualizar UI
