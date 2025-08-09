@@ -5921,6 +5921,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Inicializar el juego
             window.bingoGame = new BingoPro();
+            window.game = window.bingoGame; // ✅ ALIAS PARA HTML ONCLICK
             window.bingoGame.initializeGame();
             
             // Configuración adicional del chat después de la inicialización
@@ -6416,3 +6417,16 @@ function initializeModeCards() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeModeCards();
 });
+
+// ✅ FIX CRÍTICO: Asegurar que window.game siempre apunte a window.bingoGame
+console.log('🔧 Verificando instancia del juego...');
+setTimeout(() => {
+    if (window.bingoGame) {
+        window.game = window.bingoGame;
+        console.log('✅ window.game asignado correctamente');
+        console.log('🎮 Game instance available:', !!window.game);
+        console.log('🛒 purchaseCards method:', typeof window.game.purchaseCards);
+    } else {
+        console.error('❌ window.bingoGame no está disponible');
+    }
+}, 2000);
