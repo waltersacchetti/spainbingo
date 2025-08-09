@@ -1,0 +1,572 @@
+/* ===== BINGOROYAL PREMIUM THEME v3.0 ===== */
+/* Diseño premium inspirado en Codere, eBingo, Paf */
+
+/* ===== VARIABLES CSS PREMIUM ===== */
+:root {
+    /* === COLORES PREMIUM === */
+    /* Paleta principal - Azul Real + Dorado */
+    --premium-royal-blue: #1a237e;
+    --premium-royal-blue-light: #3949ab;
+    --premium-royal-blue-dark: #0d1421;
+    --premium-gold: #ffd700;
+    --premium-gold-light: #ffed4a;
+    --premium-gold-dark: #b8860b;
+    
+    /* Colores de soporte */
+    --premium-silver: #c0c0c0;
+    --premium-platinum: #e5e4e2;
+    --premium-copper: #cd7f32;
+    
+    /* Gradientes premium */
+    --gradient-royal: linear-gradient(135deg, var(--premium-royal-blue), var(--premium-royal-blue-light));
+    --gradient-gold: linear-gradient(135deg, var(--premium-gold), var(--premium-gold-light));
+    --gradient-royal-gold: linear-gradient(135deg, var(--premium-royal-blue), var(--premium-gold));
+    --gradient-dark: linear-gradient(135deg, var(--premium-royal-blue-dark), var(--premium-royal-blue));
+    
+    /* === GLASSMORPHISM === */
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-bg-strong: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px rgba(26, 35, 126, 0.1);
+    --glass-backdrop: blur(10px);
+    
+    /* === SOMBRAS 3D === */
+    --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --shadow-intense: 0 16px 48px rgba(0, 0, 0, 0.25);
+    --shadow-glow: 0 0 20px rgba(255, 215, 0, 0.3);
+    
+    /* === ESPACIADO PREMIUM === */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+    
+    /* === RADIO DE BORDES === */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-round: 50%;
+    
+    /* === TRANSICIONES === */
+    --transition-fast: 0.2s ease-out;
+    --transition-medium: 0.3s ease-out;
+    --transition-slow: 0.5s ease-out;
+    --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* === TIPOGRAFÍA === */
+    --font-primary: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-secondary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ===== RESET Y BASE PREMIUM ===== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-primary);
+    background: var(--gradient-dark);
+    color: white;
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Fondo animado con partículas */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(26, 35, 126, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(192, 192, 192, 0.05) 0%, transparent 50%);
+    z-index: -1;
+    animation: backgroundPulse 20s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* ===== CARTONES DE BINGO 3D PREMIUM ===== */
+.bingo-card {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-strong);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md);
+    transition: all var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+    transform: perspective(1000px) rotateX(2deg);
+}
+
+.bingo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.8s;
+}
+
+.bingo-card:hover {
+    transform: perspective(1000px) rotateX(0deg) translateY(-8px);
+    box-shadow: var(--shadow-intense), var(--shadow-glow);
+}
+
+.bingo-card:hover::before {
+    left: 100%;
+}
+
+/* Encabezado del cartón */
+.bingo-card h4 {
+    color: var(--premium-gold);
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.bingo-card h4 i {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.4rem;
+}
+
+/* Grid de números del cartón */
+.bingo-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(5px);
+}
+
+/* Celdas individuales del cartón */
+.bingo-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.bingo-cell:not(.empty) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+}
+
+.bingo-cell.empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Efecto hover en celdas */
+.bingo-cell:not(.empty):hover {
+    background: var(--gradient-royal-gold);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-medium);
+    z-index: 2;
+}
+
+/* Números marcados */
+.bingo-cell.marked {
+    background: var(--gradient-gold) !important;
+    color: var(--premium-royal-blue-dark);
+    font-weight: 700;
+    transform: scale(0.95);
+    animation: markPulse 0.6s ease-out;
+}
+
+@keyframes markPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(0.95); }
+}
+
+/* Números llamados (pero no en cartón) */
+.bingo-cell.called {
+    background: linear-gradient(135deg, var(--premium-silver), rgba(192, 192, 192, 0.7));
+    color: var(--premium-royal-blue-dark);
+    animation: callGlow 2s ease-in-out infinite;
+}
+
+@keyframes callGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(192, 192, 192, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(192, 192, 192, 0.8); }
+}
+
+/* Efectos de proximidad a premio */
+.bingo-cell.near-prize {
+    animation: nearPrize 1.5s ease-in-out infinite;
+}
+
+@keyframes nearPrize {
+    0%, 100% { background: var(--glass-bg); }
+    50% { background: linear-gradient(135deg, var(--premium-gold), var(--premium-gold-light)); }
+}
+
+/* ===== BOTONES PREMIUM ===== */
+.btn-premium {
+    background: var(--gradient-royal-gold);
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-weight: 600;
+    font-family: var(--font-primary);
+    padding: var(--spacing-md) var(--spacing-xl);
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    box-shadow: var(--shadow-medium);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+.btn-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+.btn-premium:hover::before {
+    left: 100%;
+}
+
+.btn-premium:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Variantes de botones */
+.btn-gold {
+    background: var(--gradient-gold);
+    color: var(--premium-royal-blue-dark);
+}
+
+.btn-silver {
+    background: linear-gradient(135deg, var(--premium-silver), var(--premium-platinum));
+    color: var(--premium-royal-blue-dark);
+}
+
+.btn-royal {
+    background: var(--gradient-royal);
+    color: white;
+}
+
+/* ===== TARJETAS PREMIUM ===== */
+.card-premium {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-xl);
+    transition: all var(--transition-medium);
+    position: relative;
+}
+
+.card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-gold);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.card-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-strong);
+}
+
+/* ===== NÚMEROS LLAMADOS PANEL ===== */
+.called-numbers-panel {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md) 0;
+}
+
+.called-numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: var(--spacing-sm);
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+.called-number {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-royal);
+    color: white;
+    border-radius: var(--radius-round);
+    font-weight: 600;
+    font-size: 0.9rem;
+    animation: numberCall 0.8s ease-out;
+    box-shadow: var(--shadow-subtle);
+}
+
+@keyframes numberCall {
+    0% { 
+        transform: scale(0) rotate(180deg);
+        opacity: 0;
+    }
+    50% { 
+        transform: scale(1.2) rotate(90deg);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.called-number.latest {
+    background: var(--gradient-gold);
+    color: var(--premium-royal-blue-dark);
+    animation: latestNumber 2s ease-in-out infinite;
+}
+
+@keyframes latestNumber {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: var(--shadow-subtle);
+    }
+    50% { 
+        transform: scale(1.1);
+        box-shadow: var(--shadow-glow);
+    }
+}
+
+/* ===== HEADER PREMIUM ===== */
+.main-header {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-backdrop);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-lg) 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+/* Logo premium */
+.logo-section h1 {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2rem;
+    font-weight: 800;
+    text-shadow: none;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ===== CHAT PREMIUM ===== */
+.chat-container {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium);
+    overflow: hidden;
+}
+
+.chat-message {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    animation: messageSlide 0.3s ease-out;
+}
+
+@keyframes messageSlide {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.chat-message.system {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent);
+    border-left: 3px solid var(--premium-gold);
+}
+
+.chat-message.user {
+    background: linear-gradient(90deg, rgba(26, 35, 126, 0.1), transparent);
+    border-left: 3px solid var(--premium-royal-blue);
+}
+
+/* ===== ANIMACIONES GLOBALES ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: var(--shadow-medium); }
+    50% { box-shadow: var(--shadow-glow); }
+}
+
+/* ===== UTILIDADES ===== */
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* ===== RESPONSIVE PREMIUM ===== */
+@media (max-width: 768px) {
+    :root {
+        --spacing-xs: 3px;
+        --spacing-sm: 6px;
+        --spacing-md: 12px;
+        --spacing-lg: 18px;
+        --spacing-xl: 24px;
+        --spacing-2xl: 36px;
+    }
+    
+    .bingo-card {
+        margin: var(--spacing-sm);
+        padding: var(--spacing-md);
+        transform: none;
+    }
+    
+    .bingo-cell {
+        font-size: 0.8rem;
+    }
+    
+    .btn-premium {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== MODO OSCURO/CLARO TOGGLE ===== */
+[data-theme="light"] {
+    --glass-bg: rgba(0, 0, 0, 0.05);
+    --glass-bg-strong: rgba(0, 0, 0, 0.1);
+    --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+/* ===== EFECTOS DE CARGA ===== */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+} 

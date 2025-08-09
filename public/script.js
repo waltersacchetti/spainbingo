@@ -42,6 +42,9 @@ class BingoPro {
         this.selectedCards = [];
         this.cardPrice = 1.00; // 1 euro por cartón
         
+        // Auto-Daub System
+        this.autoDaubSystem = null;
+        
         // Variables para juego global
         this.globalGameState = {
             gameId: null,
@@ -368,6 +371,15 @@ class BingoPro {
         
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
+        
+        // ✨ NUEVO: Inicializar sistema Auto-Daub
+        this.initializeAutoDaub();
+        
+        // ✨ NUEVO: Inicializar sistema de Salas Múltiples
+        this.initializeMultiRoomSystem();
+        
+        // ✨ NUEVO: Inicializar Chat Social Avanzado
+        this.initializeAdvancedChat();
         
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
@@ -4570,6 +4582,116 @@ class BingoPro {
         } catch (error) {
             console.error('❌ Error verificando bonus:', error);
         }
+    }
+
+    /**
+     * Inicializar sistema Auto-Daub
+     */
+    initializeAutoDaub() {
+        try {
+            console.log('🎯 Inicializando sistema Auto-Daub...');
+            
+            // Crear instancia del sistema Auto-Daub
+            if (window.AutoDaubSystem) {
+                this.autoDaubSystem = new AutoDaubSystem(this);
+                this.autoDaubSystem.loadSettings();
+                console.log('✅ Auto-Daub System inicializado correctamente');
+            } else {
+                console.log('⚠️ AutoDaubSystem no disponible, cargando después...');
+                // Intentar cargar después si el script aún no está disponible
+                setTimeout(() => {
+                    if (window.AutoDaubSystem) {
+                        this.autoDaubSystem = new AutoDaubSystem(this);
+                        this.autoDaubSystem.loadSettings();
+                        console.log('✅ Auto-Daub System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Auto-Daub:', error);
+        }
+    }
+
+    /**
+     * Verificar condiciones de victoria con integración Auto-Daub
+     */
+
+    /**
+     * Inicializar sistema de Salas Múltiples
+     */
+    initializeMultiRoomSystem() {
+        try {
+            console.log('🏟️ Inicializando sistema de Salas Múltiples...');
+            
+            // Crear instancia del sistema Multi-Room
+            if (window.MultiRoomSystem) {
+                this.multiRoomSystem = new MultiRoomSystem(this);
+                console.log('✅ Multi-Room System inicializado correctamente');
+            } else {
+                console.log('⚠️ MultiRoomSystem no disponible, cargando después...');
+                // Intentar cargar después si el script aún no está disponible
+                setTimeout(() => {
+                    if (window.MultiRoomSystem) {
+                        this.multiRoomSystem = new MultiRoomSystem(this);
+                        console.log('✅ Multi-Room System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Multi-Room System:', error);
+        }
+    }
+
+    /**
+     * Inicializar Chat Social Avanzado
+     */
+    initializeAdvancedChat() {
+        try {
+            console.log('💬 Inicializando Chat Social Avanzado...');
+            
+            // Crear instancia del Chat Avanzado
+            if (window.AdvancedChatSystem) {
+                this.advancedChatSystem = new AdvancedChatSystem(this);
+                console.log('✅ Advanced Chat System inicializado correctamente');
+            } else {
+                console.log('⚠️ AdvancedChatSystem no disponible, cargando después...');
+                // Intentar cargar después si el script aún no está disponible
+                setTimeout(() => {
+                    if (window.AdvancedChatSystem) {
+                        this.advancedChatSystem = new AdvancedChatSystem(this);
+                        console.log('✅ Advanced Chat System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Advanced Chat System:', error);
+        }
+    }
+
+    /**
+     * Obtener información del usuario para sistemas premium
+     */
+    getUserInfo() {
+        return {
+            username: this.username || 'Usuario',
+            level: this.currentLevel || 1,
+            vipStatus: this.currentLevel >= 7, // VIP desde nivel 7 (Diamante)
+            balance: this.userBalance || 0,
+            experience: this.currentXP || 0
+        };
+    }
+
+    /**
+     * Actualizar precio de cartón en display (usado por Multi-Room)
+     */
+    updateCardPriceDisplay() {
+        const priceElements = document.querySelectorAll('.card-price, .price-display');
+        priceElements.forEach(element => {
+            element.textContent = `€${this.cardPrice.toFixed(2)}`;
+        });
+        
+        // Actualizar también el bote global si está visible
+        this.updateGlobalJackpotDisplay();
     }
 }
 
