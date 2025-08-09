@@ -5519,6 +5519,144 @@ class BingoPro {
         if (item.type === 'withdrawal') return 'fa-minus-circle';
         return 'fa-gamepad';
     }
+
+    /**
+     * 🚀 FASE 2: Inicializar Sistema de Temporadas
+     */
+    initializeSeasonsSystem() {
+        try {
+            console.log('🌟 Inicializando Sistema de Temporadas...');
+            if (window.SeasonsSystem) {
+                this.seasonsSystem = new SeasonsSystem(this);
+                console.log('✅ Seasons System inicializado correctamente');
+            } else {
+                console.log('⚠️ SeasonsSystem no disponible, cargando después...');
+                setTimeout(() => {
+                    if (window.SeasonsSystem) {
+                        this.seasonsSystem = new SeasonsSystem(this);
+                        console.log('✅ Seasons System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Seasons System:', error);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Inicializar Sistema de Moneda Virtual
+     */
+    initializeVirtualCurrencySystem() {
+        try {
+            console.log('💰 Inicializando Sistema de Moneda Virtual...');
+            if (window.VirtualCurrencySystem) {
+                this.virtualCurrencySystem = new VirtualCurrencySystem(this);
+                console.log('✅ Virtual Currency System inicializado correctamente');
+            } else {
+                console.log('⚠️ VirtualCurrencySystem no disponible, cargando después...');
+                setTimeout(() => {
+                    if (window.VirtualCurrencySystem) {
+                        this.virtualCurrencySystem = new VirtualCurrencySystem(this);
+                        console.log('✅ Virtual Currency System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Virtual Currency System:', error);
+        }
+    }
+
+    /**
+     * 🎉 FASE 2: Eventos de progreso y recompensas
+     */
+    onPlayerProgressEvent(eventType, data = {}) {
+        console.log(`🎉 Evento de progreso: ${eventType}`, data);
+        
+        // Notificar al sistema de gamificación
+        if (this.gamificationSystem) {
+            this.gamificationSystem.onProgressEvent?.(eventType, data);
+        }
+        
+        // Ganar BingoCoins según el evento
+        if (this.virtualCurrencySystem) {
+            const coinRewards = {
+                'game_won': 25,
+                'line_completed': 10,
+                'achievement_unlocked': 50,
+                'daily_login': 15,
+                'tournament_participation': 40,
+                'vip_upgrade': 100,
+                'friend_referred': 300
+            };
+            
+            const coins = coinRewards[eventType] || 0;
+            if (coins > 0) {
+                this.virtualCurrencySystem.earnCoins(coins, eventType);
+                this.showNotification(`+${coins} BingoCoins ganados!`, 'success');
+            }
+        }
+        
+        // Actualizar progreso de temporada
+        if (this.seasonsSystem) {
+            this.seasonsSystem.onProgressEvent?.(eventType, data);
+        }
+        
+        // Aplicar bonus VIP
+        if (this.advancedVipSystem && eventType === 'game_won') {
+            this.advancedVipSystem.onGameWin?.(data);
+        }
+    }
+
+    /**
+     * 🎮 FASE 2: Override del método de victoria para incluir sistemas
+     */
+    onGameWinEnhanced(winData) {
+        // Llamar método original
+        this.onGameWin(winData);
+        
+        // Eventos adicionales de FASE 2
+        this.onPlayerProgressEvent('game_won', winData);
+        
+        // Registrar para analytics de temporada
+        if (this.seasonsSystem && this.seasonsSystem.currentSeason) {
+            winData.season = this.seasonsSystem.currentSeason.id;
+        }
+        
+        // Bonus VIP aplicados
+        if (this.advancedVipSystem && this.currentVipTier !== 'none') {
+            const vipBonus = this.applyVipWinBonus(winData);
+            if (vipBonus > 0) {
+                this.showNotification(`🎉 Bonus VIP: +€${vipBonus.toFixed(2)}`, 'vip');
+            }
+        }
+        
+        console.log('🎉 Victoria mejorada procesada con sistemas FASE 2');
+    }
+
+    /**
+     * 💰 FASE 2: Aplicar bonus VIP a victorias
+     */
+    applyVipWinBonus(winData) {
+        if (!this.advancedVipSystem || this.currentVipTier === 'none') return 0;
+        
+        const vipTiers = {
+            bronze: 0.1,   // 10% bonus
+            silver: 0.15,  // 15% bonus
+            gold: 0.25,    // 25% bonus
+            platinum: 0.35, // 35% bonus
+            diamond: 0.5   // 50% bonus
+        };
+        
+        const bonusMultiplier = vipTiers[this.currentVipTier] || 0;
+        const bonus = (winData.winnings || 0) * bonusMultiplier;
+        
+        if (bonus > 0) {
+            this.userBalance += bonus;
+            this.updateBalanceDisplay();
+        }
+        
+        return bonus;
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
