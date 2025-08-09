@@ -4637,6 +4637,71 @@ class BingoPro {
             return false;
         }
     }
+
+    // ✅ MÉTODO SHOWNOTIFICATION FALTANTE
+    showNotification(message, type = 'info') {
+        console.log(`📢 Notificación ${type}:`, message);
+        
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `game-notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Agregar al DOM
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+        
+        return true;
+    }
+
+    // ✅ MÉTODO SHOWPURCHASECONFIRMATION FALTANTE
+    showPurchaseConfirmation(quantity, totalCost) {
+        console.log(`🎉 Confirmación de compra: ${quantity} cartones por €${totalCost}`);
+        
+        const confirmation = document.createElement('div');
+        confirmation.className = 'purchase-confirmation-notification';
+        confirmation.innerHTML = `
+            <div class="confirmation-content">
+                <div class="confirmation-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3>¡Compra Exitosa!</h3>
+                <p><strong>${quantity}</strong> cartón${quantity > 1 ? 'es' : ''} comprado${quantity > 1 ? 's' : ''}</p>
+                <p class="price">Total: <span>€${totalCost.toFixed(2)}</span></p>
+                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(confirmation);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (confirmation.parentNode) {
+                confirmation.remove();
+            }
+        }, 5000);
+        
+        return true;
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
