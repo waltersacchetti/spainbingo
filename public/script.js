@@ -3124,12 +3124,14 @@ class BingoPro {
             }
             
             // Botones de compra
-            else if (e.target.closest('.btn-buy')) {
-                const btn = e.target.closest('.btn-buy');
+            else if (e.target.closest('.btn-buy') || e.target.closest('.btn-buy-modern')) {
+                const btn = e.target.closest('.btn-buy') || e.target.closest('.btn-buy-modern');
                 const packageType = btn.getAttribute('data-package');
-                console.log('Botón comprar clickeado:', packageType);
+                console.log('🛒 Botón comprar paquete clickeado:', packageType);
                 if (packageType) {
                     this.buyPackage(packageType);
+                } else {
+                    console.log('⚠️ Paquete no especificado en data-package');
                 }
             }
             
