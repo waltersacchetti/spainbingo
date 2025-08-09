@@ -1277,3 +1277,309 @@ body::before {
         transform: translate(-50%, -50%) scale(1) !important;
     }
 } 
+
+/* ===== MODAL DE SUBIDA DE NIVEL ===== */
+.level-up-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 15000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    transform: scale(0.8) !important;
+    transition: all 0.5s ease-out !important;
+}
+
+.level-up-modal.show {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+.level-up-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.level-up-content {
+    position: relative !important;
+    background: var(--glass-bg-strong) !important;
+    border: 3px solid var(--premium-gold) !important;
+    border-radius: var(--radius-xl) !important;
+    padding: var(--spacing-xl) !important;
+    text-align: center !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    backdrop-filter: blur(30px) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
+    animation: levelUpBounce 0.8s ease-out !important;
+}
+
+.level-up-celebration {
+    position: relative !important;
+    margin-bottom: var(--spacing-lg) !important;
+}
+
+.celebration-icon {
+    width: 100px !important;
+    height: 100px !important;
+    background: var(--gradient-gold) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto var(--spacing-md) auto !important;
+    animation: celebrationPulse 2s ease-in-out infinite !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.celebration-icon i {
+    font-size: 3rem !important;
+    color: var(--premium-royal-blue-dark) !important;
+    animation: trophySpin 1.5s ease-in-out infinite !important;
+}
+
+.fireworks {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 200px !important;
+    height: 200px !important;
+    pointer-events: none !important;
+}
+
+.firework {
+    position: absolute !important;
+    width: 6px !important;
+    height: 6px !important;
+    background: var(--premium-gold) !important;
+    border-radius: 50% !important;
+    animation: fireworkExplode 2s ease-out infinite !important;
+}
+
+.firework:nth-child(1) {
+    top: 20% !important;
+    left: 30% !important;
+    animation-delay: 0s !important;
+}
+
+.firework:nth-child(2) {
+    top: 60% !important;
+    right: 20% !important;
+    animation-delay: 0.5s !important;
+    background: #ff6b6b !important;
+}
+
+.firework:nth-child(3) {
+    bottom: 30% !important;
+    left: 20% !important;
+    animation-delay: 1s !important;
+    background: #4ecdc4 !important;
+}
+
+.level-up-content h2 {
+    color: var(--premium-gold) !important;
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    margin-bottom: var(--spacing-md) !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+    animation: textGlow 2s ease-in-out infinite alternate !important;
+}
+
+.new-level {
+    margin-bottom: var(--spacing-lg) !important;
+}
+
+.level-number {
+    display: inline-block !important;
+    font-size: 4rem !important;
+    font-weight: 900 !important;
+    color: var(--premium-gold) !important;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7) !important;
+    background: var(--gradient-gold) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    animation: numberScale 1.5s ease-in-out infinite alternate !important;
+}
+
+.level-message {
+    color: white !important;
+    font-size: 1.3rem !important;
+    font-weight: 500 !important;
+    margin-bottom: var(--spacing-lg) !important;
+    opacity: 0.9 !important;
+}
+
+.level-rewards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--spacing-sm) !important;
+    margin-bottom: var(--spacing-xl) !important;
+}
+
+.reward-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: var(--spacing-sm) !important;
+    background: rgba(255, 215, 0, 0.1) !important;
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-sm) !important;
+    color: white !important;
+    font-weight: 500 !important;
+    animation: rewardSlideIn 0.8s ease-out !important;
+}
+
+.reward-item:nth-child(2) {
+    animation-delay: 0.2s !important;
+}
+
+.reward-item i {
+    color: var(--premium-gold) !important;
+    font-size: 1.2rem !important;
+}
+
+.btn-level-continue {
+    background: var(--gradient-gold) !important;
+    border: none !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-md) var(--spacing-xl) !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: var(--premium-royal-blue-dark) !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-sm) !important;
+    margin: 0 auto !important;
+}
+
+.btn-level-continue:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4) !important;
+    filter: brightness(1.1) !important;
+}
+
+/* ===== ANIMACIONES LEVEL UP ===== */
+@keyframes levelUpBounce {
+    0% {
+        opacity: 0 !important;
+        transform: scale(0.5) translateY(-50px) !important;
+    }
+    50% {
+        opacity: 1 !important;
+        transform: scale(1.1) translateY(0) !important;
+    }
+    100% {
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+    }
+}
+
+@keyframes celebrationPulse {
+    0%, 100% {
+        transform: scale(1) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5) !important;
+    }
+    50% {
+        transform: scale(1.1) !important;
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8) !important;
+    }
+}
+
+@keyframes trophySpin {
+    0%, 100% {
+        transform: rotate(0deg) scale(1) !important;
+    }
+    25% {
+        transform: rotate(-10deg) scale(1.1) !important;
+    }
+    75% {
+        transform: rotate(10deg) scale(1.1) !important;
+    }
+}
+
+@keyframes fireworkExplode {
+    0% {
+        opacity: 1 !important;
+        transform: scale(0) !important;
+        box-shadow: 0 0 0 0 currentColor !important;
+    }
+    50% {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+        box-shadow: 0 0 20px 10px currentColor !important;
+    }
+    100% {
+        opacity: 0 !important;
+        transform: scale(2) !important;
+        box-shadow: 0 0 40px 20px transparent !important;
+    }
+}
+
+@keyframes textGlow {
+    0% {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+    }
+    100% {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    }
+}
+
+@keyframes numberScale {
+    0% {
+        transform: scale(1) !important;
+    }
+    100% {
+        transform: scale(1.05) !important;
+    }
+}
+
+@keyframes rewardSlideIn {
+    0% {
+        opacity: 0 !important;
+        transform: translateX(-30px) !important;
+    }
+    100% {
+        opacity: 1 !important;
+        transform: translateX(0) !important;
+    }
+}
+
+/* ===== RESPONSIVE LEVEL UP ===== */
+@media (max-width: 768px) {
+    .level-up-content {
+        padding: var(--spacing-lg) !important;
+        margin: var(--spacing-md) !important;
+    }
+    
+    .level-up-content h2 {
+        font-size: 2rem !important;
+    }
+    
+    .level-number {
+        font-size: 3rem !important;
+    }
+    
+    .celebration-icon {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    
+    .celebration-icon i {
+        font-size: 2.5rem !important;
+    }
+} 

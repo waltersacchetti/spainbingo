@@ -4764,6 +4764,68 @@ class BingoPro {
         
         console.log(`✅ Info actualizada: ${this.userCards.length} cartones, ${this.selectedCards?.length || 0} seleccionados`);
     }
+
+    // ✅ MÉTODO SHOWLEVELUPMODAL FALTANTE
+    showLevelUpModal(newLevel) {
+        console.log(`🎉 ¡Subida de nivel! Nuevo nivel: ${newLevel}`);
+        
+        // Crear modal de subida de nivel
+        const levelUpModal = document.createElement('div');
+        levelUpModal.className = 'level-up-modal';
+        levelUpModal.innerHTML = `
+            <div class="level-up-content">
+                <div class="level-up-celebration">
+                    <div class="celebration-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="fireworks">
+                        <div class="firework"></div>
+                        <div class="firework"></div>
+                        <div class="firework"></div>
+                    </div>
+                </div>
+                <h2>¡NIVEL ALCANZADO!</h2>
+                <div class="new-level">
+                    <span class="level-number">${newLevel}</span>
+                </div>
+                <p class="level-message">¡Felicidades por tu progreso!</p>
+                <div class="level-rewards">
+                    <div class="reward-item">
+                        <i class="fas fa-coins"></i>
+                        <span>+${newLevel * 100} Monedas Bonus</span>
+                    </div>
+                    <div class="reward-item">
+                        <i class="fas fa-star"></i>
+                        <span>Nuevos beneficios desbloqueados</span>
+                    </div>
+                </div>
+                <button class="btn-level-continue" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-arrow-right"></i>
+                    Continuar
+                </button>
+            </div>
+            <div class="level-up-overlay" onclick="this.parentElement.remove()"></div>
+        `;
+        
+        // Agregar al DOM
+        document.body.appendChild(levelUpModal);
+        
+        // Trigger animation
+        setTimeout(() => levelUpModal.classList.add('show'), 100);
+        
+        // Auto remove after 8 seconds
+        setTimeout(() => {
+            if (levelUpModal.parentNode) {
+                levelUpModal.remove();
+            }
+        }, 8000);
+        
+        // Agregar bonus de monedas por nivel
+        this.userBalance += (newLevel * 100);
+        this.updateBalanceDisplay();
+        
+        return true;
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
