@@ -4703,6 +4703,67 @@ class BingoPro {
         
         return true;
     }
+
+    // ✅ MÉTODO CREATEPROGRESSBAR FALTANTE
+    createProgressBar() {
+        console.log('🎯 Creando barra de progreso...');
+        
+        const progressContainer = document.getElementById('userProgressContainer');
+        if (!progressContainer) {
+            console.warn('⚠️ Contenedor de progreso no encontrado');
+            return;
+        }
+        
+        const progressHtml = `
+            <div class="progress-bar-container">
+                <div class="progress-info">
+                    <span class="level-text">Nivel ${this.userLevel}</span>
+                    <span class="xp-text">${this.userExperience}/${this.getXpForLevel(this.userLevel + 1)} XP</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${this.getProgressPercentage()}%"></div>
+                </div>
+            </div>
+        `;
+        
+        progressContainer.innerHTML = progressHtml;
+        console.log('✅ Barra de progreso creada');
+    }
+
+    // ✅ MÉTODO GETPROGRESSPERCENTAGE AUXILIAR
+    getProgressPercentage() {
+        const currentLevelXp = this.getXpForLevel(this.userLevel);
+        const nextLevelXp = this.getXpForLevel(this.userLevel + 1);
+        const progressInLevel = this.userExperience - currentLevelXp;
+        const xpNeededForLevel = nextLevelXp - currentLevelXp;
+        
+        return Math.min(100, (progressInLevel / xpNeededForLevel) * 100);
+    }
+
+    // ✅ MÉTODO GETXPFORLEVEL AUXILIAR
+    getXpForLevel(level) {
+        // Sistema de XP exponencial
+        return Math.floor(100 * Math.pow(1.5, level - 1));
+    }
+
+    // ✅ MÉTODO UPDATECARDINFO FALTANTE
+    updateCardInfo() {
+        console.log('📊 Actualizando información de cartones...');
+        
+        const cardsCountElement = document.getElementById('cards-count');
+        const selectedCountElement = document.getElementById('selected-count');
+        
+        if (cardsCountElement) {
+            cardsCountElement.textContent = `${this.userCards.length} cartones`;
+        }
+        
+        if (selectedCountElement) {
+            const selectedCount = this.selectedCards ? this.selectedCards.length : 0;
+            selectedCountElement.textContent = `${selectedCount} seleccionados`;
+        }
+        
+        console.log(`✅ Info actualizada: ${this.userCards.length} cartones, ${this.selectedCards?.length || 0} seleccionados`);
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
