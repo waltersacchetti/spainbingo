@@ -976,7 +976,15 @@
                     console.log(`📊 Response status: ${response.status}`);
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status}`);
+                        // Intentar obtener el mensaje de error del servidor
+                        try {
+                            const errorData = await response.json();
+                            const errorMessage = errorData.error || `HTTP Error: ${response.status}`;
+                            throw new Error(errorMessage);
+                        } catch (parseError) {
+                            // Si no se puede parsear la respuesta, usar error genérico
+                            throw new Error(`HTTP Error: ${response.status}`);
+                        }
                     }
                     
                     const data = await response.json();
