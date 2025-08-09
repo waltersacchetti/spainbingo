@@ -5881,6 +5881,72 @@ class BingoPro {
         
         return true;
     }
+
+    // ✅ MÉTODO BUYCARDS ORIGINAL - Como funcionaba en versión estable
+    buyCards(quantity = 1) {
+        console.log(`🛒 Comprando ${quantity} cartón(es)...`);
+        
+        const currentMode = this.getCurrentGameMode();
+        const cardPrice = currentMode.cardPrice;
+        const totalCost = quantity * cardPrice;
+
+        // Validaciones básicas
+        if (quantity < 1 || quantity > 10) {
+            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
+            return false;
+        }
+
+        if (this.userBalance < totalCost) {
+            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
+            return false;
+        }
+
+        if (this.userCards.length + quantity > currentMode.maxCards) {
+            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
+            return false;
+        }
+
+        try {
+            // Descontar dinero
+            this.userBalance -= totalCost;
+            this.updateBalanceDisplay();
+
+            // Crear cartones
+            for (let i = 0; i < quantity; i++) {
+                const card = this.addCard();
+                if (card) {
+                    card.purchasePrice = cardPrice;
+                    card.mode = currentMode.id;
+                    this.selectedCards.push(card.id);
+                    
+                    // Agregar experiencia
+                    this.addUserExperience('buyCard');
+                }
+            }
+
+            // Guardar y actualizar UI
+            this.saveUserCards();
+            this.renderCards();
+            this.updateCardInfo();
+
+            // Mostrar notificación de éxito
+            this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
+            
+            // Mostrar confirmación
+            this.showPurchaseConfirmation(quantity, totalCost);
+            
+            // Mensaje de chat
+            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
+
+            console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error en la compra:', error);
+            this.showNotification('Error al procesar la compra', 'error');
+            return false;
+        }
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
@@ -6095,338 +6161,56 @@ function changeQuantity(delta) {
 function buySelectedCards() {
     const quantityInput = document.getElementById('cardQuantity');
     if (quantityInput && window.bingoGame) {
-        const quantity = parseInt(quantityInput.value);
-        window.bingoGame.buyCards(quantity);
+        const quantity = parseInt(quantityInput.value) || 1;
+        console.log('🛒 buySelectedCards called with quantity:', quantity);
+        return window.bingoGame.buyCards(quantity);
+    } else {
+        console.error('❌ No se pudo ejecutar buySelectedCards - Missing elements');
+        return false;
     }
 }
 
 function joinCurrentGame() {
     if (window.bingoGame) {
-        window.bingoGame.joinGame();
+        return window.bingoGame.joinGame();
     }
+    return false;
 }
 
-// Función para alternar el chat
-function toggleChat() {
-    const chatSection = document.getElementById('chatSectionFixed');
-    const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
-    
-    console.log('🔧 Toggle chat clicked');
-    console.log('Chat section:', chatSection);
-    console.log('Toggle button:', toggleBtn);
-    
-    if (!chatSection || !toggleBtn) {
-        console.error('❌ Chat elements not found');
-        return;
-    }
-    
-    const isExpanded = chatSection.classList.contains('expanded');
-    
-    if (isExpanded) {
-        // Colapsar el chat
-        chatSection.classList.remove('expanded');
-        toggleBtn.classList.remove('active');
-        console.log('🔽 Chat collapsed');
+// También crear alias window.game para compatibilidad
+window.buySelectedCards = buySelectedCards;
+window.joinCurrentGame = joinCurrentGame;
+
+function changeQuantity(delta) {
+    const quantityInput = document.getElementById('cardQuantity');
+    if (quantityInput) {
+        let newValue = parseInt(quantityInput.value) + delta;
+        if (newValue < 1) newValue = 1;
+        if (newValue > 10) newValue = 10;
+        quantityInput.value = newValue;
         
-        // Limpiar el input cuando se colapsa
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            chatInput.blur();
-        }
-    } else {
-        // Expandir el chat
-        chatSection.classList.add('expanded');
-        toggleBtn.classList.add('active');
-        console.log('🔼 Chat expanded');
+        // Actualizar el precio total
+        updatePurchaseTotal();
         
-        // Configurar el input del chat después de expandir
-        setTimeout(() => {
-            const chatInput = document.getElementById('chatInput');
-            const btnSend = document.querySelector('.btn-send');
-            
-            if (chatInput && btnSend) {
-                console.log('🔧 Reconfigurando event listeners del chat...');
-                
-                // Forzar que el input sea editable
-                chatInput.readOnly = false;
-                chatInput.disabled = false;
-                chatInput.style.pointerEvents = 'auto';
-                chatInput.style.userSelect = 'text';
-                chatInput.style.webkitUserSelect = 'text';
-                
-                // Enfocar y seleccionar
-                chatInput.focus();
-                chatInput.select();
-                
-                // Función para enviar mensaje
-                const sendMessage = () => {
-                    const message = chatInput.value.trim();
-                    console.log('📤 Intentando enviar mensaje:', message);
-                    if (message && window.bingoGame) {
-                        window.bingoGame.sendChatMessage(message);
-                        chatInput.value = '';
-                        chatInput.focus();
-                        console.log('✅ Mensaje enviado correctamente');
-                    }
-                };
-                
-                // Remover event listeners anteriores para evitar duplicados
-                chatInput.removeEventListener('keypress', chatInput._keypressHandler);
-                chatInput.removeEventListener('click', chatInput._clickHandler);
-                btnSend.removeEventListener('click', btnSend._clickHandler);
-                
-                // Crear nuevos event listeners
-                chatInput._keypressHandler = (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('⌨️ Enter presionado en chat (reconfigurado)');
-                        sendMessage();
-                        return false;
-                    }
-                };
-                
-                chatInput._clickHandler = function() {
-                    this.focus();
-                    this.select();
-                };
-                
-                btnSend._clickHandler = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('📤 Click en botón enviar (reconfigurado)');
-                    sendMessage();
-                    return false;
-                };
-                
-                // Agregar los nuevos event listeners
-                chatInput.addEventListener('keypress', chatInput._keypressHandler);
-                chatInput.addEventListener('click', chatInput._clickHandler);
-                btnSend.addEventListener('click', btnSend._clickHandler);
-                
-                // Enviar mensaje de bienvenida automático solo si es la primera vez
-                if (!chatSection.dataset.welcomeSent) {
-                    setTimeout(() => {
-                        if (window.bingoGame) {
-                            window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
-                            chatSection.dataset.welcomeSent = 'true';
-                        }
-                    }, 500);
-                }
-                
-                console.log('✅ Chat event listeners reconfigurados correctamente');
-            } else {
-                console.log('❌ Elementos del chat no encontrados para reconfigurar');
-            }
-        }, 100);
+        console.log('🔄 Cantidad cambiada a:', newValue);
     }
 }
 
-// Función para enviar mensaje de chat
-function sendChatMessage() {
-    const chatInput = document.getElementById('chatInput');
-    const message = chatInput.value.trim();
+function updatePurchaseTotal() {
+    const quantityInput = document.getElementById('cardQuantity');
+    const totalSpan = document.getElementById('purchase-total');
     
-    console.log('📤 Sending chat message:', message);
-    console.log('BingoGame available:', !!window.bingoGame);
-    
-    if (message && window.bingoGame) {
-        window.bingoGame.sendChatMessage(message);
-        chatInput.value = '';
-        console.log('✅ Message sent successfully');
-    } else if (!message) {
-        console.log('⚠️ Empty message, not sending');
-    } else {
-        console.log('❌ BingoGame not available');
-    }
-}
-
-// Función para generar números llamados dinámicamente
-function generateCalledNumbers() {
-    console.log('🔄 Generando números llamados...');
-    const numbersContainer = document.getElementById('calledNumbers');
-    if (!numbersContainer) {
-        console.log('❌ Contenedor de números no encontrado');
-        return;
-    }
-    
-    console.log('✅ Contenedor encontrado, limpiando...');
-    // Limpiar contenedor
-    numbersContainer.innerHTML = '';
-    
-    // Generar números del 1 al 90
-    for (let i = 1; i <= 90; i++) {
-        const numberElement = document.createElement('div');
-        numberElement.className = 'called-number';
-        numberElement.textContent = i.toString();
-        numberElement.dataset.number = i;
+    if (quantityInput && totalSpan && window.bingoGame) {
+        const quantity = parseInt(quantityInput.value) || 1;
+        const currentMode = window.bingoGame.getCurrentGameMode();
+        const cardPrice = currentMode ? currentMode.cardPrice : 1.00;
+        const total = quantity * cardPrice;
         
-        // Agregar evento click para marcar como llamado
-        numberElement.addEventListener('click', function() {
-            this.classList.toggle('called');
-            if (this.classList.contains('called')) {
-                this.style.background = '#ff6b6b';
-                this.style.color = '#ffffff';
-                this.style.borderColor = '#ff6b6b';
-                this.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 300);
-            } else {
-                this.style.background = '#16213e';
-                this.style.color = '#ffffff';
-                this.style.borderColor = '#333';
-            }
-        });
-        
-        numbersContainer.appendChild(numberElement);
-    }
-    
-    console.log('✅ Números generados:', numbersContainer.children.length);
-}
-
-// Función para marcar números como llamados
-function markNumberAsCalled(number) {
-    const numberElement = document.querySelector(`[data-number="${number}"]`);
-    if (numberElement) {
-        numberElement.classList.add('called', 'recent');
-        setTimeout(() => {
-            numberElement.classList.remove('recent');
-        }, 1000);
+        totalSpan.textContent = `€${total.toFixed(2)}`;
+        console.log('💰 Total actualizado:', total);
     }
 }
 
-// Función para actualizar el último número llamado
-function updateLastCalledNumber(number) {
-    const lastNumberDisplay = document.getElementById('lastNumber');
-    if (lastNumberDisplay) {
-        lastNumberDisplay.textContent = number || '-';
-        if (number) {
-            lastNumberDisplay.classList.add('recent');
-            setTimeout(() => {
-                lastNumberDisplay.classList.remove('recent');
-            }, 2000);
-        }
-    }
-}
-
-// Inicializar números llamados cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Inicializando números llamados...');
-    
-    // Debug inmediato
-    const numbersContainer = document.getElementById('calledNumbers');
-    console.log('🔍 Estado inicial del contenedor:', {
-        exists: !!numbersContainer,
-        id: numbersContainer?.id,
-        className: numbersContainer?.className,
-        children: numbersContainer?.children?.length || 0
-    });
-    
-    generateCalledNumbers();
-    
-    // Verificar después de generar
-    setTimeout(() => {
-        const container = document.getElementById('calledNumbers');
-        console.log('🔍 Estado después de generar:', {
-            children: container?.children?.length || 0,
-            firstChild: container?.children[0]?.textContent,
-            lastChild: container?.children[89]?.textContent
-        });
-    }, 100);
-});
-
-// También inicializar cuando se carga el juego
-window.addEventListener('load', function() {
-    console.log('🎮 Página cargada, verificando números llamados...');
-    setTimeout(() => {
-        const numbersContainer = document.getElementById('calledNumbers');
-        if (numbersContainer && numbersContainer.children.length === 0) {
-            console.log('⚠️ Contenedor vacío, regenerando números...');
-            generateCalledNumbers();
-        } else {
-            console.log('✅ Números llamados ya generados:', numbersContainer?.children.length || 0);
-        }
-        
-        // Debug adicional
-        if (numbersContainer) {
-            console.log('🔍 Debug contenedor:', {
-                id: numbersContainer.id,
-                className: numbersContainer.className,
-                children: numbersContainer.children.length,
-                innerHTML: numbersContainer.innerHTML.substring(0, 200) + '...'
-            });
-        }
-    }, 500);
-}); 
-
-/**
- * Función global para seleccionar modo de juego
- */
-function selectGameMode(modeId) {
-    if (typeof bingoGame !== 'undefined' && bingoGame) {
-        const success = bingoGame.changeGameMode(modeId);
-        if (success) {
-            // Actualizar estado visual de las tarjetas
-            updateModeCardsVisualState();
-        }
-    } else {
-        console.error('❌ BingoGame no está inicializado');
-    }
-}
-
-/**
- * Actualizar estado visual de las tarjetas de modo
- */
-function updateModeCardsVisualState() {
-    const modeCards = document.querySelectorAll('.mode-card');
-    const currentMode = bingoGame ? bingoGame.getCurrentGameMode() : null;
-    
-    modeCards.forEach(card => {
-        const modeId = card.dataset.mode;
-        const availableModes = bingoGame ? bingoGame.getAvailableGameModes() : [];
-        const modeInfo = availableModes.find(mode => mode.id === modeId);
-        
-        if (modeInfo) {
-            if (modeInfo.canPlay) {
-                card.classList.remove('disabled');
-            } else {
-                card.classList.add('disabled');
-            }
-            
-            // Marcar como activo el modo actual
-            if (currentMode && modeId === currentMode.id) {
-                card.classList.add('active');
-            } else {
-                card.classList.remove('active');
-            }
-        }
-    });
-}
-
-/**
- * Inicializar estado de las tarjetas de modo al cargar la página
- */
-function initializeModeCards() {
-    setTimeout(() => {
-        updateModeCardsVisualState();
-    }, 1000); // Esperar a que BingoGame se inicialice
-}
-
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    initializeModeCards();
-});
-
-// ✅ FIX CRÍTICO: Asegurar que window.game siempre apunte a window.bingoGame
-console.log('🔧 Verificando instancia del juego...');
-setTimeout(() => {
-    if (window.bingoGame) {
-        window.game = window.bingoGame;
-        console.log('✅ window.game asignado correctamente');
-        console.log('🎮 Game instance available:', !!window.game);
-        console.log('🛒 purchaseCards method:', typeof window.game.purchaseCards);
-    } else {
-        console.error('❌ window.bingoGame no está disponible');
-    }
-}, 2000);
+// También crear alias globales
+window.changeQuantity = changeQuantity;
+window.updatePurchaseTotal = updatePurchaseTotal;

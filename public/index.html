@@ -450,14 +450,14 @@
                             </div>
                         </div>
                         
-                        <!-- Controles de compra CORREGIDOS -->
+                        <!-- Controles de compra ORIGINALES RESTAURADOS -->
                         <div class="purchase-controls">
                             <div class="quantity-selector">
                                 <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
-                                <span id="purchase-quantity">1</span>
+                                <input type="number" id="cardQuantity" min="1" max="10" value="1" readonly>
                                 <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
                             </div>
-                            <button class="btn btn-buy-modern" onclick="window.game.purchaseCards(parseInt(document.getElementById('purchase-quantity').textContent))">
+                            <button class="btn btn-buy-modern" onclick="buySelectedCards()">
                                 <i class="fas fa-shopping-cart"></i>
                                 Comprar <span id="purchase-total">€1.00</span>
                             </button>
