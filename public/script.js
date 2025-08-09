@@ -1372,12 +1372,13 @@ class BingoPro {
     }
 
     renderCards() {
-        const cardsContainer = document.getElementById('bingoCards');
+        const cardsContainer = document.getElementById('cards-container');
         if (!cardsContainer) {
-            console.log('Contenedor de cartones no encontrado');
+            console.log('❌ Contenedor de cartones no encontrado: cards-container');
             return;
         }
         
+        console.log(`🎯 Renderizando ${this.userCards.length} cartones...`);
         cardsContainer.innerHTML = '';
 
         this.userCards.forEach((card, index) => {
