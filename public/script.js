@@ -448,17 +448,6 @@ class BingoPro {
     setupSpendingAlerts() {
         this.spendingAlertShown = {};
         this.totalSpent = 0;
-        
-        // Interceptar compras para monitorear gasto
-        const originalBuyCards = this.buyCards;
-        this.buyCards = function(quantity) {
-            const result = originalBuyCards.call(this, quantity);
-            if (result) {
-                this.totalSpent += quantity * this.cardPrice;
-                this.checkSpendingAlerts(this.totalSpent);
-            }
-            return result;
-        };
     }
 
     /**
