@@ -4758,3 +4758,67 @@ body {
         justify-content: flex-start;
     }
 } 
+
+/* Estilos para contadores de modo */
+.mode-countdown {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 10px 0;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mode-countdown i {
+    color: #ffd700;
+    margin-right: 5px;
+}
+
+.mode-countdown span {
+    color: #ffffff;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.mode-countdown span span {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Asegurar que todos los contenedores de modo tengan el mismo layout */
+.mode-numbers {
+    display: grid !important;
+    grid-template-columns: repeat(10, 1fr) !important;
+    gap: 4px !important;
+    height: 350px !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    background: var(--bg-tertiary) !important;
+    border-radius: var(--radius-md) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 2px solid var(--border-color) !important;
+    min-height: 350px !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+/* Contenedores específicos por modo para asegurar consistencia */
+#calledNumbers-CLASSIC,
+#calledNumbers-RAPID,
+#calledNumbers-VIP,
+#calledNumbers-NIGHT {
+    display: grid !important;
+    grid-template-columns: repeat(10, 1fr) !important;
+    gap: 4px !important;
+    height: 350px !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    background: var(--bg-tertiary) !important;
+    border-radius: var(--radius-md) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 2px solid var(--border-color) !important;
+    min-height: 350px !important;
+    margin-bottom: var(--spacing-md) !important;
+}

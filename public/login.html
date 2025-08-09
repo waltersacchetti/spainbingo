@@ -257,7 +257,6 @@
                                 id="email" 
                                 class="form-input" 
                                 placeholder="tu@email.com" 
-                                value="test@example.com" 
                                 required
                             >
                         </div>
@@ -275,7 +274,6 @@
                                 id="password" 
                                 class="form-input" 
                                 placeholder="Tu contraseña" 
-                                value="123" 
                                 required
                             >
                         </div>
@@ -355,6 +353,29 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Login page loaded');
+            
+            // Verificación de seguridad para credenciales de prueba
+            const isProduction = window.location.protocol === 'https:' && 
+                                 !window.location.hostname.includes('localhost') && 
+                                 !window.location.hostname.includes('127.0.0.1');
+            
+            if (isProduction) {
+                // En producción, verificar que no haya credenciales hardcodeadas
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                
+                if (emailInput.value || passwordInput.value) {
+                    console.error('🚨 ALERTA DE SEGURIDAD: Credenciales de prueba detectadas en producción');
+                    console.error('🔒 Limpiando credenciales automáticamente...');
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                }
+                
+                console.log('🔒 Verificación de seguridad completada - Producción');
+            } else {
+                console.log('🛠️ Modo desarrollo detectado');
+                console.log('💡 Para pruebas, puedes usar: test@example.com / 123');
+            }
             
             const loginForm = document.getElementById('loginForm');
             

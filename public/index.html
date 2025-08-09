@@ -196,6 +196,10 @@
                                         <span class="prize-amount">€100</span>
                                     </div>
                                 </div>
+                                <div class="mode-countdown">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Próxima: <span id="countdown-CLASSIC">--:--</span></span>
+                                </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('CLASSIC')">
                                     <i class="fas fa-play"></i>
                                     Jugar
@@ -224,6 +228,10 @@
                                         <span class="prize-type">Bingo:</span>
                                         <span class="prize-amount">€150</span>
                                     </div>
+                                </div>
+                                <div class="mode-countdown">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Próxima: <span id="countdown-RAPID">--:--</span></span>
                                 </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('RAPID')">
                                     <i class="fas fa-play"></i>
@@ -254,6 +262,10 @@
                                         <span class="prize-amount">€300</span>
                                     </div>
                                 </div>
+                                <div class="mode-countdown">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Próxima: <span id="countdown-VIP">--:--</span></span>
+                                </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('VIP')">
                                     <i class="fas fa-play"></i>
                                     Jugar
@@ -282,6 +294,10 @@
                                         <span class="prize-type">Bingo:</span>
                                         <span class="prize-amount">€200</span>
                                     </div>
+                                </div>
+                                <div class="mode-countdown">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Próxima: <span id="countdown-NIGHT">--:--</span></span>
                                 </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('NIGHT')">
                                     <i class="fas fa-play"></i>
@@ -332,8 +348,18 @@
                         </div>
                         
                         <div class="numbers-grid">
-                            <div id="calledNumbers" class="numbers-container">
-                                <!-- Los números se generarán dinámicamente -->
+                            <!-- Contenedores independientes por modo -->
+                            <div id="calledNumbers-CLASSIC" class="numbers-container mode-numbers" data-mode="CLASSIC">
+                                <!-- Números del modo CLASSIC -->
+                            </div>
+                            <div id="calledNumbers-RAPID" class="numbers-container mode-numbers" data-mode="RAPID" style="display: none;">
+                                <!-- Números del modo RAPID -->
+                            </div>
+                            <div id="calledNumbers-VIP" class="numbers-container mode-numbers" data-mode="VIP" style="display: none;">
+                                <!-- Números del modo VIP -->
+                            </div>
+                            <div id="calledNumbers-NIGHT" class="numbers-container mode-numbers" data-mode="NIGHT" style="display: none;">
+                                <!-- Números del modo NIGHT -->
                             </div>
                         </div>
                         

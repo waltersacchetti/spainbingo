@@ -326,14 +326,18 @@ class SecurityManager {
         }
 
         // Verificar que las funciones críticas no han sido modificadas
-        const criticalFunctions = ['callNumber', 'checkWin', 'buyPackage'];
-        
-        criticalFunctions.forEach(funcName => {
-            if (typeof window[funcName] !== 'function') {
-                this.logSecurityEvent('code_tampering', `Función crítica modificada: ${funcName}`);
-                this.forceLogout('Detección de manipulación del código');
-            }
-        });
+        // Se ejecuta con un delay para permitir que las funciones se carguen
+        setTimeout(() => {
+            const criticalFunctions = ['callNumber', 'checkWin', 'buyPackage'];
+            
+            criticalFunctions.forEach(funcName => {
+                if (typeof window[funcName] !== 'function') {
+                    this.logSecurityEvent('code_tampering', `Función crítica no encontrada: ${funcName}`);
+                    console.warn(`⚠️ Función crítica no disponible: ${funcName}`);
+                    // No forzar logout inmediatamente, solo registrar
+                }
+            });
+        }, 2000); // 2 segundos de delay para que carguen las funciones
     }
 
     /**

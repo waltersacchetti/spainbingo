@@ -1,8 +1,54 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+
+// Cargar variables de entorno
+require('dotenv').config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configuración para HTTPS detrás de proxy (ALB)
+app.set('trust proxy', true);
+app.enable('trust proxy');
+
+// Importar EmailService
+const EmailService = require('./services/EmailService');
+const emailService = new EmailService();
+
+// Middleware para redirigir a dominio principal
+app.use((req, res, next) => {
+    const primaryDomain = 'game.bingoroyal.es';
+    
+    // NO redirigir rutas de health check o API internas
+    if (req.path.startsWith('/api/health') || 
+        req.path.startsWith('/api/admin') ||
+        req.path === '/health' ||
+        req.path === '/status') {
+        return next();
+    }
+    
+    // En producción, redirigir todos los dominios al dominio principal
+    if (process.env.NODE_ENV === 'production' && 
+        req.hostname !== 'localhost' && 
+        req.hostname !== '127.0.0.1' &&
+        req.hostname !== primaryDomain) {
+        
+        // Redirigir al dominio principal con HTTPS
+        return res.redirect(`https://${primaryDomain}${req.url}`);
+    }
+    
+    // Forzar HTTPS en el dominio principal
+    if (process.env.NODE_ENV === 'production' && 
+        req.hostname === primaryDomain &&
+        !req.secure && 
+        req.get('x-forwarded-proto') !== 'https') {
+        
+        return res.redirect(`https://${primaryDomain}${req.url}`);
+    }
+    
+    next();
+});
 
 // Importar configuración de base de datos
 const { sequelize, testConnection } = require('./config/database');
@@ -326,6 +372,13 @@ class GlobalBingoGame {
                         timestamp: new Date()
                     });
                     console.log('🏆 Ganador global detectado:', userId, winType);
+                    
+                    // Terminar la partida automáticamente cuando hay un ganador
+                    if (winType === 'bingo') {
+                        console.log('🎉 ¡BINGO! Terminando partida automáticamente');
+                        this.endGame();
+                        return; // Salir de la función
+                    }
                 }
             }
         }
@@ -428,11 +481,14 @@ class GlobalBingoGame {
             totalPlayers: this.players.size
         });
         
-        // Limpiar estado
+        // Limpiar estado completamente
         this.gameState = 'waiting';
         this.currentGameId = null;
         this.calledNumbers = [];
         this.winners = [];
+        this.lastNumberCalled = null;
+        this.gameStartTime = null;
+        this.currentPhase = 'early';
         
         // Programar próxima partida
         this.scheduleNextGame();
@@ -473,26 +529,37 @@ class GlobalBingoGame {
         console.log('🔍 DEBUG: Tipo de userId:', typeof userId);
         console.log('🔍 DEBUG: Jugadores actuales:', Array.from(this.players.keys()));
         
-        // Verificar si el jugador ya existe
+        // Verificar si el jugador ya existe (por email o userId)
         if (this.players.has(userId)) {
             // Actualizar la sesión existente
             const existingPlayer = this.players.get(userId);
             existingPlayer.cards = cards;
             existingPlayer.lastSeen = new Date();
+            existingPlayer.sessionCount = (existingPlayer.sessionCount || 1); // Mantener contador de sesiones
             this.players.set(userId, existingPlayer);
             console.log('🔄 Sesión actualizada para jugador existente:', userId);
+            console.log('📊 Sesiones activas para este usuario:', existingPlayer.sessionCount);
         } else {
             // Crear nueva sesión
             this.players.set(userId, {
                 cards: cards,
                 lastSeen: new Date(),
-                sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                sessionCount: 1, // Contador de sesiones activas
+                userId: userId // Guardar el userId para referencia
             });
             console.log('👤 Nuevo jugador unido al bingo global:', userId);
         }
         
         console.log('📊 Total de jugadores únicos conectados:', this.players.size);
         console.log('🔍 DEBUG: Lista completa de jugadores:', Array.from(this.players.keys()));
+        
+        // Log adicional para detectar duplicados
+        if (userId.includes('@')) {
+            console.log('📧 Usuario autenticado por email detectado:', userId);
+        } else if (userId.startsWith('anonymous_')) {
+            console.log('👤 Usuario anónimo detectado:', userId);
+        }
     }
     
     updatePlayerCards(userId, cards) {
@@ -522,6 +589,34 @@ class GlobalBingoGame {
             }
         }
     }
+    
+    /**
+     * Detectar y limpiar sesiones duplicadas del mismo usuario
+     */
+    cleanupDuplicateSessions() {
+        const emailUsers = new Map(); // email -> userId más reciente
+        
+        // Agrupar usuarios por email
+        for (const [userId, playerData] of this.players) {
+            if (userId.includes('@')) {
+                // Es un usuario autenticado por email
+                if (!emailUsers.has(userId) || playerData.lastSeen > emailUsers.get(userId).lastSeen) {
+                    emailUsers.set(userId, { userId, lastSeen: playerData.lastSeen });
+                }
+            }
+        }
+        
+        // Remover sesiones duplicadas (manteniendo solo la más reciente)
+        for (const [userId, playerData] of this.players) {
+            if (userId.includes('@')) {
+                const mostRecent = emailUsers.get(userId);
+                if (mostRecent && mostRecent.userId !== userId) {
+                    console.log(`🧹 Removiendo sesión duplicada: ${userId} (manteniendo: ${mostRecent.userId})`);
+                    this.removePlayer(userId);
+                }
+            }
+        }
+    }
 }
 
 // Instancia global del gestor de bingos
@@ -531,6 +626,7 @@ const globalBingoManager = new GlobalBingoManager();
 setInterval(() => {
     globalBingoManager.getAllGames().forEach(game => {
         game.cleanupInactivePlayers();
+        game.cleanupDuplicateSessions(); // Limpiar sesiones duplicadas
     });
 }, 60 * 1000);
 
@@ -566,8 +662,9 @@ class RateLimiter {
 }
 
 // Configurar rate limiting
-const loginLimiter = new RateLimiter(1 * 60 * 1000, 20); // 1 minuto, 20 intentos (menos restrictivo)
-const apiLimiter = new RateLimiter(1 * 60 * 1000, 200); // 1 minuto, 200 requests (menos restrictivo)
+const loginLimiter = new RateLimiter(1 * 60 * 1000, 20); // 1 minuto, 20 intentos
+const apiLimiter = new RateLimiter(1 * 60 * 1000, 200); // 1 minuto, 200 requests
+const bingoApiLimiter = new RateLimiter(1 * 60 * 1000, 5000); // 1 minuto, 5000 requests para APIs del bingo (muy permisivo)
 
 // Middleware de rate limiting
 function rateLimitMiddleware(limiter) {
@@ -611,7 +708,7 @@ app.use((req, res, next) => {
     res.header('X-Frame-Options', 'DENY');
     res.header('X-XSS-Protection', '1; mode=block');
     res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    res.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:;");
+    res.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://game.bingoroyal.es;");
     res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     
@@ -624,10 +721,10 @@ app.use((req, res, next) => {
     console.log('🏠 Host recibido:', host);
     console.log('📄 Referer recibido:', referer);
     
-    // Lista de dominios permitidos
+    // Lista de dominios permitidos - Centralizado en game.bingoroyal.es
     const allowedDomains = [
-        'spain-bingo.es',
-        'www.spain-bingo.es',
+        'game.bingoroyal.es',
+        'bingoroyal.es', // Redirección opcional al dominio principal
         'spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com',
         '52.212.178.26',
         'localhost',
@@ -657,6 +754,13 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Audit-Token');
     res.header('Access-Control-Allow-Credentials', 'true');
     
+    // Headers de seguridad para HTTPS
+    res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'SAMEORIGIN');
+    res.header('X-XSS-Protection', '1; mode=block');
+    res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
     } else {
@@ -666,11 +770,15 @@ app.use((req, res, next) => {
 
 // Servir archivos estáticos
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'entrada.html'));
+    res.sendFile(path.join(__dirname, 'welcome.html'));
 });
 
 app.get('/welcome', (req, res) => {
     res.sendFile(path.join(__dirname, 'welcome.html'));
+});
+
+app.get('/entrada', (req, res) => {
+    res.sendFile(path.join(__dirname, 'entrada.html'));
 });
 
 app.get('/login', (req, res) => {
@@ -714,8 +822,10 @@ function validateInput(data, rules) {
     return { valid: true };
 }
 
-// Aplicar rate limiting
-app.use('/api/', rateLimitMiddleware(apiLimiter));
+// Aplicar rate limiting solo a APIs específicas (excluir bingo APIs)
+app.use('/api/admin/', rateLimitMiddleware(apiLimiter));
+app.use('/api/users/', rateLimitMiddleware(apiLimiter));
+app.use('/api/verification/', rateLimitMiddleware(loginLimiter));
 
 // API endpoints para autenticación
 app.post('/api/login', (req, res) => {
@@ -1193,7 +1303,7 @@ app.post('/api/admin/cache/clear', rateLimitMiddleware(apiLimiter), (req, res) =
 });
 
 // API para enviar código de verificación
-app.post('/api/verification/send', rateLimitMiddleware(loginLimiter), async (req, res) => {
+app.post('/api/verification/send', async (req, res) => {
     try {
         const { userId, method } = req.body;
         
@@ -1280,12 +1390,61 @@ app.post('/api/verification/verify', rateLimitMiddleware(loginLimiter), async (r
     }
 });
 
+// API para verificar email por token (desde URL)
+app.get('/api/verification/verify-token', async (req, res) => {
+    try {
+        const { token, email } = req.query;
+        
+        if (!token || !email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Token y email son requeridos'
+            });
+        }
+
+        const verificationService = require('./services/VerificationService');
+        const result = await verificationService.verifyByToken(email, token);
+        
+        if (result.success) {
+            // Redirigir a página de éxito
+            res.redirect('/verification?status=success&message=' + encodeURIComponent('Email verificado exitosamente'));
+        } else {
+            res.redirect('/verification?status=error&message=' + encodeURIComponent(result.error));
+        }
+
+    } catch (error) {
+        console.error('Error al verificar token:', error);
+        res.redirect('/verification?status=error&message=' + encodeURIComponent('Error interno del servidor'));
+    }
+});
+
+// API para test de conexión SES
+app.get('/api/admin/ses-test', async (req, res) => {
+    try {
+        const result = await emailService.testConnection();
+        
+        res.json({
+            success: result.success,
+            message: result.success ? 'Conexión SES exitosa' : 'Error en conexión SES',
+            data: result.quota || null,
+            error: result.error || null
+        });
+
+    } catch (error) {
+        console.error('Error al probar SES:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
 // ========================================
 // APIS DE BINGO GLOBAL
 // ========================================
 
 // API para obtener el estado actual del juego global por modo
-app.get('/api/bingo/state', rateLimitMiddleware(apiLimiter), (req, res) => {
+app.get('/api/bingo/state', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
         const { mode = 'CLASSIC' } = req.query;
         const gameState = globalBingoManager.getGameState(mode);
@@ -1312,7 +1471,7 @@ app.get('/api/bingo/state', rateLimitMiddleware(apiLimiter), (req, res) => {
 });
 
 // API para unirse al juego global por modo
-app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
+app.post('/api/bingo/join', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
         const { userId, cards, mode = 'CLASSIC' } = req.body;
         
@@ -1348,7 +1507,7 @@ app.post('/api/bingo/join', rateLimitMiddleware(apiLimiter), (req, res) => {
 });
 
 // API para actualizar cartones del jugador por modo
-app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) => {
+app.post('/api/bingo/update-cards', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
         const { userId, cards, mode = 'CLASSIC' } = req.body;
         
@@ -1376,7 +1535,7 @@ app.post('/api/bingo/update-cards', rateLimitMiddleware(apiLimiter), (req, res) 
 });
 
 // API para salir del juego global por modo
-app.post('/api/bingo/leave', rateLimitMiddleware(apiLimiter), (req, res) => {
+app.post('/api/bingo/leave', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
         const { userId, mode = 'CLASSIC' } = req.body;
         
@@ -1461,6 +1620,7 @@ app.get('/api/bingo/global-stats', rateLimitMiddleware(apiLimiter), (req, res) =
                     totalOnlinePlayers: gameState.totalOnlinePlayers,
                     playersWithCards: gameState.playersWithCards,
                     gameState: gameState.gameState,
+                    nextGameTime: gameState.nextGameTime, // Agregar tiempo de próxima partida
                     modeName: game.modeName
                 };
             }
@@ -1517,6 +1677,46 @@ app.post('/api/bingo/force-start', rateLimitMiddleware(apiLimiter), (req, res) =
     }
 });
 
+// API de Auditoría de Seguridad
+app.post('/api/audit-log', rateLimitMiddleware(apiLimiter), (req, res) => {
+    try {
+        const auditData = req.body;
+        const auditToken = req.headers['x-audit-token'];
+        
+        // Validar token de auditoría básico
+        if (!auditToken) {
+            return res.status(401).json({
+                success: false,
+                error: 'Token de auditoría requerido'
+            });
+        }
+        
+        // Log de auditoría (en producción esto se enviaría a un sistema de logs)
+        console.log('🔒 Log de Auditoría:', {
+            timestamp: new Date().toISOString(),
+            type: auditData.type || 'security',
+            message: auditData.message || 'Evento de seguridad',
+            sessionId: auditData.sessionId,
+            userAgent: auditData.userAgent,
+            ip: req.ip || req.connection.remoteAddress,
+            severity: auditData.severity || 'info'
+        });
+        
+        res.json({
+            success: true,
+            message: 'Log de auditoría registrado',
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('Error en audit-log:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error procesando log de auditoría'
+        });
+    }
+});
+
 // Manejo de errores
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -1525,9 +1725,14 @@ app.use((err, req, res, next) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor SpainBingo iniciado en puerto ${PORT}`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
-    console.log(`🎮 Bingo Global inicializado`);
+    console.log('🚀 Servidor BingoRoyal iniciado');
+    console.log(`🌐 URL Local: http://localhost:${PORT}`);
+    console.log(`🎯 URL Principal: https://game.bingoroyal.es`);
+    console.log(`🔒 URL ALB: https://spainbingo-alb-581291766.eu-west-1.elb.amazonaws.com`);
+    console.log(`📊 Modo: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔐 HTTPS: ${process.env.NODE_ENV === 'production' ? 'Habilitado' : 'Desarrollo'}`);
+    console.log('🎮 Dominio único: game.bingoroyal.es');
+    console.log('✅ Servidor listo para recibir conexiones');
 });
 
 module.exports = app;

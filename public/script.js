@@ -1,3 +1,21 @@
+// Polyfill para requestIdleCallback para mejor compatibilidad
+if (!window.requestIdleCallback) {
+    window.requestIdleCallback = function(callback) {
+        return setTimeout(() => {
+            callback({
+                didTimeout: false,
+                timeRemaining: () => Math.max(0, 50.0)
+            });
+        }, 1);
+    };
+}
+
+if (!window.cancelIdleCallback) {
+    window.cancelIdleCallback = function(id) {
+        clearTimeout(id);
+    };
+}
+
 // Clase principal del juego
 class BingoPro {
     constructor() {
@@ -52,7 +70,7 @@ class BingoPro {
         // ===== MODOS DE JUEGO =====
         this.gameModes = {
             CLASSIC: {
-                id: 'classic',
+                id: 'CLASSIC',
                 name: 'Bingo Clásico',
                 description: 'El bingo tradicional con partidas de 2 minutos',
                 duration: 2 * 60 * 1000, // 2 minutos
@@ -74,7 +92,7 @@ class BingoPro {
                 isActive: true
             },
             RAPID: {
-                id: 'rapid',
+                id: 'RAPID',
                 name: 'Bingo Rápido',
                 description: 'Partidas aceleradas de 1 minuto para jugadores experimentados',
                 duration: 1 * 60 * 1000, // 1 minuto
@@ -96,7 +114,7 @@ class BingoPro {
                 isActive: true
             },
             VIP: {
-                id: 'vip',
+                id: 'VIP',
                 name: 'Bingo VIP',
                 description: 'Experiencia premium con premios exclusivos y cartones especiales',
                 duration: 3 * 60 * 1000, // 3 minutos
@@ -119,7 +137,7 @@ class BingoPro {
                 isActive: true
             },
             NIGHT: {
-                id: 'night',
+                id: 'NIGHT',
                 name: 'Bingo Nocturno',
                 description: 'Partidas especiales solo disponibles por la noche',
                 duration: 2.5 * 60 * 1000, // 2.5 minutos
@@ -254,7 +272,7 @@ class BingoPro {
     }
 
     initializeGame() {
-        console.log('Inicializando juego de bingo...');
+        console.log('🚀 Inicializando juego de bingo (optimizado)...');
         
         // Inicializar estado del juego
         this.gameState = 'waiting';
@@ -273,12 +291,14 @@ class BingoPro {
         this.selectedCards = [];
         this.favoriteCards = new Set();
         
-        // Cargar estado del juego guardado
+        // Cargar estado del juego guardado (optimizado)
         this.loadGameState();
         
-        // Cargar datos guardados
-        this.loadFavoriteCards(); // Load favorite cards from localStorage
-        this.loadAnalytics(); // Load analytics data
+        // Cargar datos guardados de forma asíncrona para no bloquear
+        requestIdleCallback(() => {
+            this.loadFavoriteCards();
+            this.loadAnalytics();
+        });
         
         // NO generar cartones automáticamente - el usuario debe comprarlos
         console.log('Juego profesional: Sin cartones por defecto - El usuario debe comprarlos');
@@ -286,24 +306,23 @@ class BingoPro {
         // No seleccionar cartones por defecto
         this.selectedCards = [];
         
+        // Actualizar display de forma optimizada
         this.updateDisplay();
-        this.updateAnalyticsDisplay();
-        this.saveAnalytics(); // Save analytics data after each update
         
-        // El scheduler se maneja desde el servidor global
-        // No necesitamos scheduler local
+        // Guardar analytics de forma asíncrona
+        requestIdleCallback(() => {
+            this.updateAnalyticsDisplay();
+            this.saveAnalytics();
+        });
         
         console.log('Juego inicializado correctamente');
         
-        // Inicializar características de producción
+        // Inicializar características de producción de forma asíncrona
         if (securityManager.isProduction()) {
-            this.setupProductionFeatures();
+            requestIdleCallback(() => {
+                this.setupProductionFeatures();
+            });
         }
-        
-        // Inicializar números llamados
-        setTimeout(() => {
-            generateCalledNumbers();
-        }, 100);
         
         // Inicializar sistema de bote global
         this.initializeGlobalJackpot();
@@ -311,8 +330,20 @@ class BingoPro {
         // Inicializar modos de juego
         this.initializeGameModes();
         
-        // La lógica real de jugadores se maneja en connectToGlobalBingo()
-        // que se llama automáticamente en el constructor
+        // Conectar al bingo global inmediatamente para mantener estado
+        this.connectToGlobalBingo();
+        
+        // Inicializar contadores de modo independientes con delay reducido
+        setTimeout(() => {
+            this.updateAllModeCountdowns();
+        }, 500); // Reducido de 1000ms a 500ms
+        
+        // Actualizar contadores cada 60 segundos (mantener para evitar rate limiting)
+        setInterval(() => {
+            this.updateAllModeCountdowns();
+        }, 60000);
+        
+        console.log('✅ Inicialización optimizada completada');
     }
 
     /**
@@ -610,6 +641,10 @@ class BingoPro {
                     this.renderCards();
                 }
             }
+            
+            // NO llamar updateAllModeCountdowns aquí para evitar peticiones excesivas
+            // Solo actualizar el countdown del modo actual
+            
         } catch (error) {
             console.log('⚠️ Error sincronizando con servidor:', error);
             // Fallback: mostrar countdown local si no se puede conectar
@@ -716,8 +751,9 @@ class BingoPro {
         
         // Si tenemos información del usuario real, usar su email como identificador único
         if (userInfo && (userInfo.email || userInfo.id)) {
+            // Usar email como identificador único para evitar duplicados por navegador
             const realUserId = userInfo.email || `user_${userInfo.id}`;
-            console.log('🆔 Usando userId basado en usuario real:', realUserId);
+            console.log('🆔 Usando userId basado en usuario real (email):', realUserId);
             return realUserId;
         }
         
@@ -822,6 +858,8 @@ class BingoPro {
      * Cambiar modo de juego
      */
     changeGameMode(modeId) {
+        console.log(`⚡ Cambiando modo de juego a: ${modeId} (optimizado)`);
+        
         const check = this.checkGameModeRequirements(modeId);
         
         if (!check.canPlay) {
@@ -839,24 +877,47 @@ class BingoPro {
             BINGO: { name: 'bingo', required: 15, prize: mode.prizes.bingo, probability: 0.02 }
         };
 
-        // Guardar el nuevo modo en localStorage
-        this.saveGameMode(modeId);
+        // Guardar el nuevo modo en localStorage de forma asíncrona
+        requestIdleCallback(() => {
+            this.saveGameMode(modeId);
+        });
         
-        // Actualizar UI
+        // Limpiar cartones actuales y cargar los del nuevo modo
+        this.userCards = [];
+        this.loadUserCards();
+        
+        // NO limpiar completamente el estado - mantener números llamados del servidor
+        // this.calledNumbers = new Set();
+        // this.lastNumberCalled = null;
+        // this.gameState = 'waiting';
+        
+        // Actualizar UI de forma optimizada
         this.updateGameModeDisplay();
         this.updateCardPriceDisplay();
         this.updateCardInfo();
+        this.renderCards(); // Renderizar cartones del nuevo modo
         
-        // El contador se maneja desde el servidor global
-        // No necesitamos reprogramar localmente
+        // Cambiar visibilidad de contenedores de números llamados por modo
+        this.switchCalledNumbersContainer(modeId);
         
-        // Reconectar al bingo global del nuevo modo
-        this.connectToGlobalBingo();
+        // Renderizar números llamados del nuevo modo
+        this.renderCalledNumbers();
+        this.updateLastNumber(); // Limpiar último número
         
-        // Mostrar confirmación
-        this.showGameModeChanged(mode);
+        // Reconectar al bingo global del nuevo modo de forma asíncrona
+        requestIdleCallback(() => {
+            this.connectToGlobalBingo();
+        });
         
-        console.log(`🎮 Modo de juego cambiado a: ${mode.name}`);
+        // Actualizar countdown inmediatamente para el nuevo modo
+        this.updateCountdownFromServer();
+        
+        // Mostrar confirmación de forma asíncrona
+        requestIdleCallback(() => {
+            this.showGameModeChanged(mode);
+        });
+        
+        console.log(`✅ Modo de juego cambiado a: ${mode.name} (optimizado)`);
         return true;
     }
 
@@ -896,10 +957,11 @@ class BingoPro {
     }
 
     /**
-     * Guardar cartones del usuario en localStorage
+     * Guardar cartones del usuario en localStorage (independiente por modo)
      */
     saveUserCards() {
         try {
+            const currentMode = this.getCurrentGameMode();
             const cardsData = this.userCards.map(card => ({
                 id: card.id,
                 numbers: card.numbers,
@@ -908,26 +970,35 @@ class BingoPro {
                 gameMode: card.gameMode,
                 isFavorite: card.isFavorite
             }));
-            localStorage.setItem('bingoroyal_user_cards', JSON.stringify(cardsData));
-            console.log(`💾 Cartones guardados: ${cardsData.length} cartones`);
+            
+            // Guardar cartones específicos del modo actual
+            const storageKey = `bingoroyal_user_cards_${currentMode.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(cardsData));
+            console.log(`💾 Cartones guardados para modo ${currentMode.id}: ${cardsData.length} cartones`);
         } catch (error) {
             console.error('❌ Error guardando cartones:', error);
         }
     }
 
     /**
-     * Cargar cartones del usuario desde localStorage
+     * Cargar cartones del usuario desde localStorage (independiente por modo)
      */
     loadUserCards() {
         try {
-            const savedCards = localStorage.getItem('bingoroyal_user_cards');
+            const currentMode = this.getCurrentGameMode();
+            const storageKey = `bingoroyal_user_cards_${currentMode.id}`;
+            const savedCards = localStorage.getItem(storageKey);
+            
             if (savedCards) {
                 const cardsData = JSON.parse(savedCards);
-                this.userCards = cardsData.map(cardData => ({
-                    ...cardData,
-                    purchaseTime: new Date(cardData.purchaseTime)
-                }));
-                console.log(`📂 Cartones cargados: ${this.userCards.length} cartones`);
+                // Filtrar solo cartones del modo actual
+                this.userCards = cardsData
+                    .filter(cardData => cardData.gameMode === currentMode.id)
+                    .map(cardData => ({
+                        ...cardData,
+                        purchaseTime: new Date(cardData.purchaseTime)
+                    }));
+                console.log(`📂 Cartones cargados para modo ${currentMode.id}: ${this.userCards.length} cartones`);
                 return true;
             }
         } catch (error) {
@@ -942,6 +1013,23 @@ class BingoPro {
     saveGameState() {
         this.saveGameMode(this.currentGameMode);
         this.saveUserCards();
+        
+        // Guardar números llamados
+        try {
+            localStorage.setItem('bingoroyal_called_numbers', JSON.stringify(Array.from(this.calledNumbers)));
+        } catch (error) {
+            console.log('⚠️ Error guardando números llamados:', error);
+        }
+        
+        // Guardar último número llamado
+        try {
+            if (this.lastNumberCalled) {
+                localStorage.setItem('bingoroyal_last_number', this.lastNumberCalled.toString());
+            }
+        } catch (error) {
+            console.log('⚠️ Error guardando último número:', error);
+        }
+        
         console.log('💾 Estado del juego guardado completamente');
     }
 
@@ -954,6 +1042,29 @@ class BingoPro {
         
         if (modeLoaded) {
             this.currentGameMode = modeLoaded;
+        }
+        
+        // Cargar números llamados guardados
+        try {
+            const savedCalledNumbers = localStorage.getItem('bingoroyal_called_numbers');
+            if (savedCalledNumbers) {
+                const numbers = JSON.parse(savedCalledNumbers);
+                this.calledNumbers = new Set(numbers);
+                console.log('📂 Números llamados cargados:', Array.from(this.calledNumbers));
+            }
+        } catch (error) {
+            console.log('⚠️ Error cargando números llamados:', error);
+        }
+        
+        // Cargar último número llamado
+        try {
+            const lastNumber = localStorage.getItem('bingoroyal_last_number');
+            if (lastNumber) {
+                this.lastNumberCalled = parseInt(lastNumber);
+                console.log('📂 Último número llamado cargado:', this.lastNumberCalled);
+            }
+        } catch (error) {
+            console.log('⚠️ Error cargando último número:', error);
         }
         
         console.log(`📂 Estado del juego cargado - Modo: ${modeLoaded ? 'Sí' : 'No'}, Cartones: ${cardsLoaded ? 'Sí' : 'No'}`);
@@ -1128,6 +1239,7 @@ class BingoPro {
             return null;
         }
 
+        const currentMode = this.getCurrentGameMode();
         const card = {
             id: this.generateCardId(),
             numbers: this.generateBingoCard(),
@@ -1139,7 +1251,11 @@ class BingoPro {
             winHistory: [],
             // Agregar información del cartón
             totalNumbers: 0,
-            emptyCells: 0
+            emptyCells: 0,
+            // Información específica del modo
+            gameMode: currentMode.id,
+            purchasePrice: currentMode.cardPrice,
+            purchaseTime: new Date()
         };
         
         // Calcular estadísticas del cartón
@@ -1257,7 +1373,7 @@ class BingoPro {
 
     renderCardGrid(card) {
         let html = '';
-        const logos = ['��', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
+        const logos = ['', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
         let logoIndex = 0;
         
         console.log(`Renderizando cartón ${card.id}:`, card.numbers);
@@ -1302,17 +1418,49 @@ class BingoPro {
     }
 
     renderCalledNumbers() {
-        const container = document.getElementById('calledNumbers');
+        // Obtener el modo actual y usar su contenedor específico
+        const currentMode = this.getCurrentGameMode();
+        const containerId = `calledNumbers-${currentMode.id}`;
+        let container = document.getElementById(containerId);
+        
+        console.log(`🎯 Renderizando números llamados para modo: ${currentMode.id} (optimizado)`);
+        
+        // Si no existe el contenedor específico, usar CLASSIC como fallback
         if (!container) {
-            console.log('Contenedor de números llamados no encontrado');
+            console.log(`⚠️ Contenedor ${containerId} no encontrado, usando CLASSIC como fallback`);
+            container = document.getElementById('calledNumbers-CLASSIC');
+        }
+        
+        if (!container) {
+            console.log('❌ Contenedor de números llamados no encontrado');
             return;
         }
         
-        console.log('Renderizando números llamados:', Array.from(this.calledNumbers));
+        console.log(`✅ Contenedor encontrado: ${container.id}`);
         
-        container.innerHTML = '';
+        // Usar DocumentFragment para optimizar el rendimiento
+        const fragment = document.createDocumentFragment();
+        
+        // Asegurar que el contenedor tenga las clases correctas
+        container.className = 'numbers-container mode-numbers';
+        container.setAttribute('data-mode', currentMode.id);
+        
+        // Aplicar estilos CSS directamente para asegurar el grid
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(10, 1fr)';
+        container.style.gap = '4px';
+        container.style.height = '350px';
+        container.style.overflowY = 'auto';
+        container.style.padding = '12px';
+        container.style.background = 'var(--bg-tertiary)';
+        container.style.borderRadius = 'var(--radius-md)';
+        container.style.width = '100%';
+        container.style.boxSizing = 'border-box';
+        container.style.border = '2px solid var(--border-color)';
+        container.style.minHeight = '350px';
+        container.style.marginBottom = 'var(--spacing-md)';
 
-        // Crear grid de 9x10 para los números del 1-90
+        // Crear grid de 9x10 para los números del 1-90 de forma optimizada
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 10; col++) {
                 const number = row * 10 + col + 1;
@@ -1324,15 +1472,18 @@ class BingoPro {
                     
                     if (this.calledNumbers.has(number)) {
                         numberDiv.classList.add('called');
-                        console.log(`Número ${number} marcado como llamado en el panel`);
                     }
                     
-                    container.appendChild(numberDiv);
+                    fragment.appendChild(numberDiv);
                 }
             }
         }
         
-        console.log('Panel de números llamados actualizado');
+        // Limpiar contenedor y agregar fragmento de una vez
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        
+        console.log(`✅ Panel de números llamados actualizado para modo ${currentMode.id} (optimizado)`);
     }
 
     updateLastNumber() {
@@ -3807,15 +3958,22 @@ class BingoPro {
             if (data.success) {
                 console.log(`✅ Conectado al bingo global (${currentMode.name}):`, data.gameState.gameState);
                 
-                // Sincronizar números llamados del servidor global
+                // Sincronizar números llamados del servidor global SOLO si hay números nuevos
                 if (data.gameState.calledNumbers && data.gameState.calledNumbers.length > 0) {
-                    this.calledNumbers = new Set(data.gameState.calledNumbers);
-                    this.lastNumberCalled = data.gameState.lastNumberCalled;
-                    console.log('🔄 Números sincronizados del servidor global:', data.gameState.calledNumbers);
-                    
-                    // Actualizar la UI con los números del servidor
-                    this.renderCalledNumbers();
-                    this.updateLastNumber();
+                    // Solo actualizar si hay más números que los actuales
+                    if (data.gameState.calledNumbers.length > this.calledNumbers.size) {
+                        this.calledNumbers = new Set(data.gameState.calledNumbers);
+                        this.lastNumberCalled = data.gameState.lastNumberCalled;
+                        console.log('🔄 Números sincronizados del servidor global:', data.gameState.calledNumbers);
+                        
+                        // Actualizar la UI con los números del servidor
+                        this.renderCalledNumbers();
+                        this.updateLastNumber();
+                        this.renderCards(); // Actualizar cartones con nuevos números marcados
+                        
+                        // Guardar estado actualizado
+                        this.saveGameState();
+                    }
                 }
                 
                 // Actualizar contador de jugadores
@@ -3870,20 +4028,26 @@ class BingoPro {
             if (data.success) {
                 const globalState = data.gameState;
                 
-                // Sincronizar números llamados
-                if (globalState.calledNumbers && globalState.calledNumbers.length > this.calledNumbers.size) {
-                    this.calledNumbers = new Set(globalState.calledNumbers);
-                    this.lastNumberCalled = globalState.lastNumberCalled;
-                    
-                    console.log('🔄 Nuevos números del servidor global:', globalState.calledNumbers);
-                    
-                    // Actualizar UI
-                    this.renderCalledNumbers();
-                    this.updateLastNumber();
-                    this.renderCards(); // Actualizar cartones con nuevos números marcados
-                    
-                    // Reproducir sonido de nuevo número
-                    this.playNumberSound();
+                // Sincronizar números llamados SOLO si hay números nuevos
+                if (globalState.calledNumbers && globalState.calledNumbers.length > 0) {
+                    // Solo actualizar si hay más números que los actuales o si el estado del juego cambió
+                    if (globalState.calledNumbers.length > this.calledNumbers.size || 
+                        globalState.gameState !== this.gameState) {
+                        
+                        this.calledNumbers = new Set(globalState.calledNumbers);
+                        this.lastNumberCalled = globalState.lastNumberCalled;
+                        this.gameState = globalState.gameState;
+                        
+                        console.log('🔄 Nuevos números del servidor global:', globalState.calledNumbers);
+                        
+                        // Actualizar UI
+                        this.renderCalledNumbers();
+                        this.updateLastNumber();
+                        this.renderCards(); // Actualizar cartones con nuevos números marcados
+                        
+                        // Reproducir sonido de nuevo número
+                        this.playNumberSound();
+                    }
                 }
                 
                 // Actualizar contador de jugadores
@@ -3967,6 +4131,79 @@ class BingoPro {
             });
         } catch (error) {
             console.error('❌ Error actualizando cartones globales:', error);
+        }
+    }
+
+    /**
+     * Actualizar todos los contadores de modo independientemente
+     */
+    async updateAllModeCountdowns() {
+        try {
+            // Usar una sola petición para obtener estadísticas globales que incluyen todos los modos
+            const response = await fetch('/api/bingo/global-stats');
+            const data = await response.json();
+            
+            if (data.success && data.stats) {
+                const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+                
+                for (const mode of modes) {
+                    const modeStats = data.stats[mode];
+                    const countdownElement = document.getElementById(`countdown-${mode}`);
+                    
+                    if (countdownElement && modeStats) {
+                        if (modeStats.gameState === 'waiting' && modeStats.nextGameTime) {
+                            const nextGameTime = new Date(modeStats.nextGameTime);
+                            const now = new Date();
+                            const timeLeft = nextGameTime.getTime() - now.getTime();
+                            
+                            if (timeLeft > 0) {
+                                const minutes = Math.floor(timeLeft / 60000);
+                                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                                const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                countdownElement.textContent = countdownText;
+                            } else {
+                                countdownElement.textContent = '0:00';
+                            }
+                        } else if (modeStats.gameState === 'playing') {
+                            countdownElement.textContent = 'En curso';
+                        } else {
+                            countdownElement.textContent = '--:--';
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.log('⚠️ Error actualizando countdowns:', error);
+        }
+    }
+
+    /**
+     * Cambiar la visibilidad de los contenedores de números llamados por modo
+     */
+    switchCalledNumbersContainer(modeId) {
+        try {
+            // Ocultar todos los contenedores de modo
+            const allContainers = document.querySelectorAll('.mode-numbers');
+            allContainers.forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Mostrar solo el contenedor del modo seleccionado
+            const targetContainer = document.getElementById(`calledNumbers-${modeId}`);
+            if (targetContainer) {
+                targetContainer.style.display = 'block';
+                console.log(`✅ Contenedor de números llamados cambiado a modo: ${modeId}`);
+            } else {
+                console.log(`⚠️ Contenedor de números llamados para modo ${modeId} no encontrado`);
+                // Fallback: mostrar el contenedor CLASSIC
+                const fallbackContainer = document.getElementById('calledNumbers-CLASSIC');
+                if (fallbackContainer) {
+                    fallbackContainer.style.display = 'block';
+                    console.log('✅ Usando contenedor CLASSIC como fallback');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error cambiando contenedor de números llamados:', error);
         }
     }
 }
@@ -4421,22 +4658,6 @@ document.addEventListener('DOMContentLoaded', function() {
             lastChild: container?.children[89]?.textContent
         });
     }, 100);
-    
-    // Simular algunos números llamados para demostración
-    setTimeout(() => {
-        markNumberAsCalled(15);
-        updateLastCalledNumber(15);
-    }, 1000);
-    
-    setTimeout(() => {
-        markNumberAsCalled(23);
-        updateLastCalledNumber(23);
-    }, 3000);
-    
-    setTimeout(() => {
-        markNumberAsCalled(47);
-        updateLastCalledNumber(47);
-    }, 5000);
 });
 
 // También inicializar cuando se carga el juego

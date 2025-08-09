@@ -1,0 +1,50 @@
+# ========================================
+# CONFIGURACIÓN AWS SES PARA BINGOROYAL
+# ========================================
+
+# Región de AWS SES (recomendado: eu-west-1 para España)
+AWS_REGION=eu-west-1
+
+# Credenciales de AWS IAM (crear usuario con permisos AmazonSESFullAccess)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+
+# Configuración de emails (usando info.bingoroyal.es)
+SES_FROM_EMAIL=noreply@bingoroyal.es
+SES_FROM_NAME=BingoRoyal
+SES_REPLY_TO=support@bingoroyal.es
+
+# ========================================
+# CONFIGURACIÓN DE BASE DE DATOS
+# ========================================
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bingoroyal_db
+DB_USER=postgres
+DB_PASS=tu_password_aqui
+
+# ========================================
+# CONFIGURACIÓN GENERAL
+# ========================================
+
+# Puerto del servidor
+PORT=3000
+
+# Entorno de ejecución
+NODE_ENV=production
+
+# Clave secreta para JWT
+JWT_SECRET=tu_jwt_secret_muy_seguro_aqui
+
+# ========================================
+# CONFIGURACIÓN ADICIONAL
+# ========================================
+
+# Dominio principal
+MAIN_DOMAIN=game.bingoroyal.es
+
+# Límites de rate limiting
+API_RATE_LIMIT=200
+BINGO_API_RATE_LIMIT=5000
+LOGIN_RATE_LIMIT=20 

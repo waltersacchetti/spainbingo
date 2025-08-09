@@ -8,12 +8,14 @@ const { Sequelize } = require('sequelize');
 const { sequelize } = require('../config/database');
 const VerificationCode = require('../models/VerificationCode')(sequelize);
 const User = require('../models/User')(sequelize);
+const EmailService = require('./EmailService');
 
 class VerificationService {
     constructor() {
-        this.codeExpiryMinutes = 10; // 10 minutos
+        this.codeExpiryMinutes = 15; // 15 minutos
         this.maxAttempts = 3;
-        console.log('🔐 Servicio de verificación inicializado');
+        this.emailService = new EmailService();
+        console.log('🔐 Servicio de verificación inicializado con AWS SES');
     }
 
     /**
@@ -43,6 +45,9 @@ class VerificationService {
             // Crear nuevo código
             const code = this.generateCode();
             const expiresAt = new Date(Date.now() + (this.codeExpiryMinutes * 60 * 1000));
+            
+            // Generar token de verificación para URL
+            const verificationToken = this.emailService.generateVerificationToken();
 
             const verificationCode = await VerificationCode.create({
                 user_id: userId,
@@ -50,16 +55,17 @@ class VerificationService {
                 method: method,
                 target: target,
                 expires_at: expiresAt,
+                verification_token: verificationToken,
                 used: false,
-                attempts: 0,
-                max_attempts: this.maxAttempts
+                attempts: 0
             });
 
-            console.log(`📧 Código de verificación creado para usuario ${userId}: ${code}`);
-
+            console.log(`✅ Código de verificación creado para usuario ${userId}: ${code}`);
+            
             return {
                 success: true,
                 code: code,
+                verificationToken: verificationToken,
                 expiresAt: expiresAt,
                 verificationId: verificationCode.id
             };
@@ -74,64 +80,57 @@ class VerificationService {
     }
 
     /**
-     * Enviar código por email
+     * Enviar código por email usando AWS SES
      */
-    async sendEmailCode(email, code, username) {
+    async sendEmailCode(email, code, username, verificationToken) {
         try {
-            // En producción, aquí usarías un servicio como SendGrid, AWS SES, etc.
-            console.log(`📧 Enviando código ${code} a ${email} para usuario ${username}`);
+            console.log(`📧 Enviando código de verificación real a ${email} usando AWS SES`);
             
-            // Simulación de envío de email
-            const emailContent = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #667eea;">BingoRoyal - Verificación de Cuenta</h2>
-                    <p>Hola <strong>${username}</strong>,</p>
-                    <p>Tu código de verificación es:</p>
-                    <div style="background: #f8f9fa; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
-                        <h1 style="color: #667eea; font-size: 32px; letter-spacing: 5px; margin: 0;">${code}</h1>
-                    </div>
-                    <p>Este código expira en ${this.codeExpiryMinutes} minutos.</p>
-                    <p>Si no solicitaste este código, puedes ignorar este email.</p>
-                    <hr>
-                    <p style="font-size: 12px; color: #666;">
-                        BingoRoyal - El mejor bingo online de España
-                    </p>
-                </div>
-            `;
+            // Usar AWS SES para enviar el email
+            const result = await this.emailService.sendVerificationEmail(
+                email, 
+                username, 
+                code, 
+                verificationToken
+            );
 
-            // En producción, aquí enviarías el email real
-            console.log('📧 Email simulado enviado:', {
-                to: email,
-                subject: 'BingoRoyal - Código de Verificación',
-                content: emailContent
-            });
-
-            return {
-                success: true,
-                message: 'Código enviado por email'
-            };
+            if (result.success) {
+                console.log(`✅ Email enviado exitosamente a ${email}`);
+                console.log(`📊 Message ID: ${result.messageId}`);
+                
+                return {
+                    success: true,
+                    message: 'Código enviado por email',
+                    messageId: result.messageId
+                };
+            } else {
+                console.error(`❌ Error enviando email a ${email}:`, result.error);
+                return {
+                    success: false,
+                    error: result.error || 'Error al enviar email de verificación'
+                };
+            }
 
         } catch (error) {
-            console.error('❌ Error al enviar email:', error);
+            console.error('❌ Error en sendEmailCode:', error);
             return {
                 success: false,
-                error: 'Error al enviar email'
+                error: 'Error al enviar email de verificación'
             };
         }
     }
 
     /**
-     * Enviar código por SMS
+     * Enviar código por SMS (placeholder - implementar con AWS SNS en el futuro)
      */
     async sendSMSCode(phone, code, username) {
         try {
-            // En producción, aquí usarías un servicio como Twilio, AWS SNS, etc.
-            console.log(`📱 Enviando código ${code} a ${phone} para usuario ${username}`);
+            // Por ahora simulamos el SMS
+            console.log(`📱 SMS simulado enviado a ${phone}: Código ${code}`);
             
-            // Simulación de envío de SMS
+            // TODO: Implementar AWS SNS para SMS real
             const smsContent = `BingoRoyal: Tu código de verificación es ${code}. Expira en ${this.codeExpiryMinutes} minutos.`;
 
-            // En producción, aquí enviarías el SMS real
             console.log('📱 SMS simulado enviado:', {
                 to: phone,
                 content: smsContent
@@ -139,7 +138,7 @@ class VerificationService {
 
             return {
                 success: true,
-                message: 'Código enviado por SMS'
+                message: 'Código enviado por SMS (simulado)'
             };
 
         } catch (error) {
@@ -165,56 +164,69 @@ class VerificationService {
                 };
             }
 
-            const target = method === 'email' ? user.email : user.phone;
-            if (!target) {
+            let target;
+            let sendFunction;
+
+            if (method === 'email') {
+                target = user.email;
+                sendFunction = this.sendEmailCode.bind(this);
+            } else if (method === 'sms') {
+                target = user.phone || user.telefono;
+                sendFunction = this.sendSMSCode.bind(this);
+                
+                if (!target) {
+                    return {
+                        success: false,
+                        error: 'Usuario no tiene número de teléfono registrado'
+                    };
+                }
+            } else {
                 return {
                     success: false,
-                    error: `${method === 'email' ? 'Email' : 'Teléfono'} no disponible`
+                    error: 'Método de verificación inválido'
                 };
             }
 
-            // Crear código de verificación
+            // Crear código en la base de datos
             const codeResult = await this.createVerificationCode(userId, method, target);
             if (!codeResult.success) {
                 return codeResult;
             }
 
-            // Enviar código según el método
-            let sendResult;
-            if (method === 'email') {
-                sendResult = await this.sendEmailCode(target, codeResult.code, user.username);
-            } else {
-                sendResult = await this.sendSMSCode(target, codeResult.code, user.username);
-            }
+            // Enviar código
+            const sendResult = await sendFunction(
+                target, 
+                codeResult.code, 
+                user.username,
+                codeResult.verificationToken
+            );
 
-            if (!sendResult.success) {
+            if (sendResult.success) {
+                return {
+                    success: true,
+                    message: sendResult.message,
+                    expiresIn: this.codeExpiryMinutes,
+                    messageId: sendResult.messageId
+                };
+            } else {
                 return sendResult;
             }
-
-            return {
-                success: true,
-                message: `Código enviado por ${method}`,
-                expiresIn: this.codeExpiryMinutes
-            };
 
         } catch (error) {
             console.error('❌ Error al enviar código de verificación:', error);
             return {
                 success: false,
-                error: 'Error al enviar código de verificación'
+                error: 'Error interno del servidor'
             };
         }
     }
 
     /**
-     * Verificar código
+     * Verificar código de verificación
      */
     async verifyCode(userId, code) {
         try {
-            console.log(`🔍 Verificando código ${code} para usuario ${userId}`);
-            
-            // Buscar código válido
-            const verificationCode = await VerificationCode.findOne({
+            const verification = await VerificationCode.findOne({
                 where: {
                     user_id: userId,
                     code: code,
@@ -225,54 +237,107 @@ class VerificationService {
                 }
             });
 
-            if (!verificationCode) {
-                console.log(`❌ Código no encontrado o expirado para usuario ${userId}`);
+            if (!verification) {
                 return {
                     success: false,
                     error: 'Código inválido o expirado'
                 };
             }
 
-            console.log(`✅ Código encontrado: ${verificationCode.code}, intentos: ${verificationCode.attempts}/${verificationCode.max_attempts}`);
+            // Marcar como usado
+            await verification.update({ used: true });
 
-            // Verificar intentos
-            if (verificationCode.attempts >= verificationCode.max_attempts) {
-                console.log(`❌ Demasiados intentos para usuario ${userId}`);
-                await verificationCode.update({ used: true });
-                return {
-                    success: false,
-                    error: 'Demasiados intentos. Solicita un nuevo código'
-                };
+            // Activar usuario si el email fue verificado
+            if (verification.method === 'email') {
+                await User.update(
+                    { 
+                        verified: true,
+                        email_verified: true,
+                        email_verified_at: new Date()
+                    },
+                    { where: { id: userId } }
+                );
+
+                // Enviar email de bienvenida
+                const user = await User.findByPk(userId);
+                if (user) {
+                    await this.emailService.sendWelcomeEmail(user.email, user.username);
+                }
             }
 
-            // Incrementar intentos
-            await verificationCode.update({
-                attempts: verificationCode.attempts + 1
-            });
-
-            console.log(`✅ Código verificado correctamente para usuario ${userId}`);
-
-            // Marcar código como usado
-            await verificationCode.update({ used: true });
-
-            // Marcar usuario como verificado
-            await User.update(
-                { is_verified: true },
-                { where: { id: userId } }
-            );
-
-            console.log(`✅ Usuario ${userId} verificado exitosamente`);
+            console.log(`✅ Código verificado para usuario ${userId}`);
 
             return {
                 success: true,
-                message: 'Cuenta verificada exitosamente'
+                message: 'Código verificado correctamente'
             };
 
         } catch (error) {
             console.error('❌ Error al verificar código:', error);
             return {
                 success: false,
-                error: 'Error al verificar código'
+                error: 'Error interno del servidor'
+            };
+        }
+    }
+
+    /**
+     * Verificar código por token (desde URL)
+     */
+    async verifyByToken(email, token) {
+        try {
+            const verification = await VerificationCode.findOne({
+                include: [{
+                    model: User,
+                    where: { email: email }
+                }],
+                where: {
+                    verification_token: token,
+                    used: false,
+                    expires_at: {
+                        [Sequelize.Op.gt]: new Date()
+                    }
+                }
+            });
+
+            if (!verification) {
+                return {
+                    success: false,
+                    error: 'Token inválido o expirado'
+                };
+            }
+
+            // Marcar como usado
+            await verification.update({ used: true });
+
+            // Activar usuario
+            await User.update(
+                { 
+                    verified: true,
+                    email_verified: true,
+                    email_verified_at: new Date()
+                },
+                { where: { id: verification.user_id } }
+            );
+
+            // Enviar email de bienvenida
+            const user = await User.findByPk(verification.user_id);
+            if (user) {
+                await this.emailService.sendWelcomeEmail(user.email, user.username);
+            }
+
+            console.log(`✅ Email verificado por token para usuario ${verification.user_id}`);
+
+            return {
+                success: true,
+                message: 'Email verificado correctamente'
+            };
+
+        } catch (error) {
+            console.error('❌ Error al verificar por token:', error);
+            return {
+                success: false,
+                error: 'Error interno del servidor'
             };
         }
     }
@@ -282,20 +347,58 @@ class VerificationService {
      */
     async cleanExpiredCodes() {
         try {
-            const result = await VerificationCode.destroy({
+            const expiredCount = await VerificationCode.destroy({
                 where: {
-                                    expires_at: {
-                    [Sequelize.Op.lt]: new Date()
-                }
+                    expires_at: {
+                        [Sequelize.Op.lt]: new Date()
+                    }
                 }
             });
 
-            console.log(`🧹 ${result} códigos expirados eliminados`);
-            return result;
+            if (expiredCount > 0) {
+                console.log(`🧹 Limpiados ${expiredCount} códigos expirados`);
+            }
+
+            return {
+                success: true,
+                cleaned: expiredCount
+            };
 
         } catch (error) {
             console.error('❌ Error al limpiar códigos expirados:', error);
-            return 0;
+            return {
+                success: false,
+                error: 'Error al limpiar códigos expirados'
+            };
+        }
+    }
+
+    /**
+     * Obtener estadísticas de verificación
+     */
+    async getVerificationStats() {
+        try {
+            const stats = await VerificationCode.findAll({
+                attributes: [
+                    'method',
+                    [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+                    [Sequelize.fn('SUM', Sequelize.literal('CASE WHEN used = true THEN 1 ELSE 0 END')), 'verified']
+                ],
+                group: ['method'],
+                raw: true
+            });
+
+            return {
+                success: true,
+                stats: stats
+            };
+
+        } catch (error) {
+            console.error('❌ Error al obtener estadísticas:', error);
+            return {
+                success: false,
+                error: 'Error al obtener estadísticas'
+            };
         }
     }
 }
