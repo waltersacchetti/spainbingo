@@ -2200,6 +2200,7 @@ class BingoPro {
             this.updateCardInfo();
 
             this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
+            this.showPurchaseConfirmation(quantity, totalCost);
             this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
 
             console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
@@ -5658,6 +5659,183 @@ class BingoPro {
         }
         
         return bonus;
+    }
+
+    /**
+     * 📢 MOSTRAR NOTIFICACIONES SISTEMA
+     */
+    showNotification(message, type = 'info', duration = 4000) {
+        console.log('📢 Mostrando notificación:', message, type);
+        
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `game-notification ${type}`;
+        
+        // Determinar icono según tipo
+        let icon = 'fa-info-circle';
+        let color = '#17a2b8';
+        
+        switch (type) {
+            case 'success':
+                icon = 'fa-check-circle';
+                color = '#28a745';
+                break;
+            case 'error':
+                icon = 'fa-exclamation-circle';
+                color = '#dc3545';
+                break;
+            case 'warning':
+                icon = 'fa-exclamation-triangle';
+                color = '#ffc107';
+                break;
+            case 'vip':
+                icon = 'fa-crown';
+                color = '#ffd700';
+                break;
+        }
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <div class="notification-icon" style="color: ${color}">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-message">
+                    ${message}
+                </div>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Estilos CSS en línea
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg-strong);
+            border: 1px solid ${color};
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            opacity: 0.95;
+        `;
+        
+        // Agregar al DOM
+        document.body.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto-remover después del tiempo especificado
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, duration);
+        
+        // Reproducir sonido si está disponible
+        if (this.premiumSoundSystem) {
+            this.premiumSoundSystem.onNotification();
+        }
+        
+        return notification;
+    }
+
+    /**
+     * 🛒 MOSTRAR CONFIRMACIÓN DE COMPRA ESPECÍFICA
+     */
+    showPurchaseConfirmation(quantity, totalCost) {
+        console.log('🛒 Mostrando confirmación de compra:', quantity, totalCost);
+        
+        const notification = document.createElement('div');
+        notification.className = 'purchase-confirmation-notification';
+        
+        notification.innerHTML = `
+            <div class="purchase-content">
+                <div class="purchase-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="purchase-details">
+                    <div class="purchase-title">¡Compra Exitosa!</div>
+                    <div class="purchase-info">
+                        <span class="purchase-quantity">${quantity} cartón${quantity > 1 ? 'es' : ''}</span>
+                        <span class="purchase-cost">€${totalCost.toFixed(2)}</span>
+                    </div>
+                    <div class="purchase-balance">
+                        Saldo restante: €${this.userBalance.toFixed(2)}
+                    </div>
+                </div>
+                <div class="purchase-animation">
+                    <div class="success-checkmark">✓</div>
+                </div>
+            </div>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            color: white;
+            text-align: center;
+            z-index: 10001;
+            min-width: 300px;
+            box-shadow: 0 10px 40px rgba(40, 167, 69, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.style.transform = 'translate(-50%, -50%) scale(1)';
+            notification.style.opacity = '1';
+        }, 100);
+        
+        // Remover después de 4 segundos
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.transform = 'translate(-50%, -50%) scale(0)';
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 500);
+            }
+        }, 4000);
+        
+        // Reproducir sonido de compra
+        if (this.premiumSoundSystem) {
+            this.premiumSoundSystem.onPurchase();
+        }
+        
+        // Vibración en móviles
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
     }
 }
 
