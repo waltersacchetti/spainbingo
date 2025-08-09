@@ -381,6 +381,12 @@ class BingoPro {
         // ✨ NUEVO: Inicializar Chat Social Avanzado
         this.initializeAdvancedChat();
         
+        // ✨ NUEVO: Inicializar Sistema de Sonidos Premium
+        this.initializePremiumSound();
+        
+        // ✨ NUEVO: Inicializar Sistema de Animaciones Premium
+        this.initializePremiumAnimations();
+        
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
         
@@ -4665,6 +4671,58 @@ class BingoPro {
             }
         } catch (error) {
             console.error('❌ Error inicializando Advanced Chat System:', error);
+        }
+    }
+
+    /**
+     * Inicializar Sistema de Sonidos Premium
+     */
+    initializePremiumSound() {
+        try {
+            console.log('🔊 Inicializando Sistema de Sonidos Premium...');
+            
+            // Crear instancia del Sistema de Sonidos
+            if (window.PremiumSoundSystem) {
+                this.premiumSoundSystem = new PremiumSoundSystem(this);
+                console.log('✅ Premium Sound System inicializado correctamente');
+            } else {
+                console.log('⚠️ PremiumSoundSystem no disponible, cargando después...');
+                // Intentar cargar después si el script aún no está disponible
+                setTimeout(() => {
+                    if (window.PremiumSoundSystem) {
+                        this.premiumSoundSystem = new PremiumSoundSystem(this);
+                        console.log('✅ Premium Sound System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Premium Sound System:', error);
+        }
+    }
+
+    /**
+     * Inicializar Sistema de Animaciones Premium
+     */
+    initializePremiumAnimations() {
+        try {
+            console.log('✨ Inicializando Sistema de Animaciones Premium...');
+            
+            // Crear instancia del Sistema de Animaciones
+            if (window.PremiumAnimationSystem) {
+                this.premiumAnimationSystem = new PremiumAnimationSystem(this);
+                console.log('✅ Premium Animation System inicializado correctamente');
+            } else {
+                console.log('⚠️ PremiumAnimationSystem no disponible, cargando después...');
+                // Intentar cargar después si el script aún no está disponible
+                setTimeout(() => {
+                    if (window.PremiumAnimationSystem) {
+                        this.premiumAnimationSystem = new PremiumAnimationSystem(this);
+                        console.log('✅ Premium Animation System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Premium Animation System:', error);
         }
     }
 
