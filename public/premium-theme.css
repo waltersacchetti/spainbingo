@@ -1028,104 +1028,225 @@ body::before {
 .cards-container {
     flex: 1 !important;
     min-height: 400px !important;
-    max-height: 500px !important;
+    max-height: 600px !important;
     overflow-y: auto !important;
-}
-
-/* Controles de compra mejorados */
-.purchase-controls {
-    background: var(--glass-bg-strong) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-md) !important;
-    padding: var(--spacing-md) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: var(--spacing-md) !important;
-    margin-top: var(--spacing-md) !important;
-}
-
-/* Botón de compra corregido */
-.btn-buy-modern {
-    background: var(--gradient-gold) !important;
-    border: none !important;
-    border-radius: var(--radius-md) !important;
-    padding: var(--spacing-sm) var(--spacing-md) !important;
-    font-weight: 600 !important;
-    color: var(--premium-royal-blue-dark) !important;
-    cursor: pointer !important;
-    transition: all var(--transition-medium) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: var(--spacing-xs) !important;
-    min-width: 140px !important;
-    justify-content: center !important;
-}
-
-.btn-buy-modern:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: var(--shadow-glow) !important;
-    filter: brightness(1.1) !important;
-}
-
-.btn-buy-modern:active {
-    transform: translateY(0) !important;
-}
-
-/* Grid de estadísticas más compacto en center-panel */
-.stats-moved .stats-grid {
+    overflow-x: hidden !important;
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: var(--spacing-sm) !important;
-    margin-bottom: 0 !important;
-}
-
-.stats-moved .stat-card {
-    background: var(--glass-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-md) !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: var(--spacing-md) !important;
     padding: var(--spacing-sm) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: var(--spacing-sm) !important;
-    transition: all var(--transition-medium) !important;
-    color: white !important;
-    min-height: 60px !important;
+    border-radius: var(--radius-md) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
 }
 
-.stats-moved .stat-card:hover {
-    transform: translateY(-2px) !important;
+/* Estilo del scrollbar para el contenedor */
+.cards-container::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.cards-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px !important;
+}
+
+.cards-container::-webkit-scrollbar-thumb {
+    background: var(--premium-gold) !important;
+    border-radius: 4px !important;
+}
+
+.cards-container::-webkit-scrollbar-thumb:hover {
+    background: var(--premium-gold-light) !important;
+}
+
+/* Cartones individuales optimizados */
+.bingo-card {
+    background: var(--glass-bg-strong) !important;
+    border: 2px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-md) !important;
+    backdrop-filter: blur(20px) !important;
+    transition: all var(--transition-medium) !important;
+    position: relative !important;
+    min-height: 320px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: cardSlideIn 0.5s ease-out !important;
+}
+
+.bingo-card:hover {
+    transform: translateY(-4px) scale(1.02) !important;
     box-shadow: var(--shadow-glow) !important;
     border-color: var(--premium-gold) !important;
 }
 
-/* ===== RESPONSIVE LAYOUT V2 ===== */
+/* Header del cartón */
+.card-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: var(--spacing-sm) !important;
+    padding-bottom: var(--spacing-xs) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.card-header h4 {
+    color: var(--premium-gold) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-xs) !important;
+}
+
+.card-status {
+    padding: 2px 8px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+}
+
+.card-status.active {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #10b981 !important;
+    border: 1px solid #10b981 !important;
+}
+
+.card-status.inactive {
+    background: rgba(107, 114, 128, 0.2) !important;
+    color: #9ca3af !important;
+    border: 1px solid #6b7280 !important;
+}
+
+/* Grid de números del cartón */
+.bingo-card-grid {
+    flex: 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 4px !important;
+    margin: var(--spacing-sm) 0 !important;
+}
+
+.bingo-number {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--radius-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    color: white !important;
+    font-size: 0.9rem !important;
+    min-height: 35px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.bingo-number:hover {
+    background: rgba(255, 215, 0, 0.3) !important;
+    border-color: var(--premium-gold) !important;
+    transform: scale(1.1) !important;
+}
+
+.bingo-number.marked {
+    background: var(--gradient-gold) !important;
+    color: var(--premium-royal-blue-dark) !important;
+    border-color: var(--premium-gold) !important;
+    font-weight: 700 !important;
+    transform: scale(1.05) !important;
+}
+
+/* Info del cartón */
+.card-info {
+    text-align: center !important;
+    padding-top: var(--spacing-xs) !important;
+    border-top: 1px solid var(--glass-border) !important;
+    color: var(--text-muted) !important;
+    font-size: 0.75rem !important;
+}
+
+/* Animación de entrada de cartones */
+@keyframes cardSlideIn {
+    0% {
+        opacity: 0 !important;
+        transform: translateY(20px) scale(0.95) !important;
+    }
+    100% {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+    }
+}
+
+/* Mensaje cuando no hay cartones */
+.empty-cards-message {
+    grid-column: 1 / -1 !important;
+    text-align: center !important;
+    padding: var(--spacing-xl) !important;
+    color: var(--text-muted) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: var(--spacing-md) !important;
+}
+
+.empty-cards-message i {
+    font-size: 3rem !important;
+    color: var(--premium-gold) !important;
+    opacity: 0.7 !important;
+}
+
+.empty-cards-message p {
+    margin: 0 !important;
+    font-size: 1rem !important;
+}
+
+/* ===== RESPONSIVE CARTONES ===== */
 @media (max-width: 1200px) {
-    .game-layout {
-        grid-template-columns: 1fr 1.3fr 1fr !important;
-        gap: var(--spacing-md) !important;
-        padding: var(--spacing-md) !important;
+    .cards-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+        max-height: 500px !important;
+    }
+    
+    .bingo-card {
+        min-height: 280px !important;
     }
 }
 
 @media (max-width: 768px) {
-    .game-layout {
-        grid-template-columns: 1fr !important;
-        gap: var(--spacing-sm) !important;
-        padding: var(--spacing-sm) !important;
-    }
-    
-    .center-panel {
-        min-height: auto !important;
-    }
-    
     .cards-container {
-        max-height: 300px !important;
+        grid-template-columns: 1fr !important;
+        max-height: 400px !important;
+        gap: var(--spacing-sm) !important;
     }
     
-    .stats-moved .stats-grid {
-        grid-template-columns: 1fr !important;
-        gap: var(--spacing-xs) !important;
+    .bingo-card {
+        min-height: 250px !important;
+    }
+    
+    .bingo-number {
+        min-height: 30px !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .cards-container {
+        padding: var(--spacing-xs) !important;
+        max-height: 350px !important;
+    }
+    
+    .bingo-card {
+        padding: var(--spacing-sm) !important;
+        min-height: 220px !important;
+    }
+    
+    .bingo-number {
+        min-height: 28px !important;
+        font-size: 0.75rem !important;
     }
 }
 
