@@ -387,6 +387,12 @@ class BingoPro {
         // ✨ NUEVO: Inicializar Sistema de Animaciones Premium
         this.initializePremiumAnimations();
         
+        // 🚀 FASE 2: Inicializar Sistema VIP Avanzado
+        this.initializeAdvancedVipSystem();
+        
+        // 🚀 FASE 2: Inicializar Sistema de Torneos
+        this.initializeTournamentSystem();
+        
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
         
@@ -4750,6 +4756,198 @@ class BingoPro {
         
         // Actualizar también el bote global si está visible
         this.updateGlobalJackpotDisplay();
+    }
+
+    /**
+     * 🚀 FASE 2: Inicializar Sistema VIP Avanzado
+     */
+    initializeAdvancedVipSystem() {
+        try {
+            console.log('👑 Inicializando Sistema VIP Avanzado...');
+            if (window.AdvancedVipSystem) {
+                this.advancedVipSystem = new AdvancedVipSystem(this);
+                console.log('✅ Advanced VIP System inicializado correctamente');
+            } else {
+                console.log('⚠️ AdvancedVipSystem no disponible, cargando después...');
+                setTimeout(() => {
+                    if (window.AdvancedVipSystem) {
+                        this.advancedVipSystem = new AdvancedVipSystem(this);
+                        console.log('✅ Advanced VIP System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Advanced VIP System:', error);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Inicializar Sistema de Torneos
+     */
+    initializeTournamentSystem() {
+        try {
+            console.log('🏆 Inicializando Sistema de Torneos...');
+            if (window.TournamentSystem) {
+                this.tournamentSystem = new TournamentSystem(this);
+                console.log('✅ Tournament System inicializado correctamente');
+            } else {
+                console.log('⚠️ TournamentSystem no disponible, cargando después...');
+                setTimeout(() => {
+                    if (window.TournamentSystem) {
+                        this.tournamentSystem = new TournamentSystem(this);
+                        console.log('✅ Tournament System inicializado (delayed)');
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error inicializando Tournament System:', error);
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Callback cuando usuario mejora su VIP
+     */
+    onVipUpgrade(newTier) {
+        console.log(`🎉 Usuario mejorado a VIP ${newTier}`);
+        
+        // Actualizar beneficios en tiempo real
+        this.applyVipBenefits(newTier);
+        
+        // Mostrar celebración
+        if (this.premiumAnimationSystem) {
+            this.premiumAnimationSystem.playVipUpgradeAnimation(newTier);
+        }
+        
+        // Reproducir sonido de celebración
+        if (this.premiumSoundSystem) {
+            this.premiumSoundSystem.playVipUpgradeSound(newTier);
+        }
+        
+        // Notificar a otros sistemas
+        if (this.tournamentSystem) {
+            this.tournamentSystem.onVipStatusChange(newTier);
+        }
+        
+        // Guardar evento de analytics
+        this.logEvent('vip_upgrade', { 
+            newTier, 
+            timestamp: new Date().toISOString(),
+            previousTier: this.previousVipTier || 'none'
+        });
+        
+        this.previousVipTier = newTier;
+    }
+
+    /**
+     * 🚀 FASE 2: Aplicar beneficios VIP al juego
+     */
+    applyVipBenefits(tier) {
+        const vipTiers = {
+            bronze: { discount: 20, potBonus: 50, xpBonus: 25 },
+            silver: { discount: 30, potBonus: 75, xpBonus: 40 },
+            gold: { discount: 40, potBonus: 100, xpBonus: 60 },
+            platinum: { discount: 50, potBonus: 150, xpBonus: 80 },
+            diamond: { discount: 60, potBonus: 200, xpBonus: 100 }
+        };
+        
+        const benefits = vipTiers[tier];
+        if (benefits) {
+            this.vipDiscount = benefits.discount;
+            this.vipPotBonus = benefits.potBonus;
+            this.vipXpBonus = benefits.xpBonus;
+            
+            console.log(`👑 Beneficios VIP ${tier} aplicados:`, benefits);
+            
+            // Actualizar precios con descuento
+            this.updateCardPriceDisplay();
+            
+            // Actualizar bote con bonus
+            this.updateGlobalJackpotDisplay();
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Obtener información del usuario para sistemas premium
+     */
+    getUserInfo() {
+        return {
+            username: this.username || 'Usuario',
+            level: this.currentLevel || 1,
+            vipStatus: this.currentVipTier !== 'none',
+            vipTier: this.currentVipTier || 'none',
+            balance: this.userBalance || 0,
+            experience: this.currentXP || 0,
+            gamesPlayed: this.gameHistory?.length || 0,
+            totalSpent: this.calculateTotalSpent(),
+            winRate: this.calculateWinRate(),
+            favoriteGameMode: this.getFavoriteGameMode()
+        };
+    }
+
+    /**
+     * 🚀 FASE 2: Calcular gasto total del usuario
+     */
+    calculateTotalSpent() {
+        try {
+            const purchases = JSON.parse(localStorage.getItem('bingoroyal_purchases') || '[]');
+            return purchases.reduce((total, purchase) => total + purchase.amount, 0);
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    /**
+     * 🚀 FASE 2: Calcular win rate del usuario
+     */
+    calculateWinRate() {
+        if (!this.gameHistory || this.gameHistory.length === 0) return 0;
+        const wins = this.gameHistory.filter(game => game.won).length;
+        return Math.round((wins / this.gameHistory.length) * 100);
+    }
+
+    /**
+     * 🚀 FASE 2: Obtener modo de juego favorito
+     */
+    getFavoriteGameMode() {
+        if (!this.gameHistory || this.gameHistory.length === 0) return 'CLASSIC';
+        
+        const modeCounts = {};
+        this.gameHistory.forEach(game => {
+            modeCounts[game.mode] = (modeCounts[game.mode] || 0) + 1;
+        });
+        
+        return Object.keys(modeCounts).reduce((a, b) => 
+            modeCounts[a] > modeCounts[b] ? a : b
+        );
+    }
+
+    /**
+     * 🚀 FASE 2: Registrar compra para tracking VIP
+     */
+    recordPurchase(amount, type, details = {}) {
+        try {
+            const purchases = JSON.parse(localStorage.getItem('bingoroyal_purchases') || '[]');
+            const purchase = {
+                id: Date.now().toString(),
+                amount: amount,
+                type: type,
+                details: details,
+                timestamp: new Date().toISOString(),
+                vipTier: this.currentVipTier || 'none'
+            };
+            
+            purchases.push(purchase);
+            localStorage.setItem('bingoroyal_purchases', JSON.stringify(purchases));
+            
+            // Notificar al sistema VIP
+            if (this.advancedVipSystem) {
+                this.advancedVipSystem.onPurchase(purchase);
+            }
+            
+            console.log('💰 Compra registrada:', purchase);
+        } catch (error) {
+            console.error('❌ Error registrando compra:', error);
+        }
     }
 }
 
