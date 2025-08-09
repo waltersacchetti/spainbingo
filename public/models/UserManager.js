@@ -244,6 +244,32 @@ class UserManager {
             console.error('❌ Error al registrar usuario:', error);
             this.recordRegistrationAttempt(ip);
             
+            // Manejar errores específicos de PostgreSQL
+            if (error.code === '23505') {
+                // Violación de restricción de unicidad
+                if (error.constraint === 'users_username_key') {
+                    return {
+                        success: false,
+                        error: 'El nombre de usuario ya está en uso'
+                    };
+                } else if (error.constraint === 'users_email_key') {
+                    return {
+                        success: false,
+                        error: 'El email ya está registrado'
+                    };
+                } else if (error.detail && error.detail.includes('username')) {
+                    return {
+                        success: false,
+                        error: 'El nombre de usuario ya está en uso'
+                    };
+                } else if (error.detail && error.detail.includes('email')) {
+                    return {
+                        success: false,
+                        error: 'El email ya está registrado'
+                    };
+                }
+            }
+            
             return {
                 success: false,
                 error: 'Error interno del servidor'
