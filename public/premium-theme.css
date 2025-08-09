@@ -952,3 +952,196 @@ body::before {
     0% { left: -100%; }
     100% { left: 100%; }
 } 
+
+/* ===== LAYOUT OPTIMIZADO V2 - ESTADÍSTICAS MOVIDAS ===== */
+.game-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 1.5fr 1fr !important; /* Center panel más ancho */
+    gap: var(--spacing-lg) !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: var(--spacing-lg) !important;
+    min-height: 80vh !important;
+}
+
+.left-panel, .center-panel, .right-panel {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-lg) !important;
+    backdrop-filter: blur(20px) !important;
+    animation: slideInUp 0.8s ease-out !important;
+    height: fit-content !important;
+}
+
+/* Panel izquierdo - Números llamados */
+.left-panel {
+    min-height: 600px !important;
+}
+
+/* Panel central - Mis cartones + Estadísticas */
+.center-panel {
+    min-height: 800px !important; /* Más alto para incluir estadísticas */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--spacing-lg) !important;
+}
+
+/* Panel derecho - Solo chat */
+.right-panel {
+    width: 100% !important;
+    max-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--spacing-md) !important;
+    margin-top: 0 !important;
+}
+
+/* Estadísticas movidas dentro del center-panel */
+.stats-moved {
+    background: var(--glass-bg-strong) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-md) !important;
+    margin-top: var(--spacing-lg) !important;
+    backdrop-filter: blur(20px) !important;
+    animation: slideInUp 0.8s ease-out 0.2s both !important;
+}
+
+/* Ocultar la stats-section original del right-panel si existe */
+.right-panel .stats-section:not(.stats-moved) {
+    display: none !important;
+}
+
+/* Contenedor de cartones ajustado */
+.cards-container {
+    flex: 1 !important;
+    min-height: 400px !important;
+    max-height: 500px !important;
+    overflow-y: auto !important;
+}
+
+/* Controles de compra mejorados */
+.purchase-controls {
+    background: var(--glass-bg-strong) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-md) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: var(--spacing-md) !important;
+    margin-top: var(--spacing-md) !important;
+}
+
+/* Botón de compra corregido */
+.btn-buy-modern {
+    background: var(--gradient-gold) !important;
+    border: none !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    font-weight: 600 !important;
+    color: var(--premium-royal-blue-dark) !important;
+    cursor: pointer !important;
+    transition: all var(--transition-medium) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-xs) !important;
+    min-width: 140px !important;
+    justify-content: center !important;
+}
+
+.btn-buy-modern:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-glow) !important;
+    filter: brightness(1.1) !important;
+}
+
+.btn-buy-modern:active {
+    transform: translateY(0) !important;
+}
+
+/* Grid de estadísticas más compacto en center-panel */
+.stats-moved .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--spacing-sm) !important;
+    margin-bottom: 0 !important;
+}
+
+.stats-moved .stat-card {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-sm) !important;
+    transition: all var(--transition-medium) !important;
+    color: white !important;
+    min-height: 60px !important;
+}
+
+.stats-moved .stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-glow) !important;
+    border-color: var(--premium-gold) !important;
+}
+
+/* ===== RESPONSIVE LAYOUT V2 ===== */
+@media (max-width: 1200px) {
+    .game-layout {
+        grid-template-columns: 1fr 1.3fr 1fr !important;
+        gap: var(--spacing-md) !important;
+        padding: var(--spacing-md) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-layout {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-sm) !important;
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .center-panel {
+        min-height: auto !important;
+    }
+    
+    .cards-container {
+        max-height: 300px !important;
+    }
+    
+    .stats-moved .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-xs) !important;
+    }
+}
+
+/* ===== NOTIFICACIONES DE COMPRA MEJORADAS ===== */
+.purchase-confirmation-notification {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: var(--glass-bg-strong) !important;
+    border: 2px solid var(--premium-gold) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-xl) !important;
+    backdrop-filter: blur(20px) !important;
+    z-index: 10000 !important;
+    min-width: 300px !important;
+    text-align: center !important;
+    animation: purchaseConfirmationShow 0.5s ease-out !important;
+}
+
+@keyframes purchaseConfirmationShow {
+    0% {
+        opacity: 0 !important;
+        transform: translate(-50%, -50%) scale(0.8) !important;
+    }
+    100% {
+        opacity: 1 !important;
+        transform: translate(-50%, -50%) scale(1) !important;
+    }
+} 

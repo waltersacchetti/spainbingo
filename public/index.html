@@ -436,53 +436,71 @@
                     <!-- Panel Central - Cartones -->
                     <div class="center-panel">
                         <div class="panel-header">
-                            <h3><i class="fas fa-ticket-alt"></i> Mis Cartones</h3>
+                            <h3><i class="fas fa-id-card"></i> Mis Cartones</h3>
+                            <div class="cards-info">
+                                <span id="cards-count">0 cartones</span>
+                                <span id="selected-count">0 seleccionados</span>
+                            </div>
+                        </div>
+                        <div id="cards-container" class="cards-container">
+                            <div class="empty-cards-message">
+                                <i class="fas fa-id-card"></i>
+                                <p>No tienes cartones aún</p>
+                                <p>Compra cartones para empezar a jugar</p>
+                            </div>
                         </div>
                         
-                        <!-- Sistema de Compra de Cartones -->
-                        <div class="card-purchase-section">
-                            <div class="purchase-info">
-                                <div class="price-info">
-                                    <i class="fas fa-euro-sign"></i>
-                                    <span id="cardPrice">€1.00</span> por cartón
-                                </div>
-                                <div class="selected-cards">
-                                    <span id="selectedCardsCount">0</span> cartones seleccionados
-                                </div>
+                        <!-- Controles de compra CORREGIDOS -->
+                        <div class="purchase-controls">
+                            <div class="quantity-selector">
+                                <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                                <span id="purchase-quantity">1</span>
+                                <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                            </div>
+                            <button class="btn btn-buy-modern" onclick="window.game.purchaseCards(parseInt(document.getElementById('purchase-quantity').textContent))">
+                                <i class="fas fa-shopping-cart"></i>
+                                Comprar <span id="purchase-total">€1.00</span>
+                            </button>
+                        </div>
+                        
+                        <!-- ESTADÍSTICAS MOVIDAS AQUÍ DEBAJO DE MIS CARTONES -->
+                        <div class="stats-section stats-moved">
+                            <div class="panel-header">
+                                <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
                             </div>
                             
-                            <div class="purchase-controls">
-                                <div class="quantity-selector">
-                                    <button class="btn-quantity" onclick="changeQuantity(-1)">-</button>
-                                    <input type="number" id="cardQuantity" value="1" min="1" max="20">
-                                    <button class="btn-quantity" onclick="changeQuantity(1)">+</button>
-                                </div>
-                                <button class="btn-buy-cards" onclick="buySelectedCards()">
-                                    <i class="fas fa-shopping-cart"></i>
-                                    Comprar Cartones
-                                </button>
-                                <button class="btn-join-game" onclick="joinCurrentGame()" id="joinGameBtn" disabled>
-                                    <i class="fas fa-play"></i>
-                                    Unirse a la Partida
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="cards-container">
-                            <div class="cards-preview">
-                                <div class="cards-summary">
-                                    <div class="cards-count">
-                                        <i class="fas fa-ticket-alt"></i>
-                                        <span id="cardsCount">0</span> cartones
-                                    </div>
-                                    <div class="cards-status">
-                                        <span id="activeCardsCount">0</span> activos
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="wins-count">0</div>
+                                        <div class="stat-label">Victorias</div>
                                     </div>
                                 </div>
-                                <button id="viewCardsBtn" class="btn-view-cards">
-                                    <i class="fas fa-eye"></i>
-                                    Ver Cartones
-                                </button>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-gamepad"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="games-played">0</div>
+                                        <div class="stat-label">Partidas</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-euro-sign"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="total-winnings">€0</div>
+                                        <div class="stat-label">Ganado</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="win-rate">0%</div>
+                                        <div class="stat-label">Tasa Victoria</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
