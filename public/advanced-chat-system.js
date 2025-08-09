@@ -1250,9 +1250,9 @@ const advancedChatCSS = `
 `;
 
 // Inyectar CSS
-const styleSheet = document.createElement('style');
-styleSheet.textContent = advancedChatCSS;
-document.head.appendChild(styleSheet);
+const advancedChatStyleSheet = document.createElement('style');
+advancedChatStyleSheet.textContent = advancedChatCSS;
+document.head.appendChild(advancedChatStyleSheet);
 
 // Exportar clase
 window.AdvancedChatSystem = AdvancedChatSystem; 

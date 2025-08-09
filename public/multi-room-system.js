@@ -1174,9 +1174,9 @@ const multiRoomCSS = `
 `;
 
 // Inyectar CSS
-const styleSheet = document.createElement('style');
-styleSheet.textContent = multiRoomCSS;
-document.head.appendChild(styleSheet);
+const multiRoomStyleSheet = document.createElement('style');
+multiRoomStyleSheet.textContent = multiRoomCSS;
+document.head.appendChild(multiRoomStyleSheet);
 
 // Exportar clase
 window.MultiRoomSystem = MultiRoomSystem; 

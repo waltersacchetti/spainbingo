@@ -1126,9 +1126,9 @@ const premiumAnimationCSS = `
 `;
 
 // Inyectar CSS
-const styleSheet = document.createElement('style');
-styleSheet.textContent = premiumAnimationCSS;
-document.head.appendChild(styleSheet);
+const premiumAnimationsStyleSheet = document.createElement('style');
+premiumAnimationsStyleSheet.textContent = premiumAnimationCSS;
+document.head.appendChild(premiumAnimationsStyleSheet);
 
 // Exportar clase
 window.PremiumAnimationSystem = PremiumAnimationSystem; 

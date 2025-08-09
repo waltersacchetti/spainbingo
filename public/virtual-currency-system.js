@@ -861,9 +861,9 @@ const virtualCurrencyCSS = `
 `;
 
 // Inyectar CSS
-const styleSheet = document.createElement('style');
-styleSheet.textContent = virtualCurrencyCSS;
-document.head.appendChild(styleSheet);
+const virtualCurrencyStyleSheet = document.createElement('style');
+virtualCurrencyStyleSheet.textContent = virtualCurrencyCSS;
+document.head.appendChild(virtualCurrencyStyleSheet);
 
 // Exportar clase
 window.VirtualCurrencySystem = VirtualCurrencySystem; 
