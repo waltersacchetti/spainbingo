@@ -2224,6 +2224,8 @@ class BingoPro {
         
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${type}`;
+        // ✨ NUEVO: Agregar ID único para evitar duplicados
+        messageDiv.setAttribute('data-message-id', Date.now() + Math.random());
         
         const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
         
@@ -2427,6 +2429,54 @@ class BingoPro {
     }
 
     /**
+     * ✨ NUEVO: Agregar solo mensajes nuevos del servidor sin borrar los existentes
+     */
+    addNewMessagesFromServer(messages) {
+        console.log('📋 Agregando mensajes nuevos del servidor:', messages?.length || 0);
+        
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) {
+            console.warn('⚠️ Contenedor de mensajes del chat no encontrado');
+            return;
+        }
+        
+        // Solo agregar mensajes que no estén ya en el chat
+        messages.forEach(msg => {
+            // Verificar si el mensaje ya existe (por ID o contenido)
+            const existingMessage = chatMessages.querySelector(`[data-message-id="${msg.id}"]`);
+            if (!existingMessage) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${msg.type}`;
+                messageDiv.setAttribute('data-message-id', msg.id || Date.now() + Math.random());
+                
+                if (msg.type === 'system') {
+                    messageDiv.innerHTML = `
+                        <span class="message-time">${msg.time}</span>
+                        <span class="message-text">${msg.message}</span>
+                    `;
+                } else if (msg.type === 'bot') {
+                    messageDiv.innerHTML = `
+                        <span class="message-time">${msg.time}</span>
+                        <span class="message-user">BingoBot:</span>
+                        <span class="message-text">${msg.message}</span>
+                    `;
+                } else {
+                    const displayName = msg.userId === this.userId ? 'Tú' : msg.userName;
+                    messageDiv.innerHTML = `
+                        <span class="message-time">${msg.time}</span>
+                        <span class="message-user">${displayName}:</span>
+                        <span class="message-text">${msg.message}</span>
+                    `;
+                }
+                
+                chatMessages.appendChild(messageDiv);
+            }
+        });
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    /**
      * Mostrar mensajes en el chat
      */
     displayChatMessages(messages) {
@@ -2561,7 +2611,8 @@ class BingoPro {
                         const latestMessage = data.messages[0];
                         if (this.lastMessageId !== latestMessage.id) {
                             this.lastMessageId = latestMessage.id;
-                            this.loadChatMessages();
+                            // ✨ NUEVO: Solo agregar mensajes nuevos, no recargar todo
+                            this.addNewMessagesFromServer(data.messages);
                         }
                     }
                 } else if (response.status === 404) {
