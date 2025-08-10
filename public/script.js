@@ -2268,11 +2268,24 @@ class BingoPro {
     }
 
     /**
-     * Inicializar chat en vivo
+     * Inicializar chat en vivo - VERSIÓN CORREGIDA
      */
     initializeLiveChat() {
+        // Evitar inicialización múltiple
+        if (this.chatInitialized) {
+            console.log('🔧 Chat ya inicializado, saltando...');
+            return;
+        }
+
         console.log('🔧 Inicializando chat en vivo...');
         console.log('🔗 URL del chat:', this.chatApiUrl);
+        
+        // Esperar a que el DOM esté completamente listo
+        if (document.readyState !== 'complete') {
+            console.log('⏳ DOM no está listo, esperando...');
+            setTimeout(() => this.initializeLiveChat(), 100);
+            return;
+        }
         
         // Verificar que los elementos del chat existan
         const chatSection = document.getElementById('chatSectionFixed');
@@ -2281,18 +2294,22 @@ class BingoPro {
         const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
         
         console.log('🔍 Elementos del chat encontrados:');
-        console.log('- Chat section:', chatSection);
-        console.log('- Chat input:', chatInput);
-        console.log('- Botón enviar:', btnSend);
-        console.log('- Botón toggle:', toggleBtn);
+        console.log('- Chat section:', !!chatSection);
+        console.log('- Chat input:', !!chatInput);
+        console.log('- Botón enviar:', !!btnSend);
+        console.log('- Botón toggle:', !!toggleBtn);
         
         if (!chatSection || !chatInput || !btnSend || !toggleBtn) {
-            console.error('❌ Faltan elementos del chat');
+            console.error('❌ Faltan elementos del chat, reintentando en 500ms...');
+            setTimeout(() => this.initializeLiveChat(), 500);
             return;
         }
         
         // Detectar y corregir problemas de URL del chat
         this.detectChatUrlIssues();
+        
+        // Configurar input del chat ANTES de probar la conexión
+        this.setupChatInput();
         
         // Probar conexión con la API
         this.testChatConnection();
@@ -2303,9 +2320,6 @@ class BingoPro {
         // Iniciar polling para nuevos mensajes
         this.startChatPolling();
         
-        // ✨ NUEVO: Configurar input del chat
-        this.setupChatInput();
-        
         // Marcar como inicializado
         this.chatInitialized = true;
         
@@ -2313,36 +2327,95 @@ class BingoPro {
     }
     
     /**
-     * Configurar input del chat
+     * Configurar input del chat - VERSIÓN CORREGIDA
      */
     setupChatInput() {
         console.log('🔧 Configurando input del chat...');
-        console.log('🔍 Buscando elementos del chat...');
         
         const chatInput = document.getElementById('chatInput');
         const btnSend = document.querySelector('.btn-send');
         
-        console.log('📝 Chat input encontrado:', !!chatInput);
-        console.log('📤 Botón enviar encontrado:', !!btnSend);
+        if (!chatInput || !btnSend) {
+            console.warn('⚠️ Elementos del chat no encontrados en setupChatInput');
+            return;
+        }
         
-        if (chatInput && btnSend) {
-            console.log('🔧 Configurando input del chat...');
-            
-            // Configurar input
-            chatInput.readOnly = false;
-            chatInput.disabled = false;
-            chatInput.style.pointerEvents = 'auto';
-            chatInput.style.userSelect = 'text';
-            chatInput.style.webkitUserSelect = 'text';
-            
-            // Configurar botón enviar
-            btnSend.style.pointerEvents = 'auto';
-            btnSend.style.cursor = 'pointer';
-            
+        // Configurar input
+        chatInput.readOnly = false;
+        chatInput.disabled = false;
+        chatInput.style.pointerEvents = 'auto';
+        chatInput.style.userSelect = 'text';
+        chatInput.style.webkitUserSelect = 'text';
+        chatInput.placeholder = 'Escribe tu mensaje...';
+        
+        // Configurar botón enviar
+        btnSend.style.pointerEvents = 'auto';
+        btnSend.style.cursor = 'pointer';
+        btnSend.disabled = false;
+        
+        // Limpiar event listeners existentes para evitar duplicados
+        const newChatInput = chatInput.cloneNode(true);
+        const newBtnSend = btnSend.cloneNode(true);
+        
+        chatInput.parentNode.replaceChild(newChatInput, chatInput);
+        btnSend.parentNode.replaceChild(newBtnSend, btnSend);
+        
+        // Obtener referencias actualizadas
+        const updatedChatInput = document.getElementById('chatInput');
+        const updatedBtnSend = document.querySelector('.btn-send');
+        
+        if (updatedChatInput && updatedBtnSend) {
+            // Configurar event listeners del chat
+            this.setupChatEventListeners(updatedChatInput, updatedBtnSend);
             console.log('✅ Input del chat configurado correctamente');
         } else {
-            console.warn('⚠️ Elementos del chat no encontrados');
+            console.error('❌ Error configurando input del chat');
         }
+    }
+    
+    /**
+     * Configurar event listeners del chat - NUEVA FUNCIÓN
+     */
+    setupChatEventListeners(chatInput, btnSend) {
+        console.log('🔧 Configurando event listeners del chat...');
+        
+        // Función para enviar mensaje
+        const sendMessage = () => {
+            const message = chatInput.value.trim();
+            console.log('📤 Intentando enviar mensaje:', message);
+            
+            if (message) {
+                this.sendChatMessage(message);
+                chatInput.value = '';
+                chatInput.focus();
+                console.log('✅ Mensaje enviado correctamente');
+            }
+        };
+        
+        // Event listener para el botón enviar
+        btnSend.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📤 Click en botón enviar');
+            sendMessage();
+        });
+        
+        // Event listener para Enter en el input
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('⌨️ Enter presionado en chat');
+                sendMessage();
+            }
+        });
+        
+        // Event listener para focus
+        chatInput.addEventListener('focus', () => {
+            console.log('🎯 Chat input enfocado');
+        });
+        
+        console.log('✅ Event listeners del chat configurados');
     }
 
     /**
@@ -2461,7 +2534,22 @@ class BingoPro {
                         <span class="message-text">${msg.message}</span>
                     `;
                 } else {
-                    const displayName = msg.userId === this.userId ? 'Tú' : msg.userName;
+                    // Obtener información del usuario desde la sesión
+                    const sessionData = localStorage.getItem('bingoroyal_session');
+                    let currentUserId = 'anonymous';
+                    
+                    if (sessionData) {
+                        try {
+                            const session = JSON.parse(sessionData);
+                            if (session.user) {
+                                currentUserId = session.user.id || session.user.email || 'user_' + Date.now();
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ Error parseando sesión:', e);
+                        }
+                    }
+                    
+                    const displayName = msg.userId === currentUserId ? 'Tú' : msg.userName;
                     messageDiv.innerHTML = `
                         <span class="message-time">${msg.time}</span>
                         <span class="message-user">${displayName}:</span>
@@ -2508,7 +2596,22 @@ class BingoPro {
                     <span class="message-text">${msg.message}</span>
                 `;
             } else {
-                const displayName = msg.userId === this.userId ? 'Tú' : msg.userName;
+                // Obtener información del usuario desde la sesión
+                const sessionData = localStorage.getItem('bingoroyal_session');
+                let currentUserId = 'anonymous';
+                
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        if (session.user) {
+                            currentUserId = session.user.id || session.user.email || 'user_' + Date.now();
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Error parseando sesión:', e);
+                    }
+                }
+                
+                const displayName = msg.userId === currentUserId ? 'Tú' : msg.userName;
                 messageDiv.innerHTML = `
                     <span class="message-time">${msg.time}</span>
                     <span class="message-user">${displayName}:</span>
@@ -2529,8 +2632,26 @@ class BingoPro {
         try {
             console.log('📤 Enviando mensaje a la API:', message);
             console.log('🔗 URL de la API:', this.chatApiUrl);
-            console.log('👤 User ID:', this.userId);
-            console.log('👤 User Name:', this.userName);
+            
+            // Obtener información del usuario desde la sesión
+            const sessionData = localStorage.getItem('bingoroyal_session');
+            let userId = 'anonymous';
+            let userName = 'Jugador';
+            
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    if (session.user) {
+                        userId = session.user.id || session.user.email || 'user_' + Date.now();
+                        userName = session.user.firstName || session.user.email || 'Jugador';
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Error parseando sesión:', e);
+                }
+            }
+            
+            console.log('👤 User ID:', userId);
+            console.log('👤 User Name:', userName);
             
             const response = await fetch(this.chatApiUrl, {
                 method: 'POST',
@@ -2539,8 +2660,8 @@ class BingoPro {
                 },
                 body: JSON.stringify({
                     message: message,
-                    userId: this.userId,
-                    userName: this.userName
+                    userId: userId,
+                    userName: userName
                 })
             });
             
@@ -3389,76 +3510,8 @@ class BingoPro {
             }
         });
 
-        // Chat - Event listeners mejorados
-        const chatInput = document.getElementById('chatInput');
-        const btnSend = document.querySelector('.btn-send');
-        
-        console.log('🔧 Configurando chat event listeners...');
-        console.log('Chat input encontrado:', !!chatInput);
-        console.log('Botón enviar encontrado:', !!btnSend);
-        
-        if (chatInput && btnSend) {
-            // Hacer el input editable y funcional
-            chatInput.readOnly = false;
-            chatInput.disabled = false;
-            chatInput.style.pointerEvents = 'auto';
-            chatInput.style.userSelect = 'text';
-            chatInput.style.webkitUserSelect = 'text';
-            
-            const sendMessage = () => {
-                const message = chatInput.value.trim();
-                console.log('📤 Intentando enviar mensaje:', message);
-                if (message) {
-                    // Usar sendChatMessage en lugar de addChatMessage para enviar al servidor
-                    this.sendChatMessage(message);
-                    chatInput.value = '';
-                    chatInput.focus();
-                    console.log('✅ Mensaje enviado correctamente');
-                }
-            };
-            
-            // Event listener para el botón enviar
-            btnSend.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                console.log('📤 Click en botón enviar');
-                sendMessage();
-                return false;
-            });
-            
-            // Event listener para Enter en el input
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    console.log('⌨️ Enter presionado en chat');
-                    sendMessage();
-                    return false;
-                }
-            });
-            
-            // Event listener para keydown para prevenir propagación
-            chatInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            });
-            
-            // Event listener para focus
-            chatInput.addEventListener('focus', (e) => {
-                console.log('🎯 Focus en chat input');
-                e.target.select();
-            });
-            
-            console.log('✅ Chat event listeners configurados correctamente');
-        } else {
-            console.log('❌ Elementos del chat no encontrados');
-        }
+        // Chat - Event listeners ya configurados en setupChatInput
+        console.log('🔧 Chat event listeners configurados en setupChatInput');
 
         // Atajos de teclado
         document.addEventListener('keydown', (event) => {
@@ -5039,27 +5092,52 @@ class BingoPro {
     }
 
     /**
-     * Detectar y corregir problemas de URL del chat
+     * Detectar y corregir problemas de URL del chat - VERSIÓN MEJORADA
      */
     detectChatUrlIssues() {
         try {
+            console.log('🔧 Detectando problemas de URL del chat...');
+            console.log('📍 Protocolo actual:', window.location.protocol);
+            console.log('🌐 Origin actual:', window.location.origin);
+            console.log('🔗 URL del chat actual:', this.chatApiUrl);
+            
             // Verificar si estamos en HTTPS y si la URL del chat es relativa
             if (window.location.protocol === 'https:' && this.chatApiUrl.startsWith('/')) {
                 // Si estamos en HTTPS, usar la URL completa del servidor
                 const serverUrl = window.location.origin;
-                this.chatApiUrl = `${serverUrl}/api/chat`; // Corregido: usar /api/chat
+                this.chatApiUrl = `${serverUrl}/api/chat`;
                 console.log('🔧 URL del chat corregida para HTTPS:', this.chatApiUrl);
             }
             
             // Verificar si la URL es válida
             try {
-                new URL(this.chatApiUrl, window.location.origin);
+                const url = new URL(this.chatApiUrl, window.location.origin);
+                console.log('✅ URL del chat válida:', url.href);
             } catch (e) {
                 console.warn('⚠️ URL del chat inválida, usando URL por defecto');
-                this.chatApiUrl = '/api/chat'; // Corregido: usar /api/chat
+                this.chatApiUrl = '/api/chat';
+                console.log('🔧 URL del chat establecida por defecto:', this.chatApiUrl);
             }
+            
+            // Verificar que la URL termine en /api/chat
+            if (!this.chatApiUrl.endsWith('/api/chat')) {
+                console.warn('⚠️ URL del chat no termina en /api/chat, corrigiendo...');
+                if (this.chatApiUrl.includes('/api/')) {
+                    // Si ya tiene /api/, solo cambiar la parte final
+                    this.chatApiUrl = this.chatApiUrl.replace(/\/[^\/]*$/, '/chat');
+                } else {
+                    // Si no tiene /api/, agregarlo
+                    this.chatApiUrl = this.chatApiUrl.replace(/\/?$/, '/api/chat');
+                }
+                console.log('🔧 URL del chat corregida:', this.chatApiUrl);
+            }
+            
+            console.log('✅ URL del chat final:', this.chatApiUrl);
         } catch (error) {
             console.error('❌ Error detectando problemas de URL del chat:', error);
+            // Fallback a URL por defecto
+            this.chatApiUrl = '/api/chat';
+            console.log('🔧 URL del chat establecida por defecto debido a error:', this.chatApiUrl);
         }
     }
 }
