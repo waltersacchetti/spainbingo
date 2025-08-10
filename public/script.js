@@ -5293,7 +5293,7 @@ function joinCurrentGame() {
 // Función para alternar el chat
 function toggleChat() {
     const chatSection = document.getElementById('chatSectionFixed');
-    const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+    const toggleBtn = document.getElementById('chatToggleBtn');
     
     console.log('🔧 Toggle chat clicked');
     console.log('Chat section:', chatSection);
@@ -5609,7 +5609,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Configurando event listeners del chat...');
     
     // Event listener para el botón toggle del chat
-    const chatToggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
     if (chatToggleBtn) {
         console.log('✅ Botón toggle del chat encontrado, configurando event listener...');
         chatToggleBtn.addEventListener('click', function(e) {
@@ -5634,6 +5634,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         console.error('❌ Botón enviar del chat no encontrado');
+    }
+    
+    // Event listener para el botón cerrar del chat
+    const chatCloseBtn = document.getElementById('chatCloseBtn');
+    if (chatCloseBtn) {
+        console.log('✅ Botón cerrar del chat encontrado, configurando event listener...');
+        chatCloseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Click en botón cerrar del chat detectado');
+            toggleChat();
+        });
+    } else {
+        console.error('❌ Botón cerrar del chat no encontrado');
     }
     
     // Event listener para el input del chat (Enter key)
