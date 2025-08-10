@@ -5604,4 +5604,59 @@ function initializeModeCards() {
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     initializeModeCards();
+    
+    // ✨ NUEVO: Configurar event listeners del chat
+    console.log('🔧 Configurando event listeners del chat...');
+    
+    // Event listener para el botón toggle del chat
+    const chatToggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+    if (chatToggleBtn) {
+        console.log('✅ Botón toggle del chat encontrado, configurando event listener...');
+        chatToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Click en botón toggle del chat detectado');
+            toggleChat();
+        });
+    } else {
+        console.error('❌ Botón toggle del chat no encontrado');
+    }
+    
+    // Event listener para el botón enviar del chat
+    const chatSendBtn = document.querySelector('.btn-send');
+    if (chatSendBtn) {
+        console.log('✅ Botón enviar del chat encontrado, configurando event listener...');
+        chatSendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Click en botón enviar del chat detectado');
+            sendChatMessage();
+        });
+    } else {
+        console.error('❌ Botón enviar del chat no encontrado');
+    }
+    
+    // Event listener para el input del chat (Enter key)
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        console.log('✅ Input del chat encontrado, configurando event listener...');
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔧 Enter presionado en input del chat');
+                sendChatMessage();
+            }
+        });
+        
+        // Event listener para click en el input
+        chatInput.addEventListener('click', function() {
+            this.focus();
+            this.select();
+        });
+    } else {
+        console.error('❌ Input del chat no encontrado');
+    }
+    
+    console.log('✅ Event listeners del chat configurados correctamente');
 });
