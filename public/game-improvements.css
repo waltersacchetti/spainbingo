@@ -1,0 +1,220 @@
+/* 🎮 ESTILOS PARA MEJORAS DEL JUEGO DE BINGO */
+
+/* 🔒 Indicadores de bloqueo en botones */
+.btn-buy.disabled,
+.btn-buy-cards.disabled,
+.btn-buy-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.btn-buy.game-blocked,
+.btn-buy-cards.game-blocked,
+.btn-buy-card.game-blocked {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    border-color: #d63031;
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.blocked-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #d63031;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse-blocked 2s infinite;
+}
+
+@keyframes pulse-blocked {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 📢 Mensajes de estado del juego */
+.game-status {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-weight: 500;
+    text-align: center;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.game-status.playing {
+    background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+    border-left-color: #f39c12;
+    color: #d63031;
+}
+
+.game-status.global-active {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    border-left-color: #0984e3;
+    color: white;
+}
+
+.game-status.available {
+    background: linear-gradient(135deg, #55a3ff, #00b894);
+    border-left-color: #00b894;
+    color: white;
+}
+
+/* 🎯 Mejoras en la interfaz de modos de juego */
+.game-mode-card {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.game-mode-card.active {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.game-mode-card.blocked {
+    opacity: 0.7;
+    filter: grayscale(30%);
+}
+
+.game-mode-card.blocked::after {
+    content: '🔒';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    color: #d63031;
+    background: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ⏰ Contadores de próximas partidas */
+.countdown-timer {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    animation: countdown-pulse 1s infinite;
+}
+
+@keyframes countdown-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.countdown-timer.urgent {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    animation: countdown-urgent 0.5s infinite;
+}
+
+@keyframes countdown-urgent {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 🎮 Indicadores de partida activa */
+.game-active-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+    z-index: 1000;
+    animation: slide-in-right 0.5s ease;
+}
+
+@keyframes slide-in-right {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* 🔄 Estados de sincronización */
+.sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.sync-status.syncing {
+    background: #ffeaa7;
+    color: #d63031;
+}
+
+.sync-status.synced {
+    background: #55a3ff;
+    color: white;
+}
+
+.sync-status.error {
+    background: #ff6b6b;
+    color: white;
+}
+
+/* 📱 Responsive para móviles */
+@media (max-width: 768px) {
+    .game-status {
+        margin: 12px 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .blocked-indicator {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+        top: -6px;
+        right: -6px;
+    }
+    
+    .game-active-indicator {
+        top: 10px;
+        right: 10px;
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+
+/* 🌙 Modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .game-status.playing {
+        background: linear-gradient(135deg, #2d3436, #636e72);
+        color: #ffeaa7;
+    }
+    
+    .game-status.global-active {
+        background: linear-gradient(135deg, #2d3436, #0984e3);
+        color: #74b9ff;
+    }
+    
+    .game-status.available {
+        background: linear-gradient(135deg, #2d3436, #00b894);
+        color: #55a3ff;
+    }
+}

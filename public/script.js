@@ -364,6 +364,14 @@ class BingoPro {
         // Inicializar modos de juego
         this.initializeGameModes();
         
+        // 🔄 Sincronizar estado con el servidor al inicializar
+        this.syncGameStateWithServer();
+        
+        // Configurar sincronización periódica cada 30 segundos
+        setInterval(() => {
+            this.syncGameStateWithServer();
+        }, 30000);
+        
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
         
@@ -892,6 +900,277 @@ class BingoPro {
         }
 
         return { canPlay: true, reason: 'Requisitos cumplidos' };
+    }
+
+    /**
+     * 🔒 Verificar si hay una partida global activa en un modo específico
+     */
+    isGlobalGameActive(modeId) {
+        // Verificar estado local del juego
+        if (this.gameState === 'playing' && this.currentGameMode === modeId) {
+            return true;
+        }
+
+        // Verificar estado del servidor si está disponible
+        if (this.serverGameState && this.serverGameState[modeId]) {
+            return this.serverGameState[modeId].gameState === 'playing';
+        }
+
+        // Verificar si hay una partida activa en el modo actual
+        const currentMode = this.getCurrentGameMode();
+        if (currentMode.id === modeId && this.gameState === 'playing') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 🔒 Verificar si se puede comprar cartones en este momento
+     */
+    canPurchaseCards(modeId = null) {
+        const targetMode = modeId || this.currentGameMode;
+        
+        // No permitir compra durante partidas activas
+        if (this.gameState === 'playing') {
+            return { 
+                canPurchase: false, 
+                reason: 'No puedes comprar cartones durante una partida activa',
+                code: 'GAME_IN_PROGRESS'
+            };
+        }
+
+        // Verificar partida global activa
+        if (this.isGlobalGameActive(targetMode.id)) {
+            return { 
+                canPurchase: false, 
+                reason: `Hay una partida global activa en ${targetMode.name}`,
+                code: 'GLOBAL_GAME_ACTIVE'
+            };
+        }
+
+        // Verificar requisitos del modo
+        const requirements = this.checkGameModeRequirements(targetMode.id);
+        if (!requirements.canPlay) {
+            return { 
+                canPurchase: false, 
+                reason: requirements.reason,
+                code: 'REQUIREMENTS_NOT_MET'
+            };
+        }
+
+        // Verificar límite de cartones
+        const currentCardsInMode = this.userCards.filter(card => card.mode === targetMode.id).length;
+        if (currentCardsInMode >= targetMode.maxCards) {
+            return { 
+                canPurchase: false, 
+                reason: `Ya tienes el máximo de cartones permitidos para ${targetMode.name}`,
+                code: 'MAX_CARDS_REACHED'
+            };
+        }
+
+        return { 
+            canPurchase: true, 
+            reason: 'Puedes comprar cartones',
+            code: 'CAN_PURCHASE'
+        };
+    }
+
+    /**
+     * 📦 Comprar paquete de cartones (método para botones de paquete)
+     */
+    buyPackage(packageType) {
+        console.log(`📦 Comprando paquete: ${packageType}`);
+        
+        // 🔒 Verificar si se puede comprar
+        const currentMode = this.getCurrentGameMode();
+        const canPurchase = this.canPurchaseCards(currentMode.id);
+        
+        if (!canPurchase.canPurchase) {
+            this.showNotification(`❌ ${canPurchase.reason}`, 'error');
+            return false;
+        }
+        
+        // Mapear tipos de paquete a cantidades
+        const packageQuantities = {
+            'starter': 1,
+            'basic': 3,
+            'premium': 5,
+            'vip': 10,
+            'ultimate': 25
+        };
+        
+        const quantity = packageQuantities[packageType];
+        if (!quantity) {
+            this.showNotification('❌ Tipo de paquete no válido', 'error');
+            return false;
+        }
+        
+        // Usar el método de compra existente
+        return this.buyCards(quantity);
+    }
+
+    /**
+     * 🔒 Actualizar estado visual de botones de compra
+     */
+    updatePurchaseButtonsState() {
+        const buyButtons = document.querySelectorAll('.btn-buy, .btn-buy-cards, .btn-buy-card');
+        const currentMode = this.getCurrentGameMode();
+        
+        buyButtons.forEach(button => {
+            const canPurchase = this.canPurchaseCards(currentMode.id);
+            
+            if (!canPurchase.canPurchase) {
+                button.disabled = true;
+                button.title = canPurchase.reason;
+                button.classList.add('disabled', 'game-blocked');
+                
+                // Agregar indicador visual del bloqueo
+                if (!button.querySelector('.blocked-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'blocked-indicator';
+                    indicator.innerHTML = '🔒';
+                    indicator.title = canPurchase.reason;
+                    button.appendChild(indicator);
+                }
+            } else {
+                button.disabled = false;
+                button.title = 'Comprar cartones';
+                button.classList.remove('disabled', 'game-blocked');
+                
+                // Remover indicador de bloqueo
+                const indicator = button.querySelector('.blocked-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+        });
+        
+        // Actualizar mensaje de estado del juego
+        this.updateGameStatusMessage();
+    }
+
+    /**
+     * 📢 Actualizar mensaje de estado del juego
+     */
+    updateGameStatusMessage() {
+        const currentMode = this.getCurrentGameMode();
+        const statusElement = document.getElementById('gameStatusMessage');
+        
+        if (!statusElement) return;
+        
+        if (this.gameState === 'playing') {
+            statusElement.innerHTML = `🎮 <strong>Partida activa en ${currentMode.name}</strong> - No se pueden comprar cartones hasta que termine`;
+            statusElement.className = 'game-status playing';
+        } else if (this.isGlobalGameActive(currentMode.id)) {
+            statusElement.innerHTML = `🌐 <strong>Partida global activa en ${currentMode.name}</strong> - Espera a que termine para comprar cartones`;
+            statusElement.className = 'game-status global-active';
+        } else {
+            statusElement.innerHTML = `✅ <strong>${currentMode.name} disponible</strong> - Puedes comprar cartones y unirte a la próxima partida`;
+            statusElement.className = 'game-status available';
+        }
+    }
+
+    /**
+     * 🌐 Sincronizar estado del juego con el servidor
+     */
+    async syncGameStateWithServer() {
+        try {
+            console.log('🔄 Sincronizando estado del juego con el servidor...');
+            
+            // Obtener estado actual del servidor
+            const response = await fetch('/api/game/state', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const serverState = await response.json();
+                this.serverGameState = serverState;
+                
+                // Actualizar estado local basado en el servidor
+                this.updateLocalGameState(serverState);
+                
+                console.log('✅ Estado sincronizado con el servidor:', serverState);
+                return true;
+            } else {
+                console.warn('⚠️ No se pudo sincronizar con el servidor');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error sincronizando con el servidor:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 🔄 Actualizar estado local basado en el servidor
+     */
+    updateLocalGameState(serverState) {
+        if (!serverState || !serverState.modes) return;
+
+        // Actualizar estado por modo de juego
+        Object.keys(serverState.modes).forEach(modeId => {
+            const modeState = serverState.modes[modeId];
+            
+            // Si hay una partida activa en el servidor, actualizar estado local
+            if (modeState.gameState === 'playing') {
+                // Si el modo actual está jugando, actualizar estado local
+                if (this.currentGameMode === modeId) {
+                    this.gameState = 'playing';
+                    this.globalGameState.isActive = true;
+                    this.globalGameState.gameId = modeState.gameId;
+                    this.globalGameState.startTime = new Date(modeState.startTime);
+                    
+                    // Mostrar notificación de partida activa
+                    this.showNotification(`🎮 Partida activa en ${this.gameModes[modeId].name}`, 'info');
+                }
+            }
+        });
+
+        // Actualizar contadores y próximas partidas
+        this.updateNextGameCountdowns(serverState);
+    }
+
+    /**
+     * ⏰ Actualizar contadores de próximas partidas
+     */
+    updateNextGameCountdowns(serverState) {
+        if (!serverState || !serverState.modes) return;
+
+        Object.keys(serverState.modes).forEach(modeId => {
+            const modeState = serverState.modes[modeId];
+            const countdownElement = document.getElementById(`countdown-${modeId}`);
+            
+            if (countdownElement && modeState.nextGameTime) {
+                const nextGameTime = new Date(modeState.nextGameTime);
+                const now = new Date();
+                const timeUntilNext = nextGameTime - now;
+                
+                if (timeUntilNext > 0) {
+                    // Actualizar contador
+                    this.updateCountdownDisplay(modeId, timeUntilNext);
+                } else {
+                    // La próxima partida debería estar empezando
+                    countdownElement.textContent = '¡YA!';
+                }
+            }
+        });
+    }
+
+    /**
+     * ⏰ Actualizar display del contador para un modo específico
+     */
+    updateCountdownDisplay(modeId, timeRemaining) {
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) return;
+
+        const minutes = Math.floor(timeRemaining / (1000 * 60));
+        const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+        
+        countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
     /**
@@ -2097,13 +2376,21 @@ class BingoPro {
     }
 
     joinGame() {
+        // 🔒 BLOQUEO: No permitir unirse durante partidas activas
         if (this.gameState === 'playing') {
-            alert('No puedes unirte a una partida que ya ha comenzado');
+            this.showNotification('❌ No puedes unirte a una partida que ya ha comenzado', 'error');
+            return false;
+        }
+
+        // 🔒 BLOQUEO: Verificar que no haya partida global activa
+        const currentMode = this.getCurrentGameMode();
+        if (this.isGlobalGameActive(currentMode.id)) {
+            this.showNotification(`❌ No puedes unirte. Hay una partida activa en ${currentMode.name}`, 'error');
             return false;
         }
 
         if (this.selectedCards.length === 0) {
-            alert('Debes comprar al menos 1 cartón para unirte a la partida');
+            this.showNotification('❌ Debes comprar al menos 1 cartón para unirte a la partida', 'error');
             return false;
         }
 
@@ -2117,26 +2404,53 @@ class BingoPro {
         return true;
     }
 
+    /**
+     * Comprar cartones para el modo de juego actual
+     * ✅ BLOQUEADO durante partidas activas
+     */
     async purchaseCards(quantity = 1) {
+        // 🔒 BLOQUEO: No permitir compra durante partidas activas
+        if (this.gameState === 'playing') {
+            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
+            return false;
+        }
+
+        // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
         const currentMode = this.getCurrentGameMode();
+        if (this.isGlobalGameActive(currentMode.id)) {
+            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+            return false;
+        }
+
+        // Validaciones básicas
+        if (quantity <= 0 || quantity > 50) {
+            this.showNotification('❌ Cantidad inválida. Máximo 50 cartones por compra.', 'error');
+            return false;
+        }
+
+        // Verificar requisitos del modo de juego
+        const requirements = this.checkGameModeRequirements(currentMode.id);
+        if (!requirements.canPlay) {
+            this.showNotification(`❌ ${requirements.reason}`, 'error');
+            return false;
+        }
+
+        // Verificar límite de cartones por modo
+        const currentCardsInMode = this.userCards.filter(card => card.mode === currentMode.id).length;
+        if (currentCardsInMode + quantity > currentMode.maxCards) {
+            this.showNotification(`❌ Límite excedido. Máximo ${currentMode.maxCards} cartones para ${currentMode.name}.`, 'error');
+            return false;
+        }
+
+        // Calcular costo total
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
 
-        // Validaciones existentes
-        console.log(`💳 Intentando comprar ${quantity} cartón(es) a €${cardPrice} cada uno (Total: €${totalCost})`);
-
-        if (quantity < 1 || quantity > 10) {
-            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
-            return false;
-        }
-
+        // Verificar saldo
         if (this.userBalance < totalCost) {
-            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
-            return false;
-        }
-
-        if (this.userCards.length + quantity > currentMode.maxCards) {
-            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
+            this.showNotification(`❌ Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
             return false;
         }
 
@@ -2150,6 +2464,8 @@ class BingoPro {
                 const card = this.generateCard();
                 card.purchasePrice = cardPrice;
                 card.mode = currentMode.id;
+                card.purchaseTime = new Date();
+                card.gameMode = currentMode.id;
                 this.userCards.push(card);
                 this.selectedCards.push(card.id);
                 
@@ -2920,14 +3236,23 @@ class BingoPro {
     startNewGame() {
         console.log('🎮 Iniciando nueva partida profesional de Bingo...');
         
+        // 🔒 BLOQUEO: Verificar que no haya partida activa
         if (this.gameState === 'playing') {
             console.log('⚠️ Ya hay una partida en curso');
+            this.showNotification('❌ Ya hay una partida activa. Espera a que termine.', 'warning');
             return;
         }
         
         // Obtener configuración del modo de juego actual
         const currentMode = this.getCurrentGameMode();
         console.log(`🎮 Modo de juego: ${currentMode.name}`);
+        
+        // 🔒 BLOQUEO: Verificar que no haya partida global activa en este modo
+        if (this.isGlobalGameActive(currentMode.id)) {
+            console.log('⚠️ Ya hay una partida global activa en este modo');
+            this.showNotification(`❌ Ya hay una partida activa en ${currentMode.name}. Espera a que termine.`, 'warning');
+            return;
+        }
         
         // En un bingo global, el juego funciona independientemente de los cartones del usuario
         // Los cartones del usuario solo afectan si puede ganar, no si el juego puede comenzar
@@ -2955,7 +3280,8 @@ class BingoPro {
             prizes: dynamicPrizes.prizes,
             isActive: true,
             phase: 'early', // early, mid, late
-            numbersCalled: 0
+            numbersCalled: 0,
+            gameMode: currentMode.id // Agregar modo de juego
         };
         
         // Limpiar estado anterior
@@ -2981,7 +3307,8 @@ class BingoPro {
             gameId: this.globalGameState.gameId,
             cardsCount: this.userCards.length,
             isSpecialGame: dynamicPrizes.isSpecialGame,
-            basePrize: dynamicPrizes.basePrize
+            basePrize: dynamicPrizes.basePrize,
+            gameMode: currentMode.id
         });
         
         // Agregar mensaje al chat
@@ -2995,6 +3322,9 @@ class BingoPro {
         this.startAutoCalling();
         
         console.log('Nueva partida global iniciada correctamente');
+        
+        // 🔄 Sincronizar con el servidor
+        this.syncGameStateWithServer();
     }
 
     startAutoCalling() {
@@ -3190,6 +3520,9 @@ class BingoPro {
         if (earningsHero) {
             earningsHero.textContent = `€${this.gameAnalytics.totalMoneyWon.toFixed(0)}`;
         }
+        
+        // 🔒 Actualizar estado de botones de compra
+        this.updatePurchaseButtonsState();
     }
 
     /**
@@ -3400,11 +3733,21 @@ class BingoPro {
                 this.newGame();
             }
             
-            // Botones de compra
+            // Botones de compra con validaciones mejoradas
             else if (e.target.closest('.btn-buy')) {
                 const btn = e.target.closest('.btn-buy');
                 const packageType = btn.getAttribute('data-package');
                 console.log('Botón comprar clickeado:', packageType);
+                
+                // 🔒 Verificar si se puede comprar en este momento
+                const currentMode = this.getCurrentGameMode();
+                const canPurchase = this.canPurchaseCards(currentMode.id);
+                
+                if (!canPurchase.canPurchase) {
+                    this.showNotification(`❌ ${canPurchase.reason}`, 'error');
+                    return;
+                }
+                
                 if (packageType) {
                     this.buyPackage(packageType);
                 }
@@ -4841,23 +5184,46 @@ class BingoPro {
     buyCards(quantity = 1) {
         console.log(`🛒 Comprando ${quantity} cartón(es)...`);
         
+        // 🔒 BLOQUEO: No permitir compra durante partidas activas
+        if (this.gameState === 'playing') {
+            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
+            return false;
+        }
+
+        // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
         const currentMode = this.getCurrentGameMode();
+        if (this.isGlobalGameActive(currentMode.id)) {
+            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+            return false;
+        }
+
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
 
-        // Validaciones básicas
-        if (quantity < 1 || quantity > 10) {
-            this.showNotification('Puedes comprar entre 1 y 10 cartones por vez', 'error');
+        // Validaciones mejoradas
+        if (quantity < 1 || quantity > 50) {
+            this.showNotification('❌ Cantidad inválida. Puedes comprar entre 1 y 50 cartones por vez', 'error');
+            return false;
+        }
+
+        // Verificar requisitos del modo de juego
+        const requirements = this.checkGameModeRequirements(currentMode.id);
+        if (!requirements.canPlay) {
+            this.showNotification(`❌ ${requirements.reason}`, 'error');
             return false;
         }
 
         if (this.userBalance < totalCost) {
-            this.showNotification(`Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
+            this.showNotification(`❌ Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
             return false;
         }
 
-        if (this.userCards.length + quantity > currentMode.maxCards) {
-            this.showNotification(`Máximo ${currentMode.maxCards} cartones permitidos en este modo`, 'error');
+        // Verificar límite de cartones por modo
+        const currentCardsInMode = this.userCards.filter(card => card.mode === currentMode.id).length;
+        if (currentCardsInMode + quantity > currentMode.maxCards) {
+            this.showNotification(`❌ Límite excedido. Máximo ${currentMode.maxCards} cartones para ${currentMode.name}.`, 'error');
             return false;
         }
 
@@ -4872,6 +5238,8 @@ class BingoPro {
                 if (card) {
                     card.purchasePrice = cardPrice;
                     card.mode = currentMode.id;
+                    card.purchaseTime = new Date();
+                    card.gameMode = currentMode.id;
                     this.selectedCards.push(card.id);
                     
                     // Agregar experiencia
