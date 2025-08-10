@@ -2337,35 +2337,7 @@ class BingoPro {
             btnSend.style.pointerEvents = 'auto';
             btnSend.style.cursor = 'pointer';
             
-            // Event listener para Enter en el input
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('⌨️ Enter presionado en chat');
-                    this.sendChatMessage(chatInput.value.trim());
-                    chatInput.value = '';
-                    return false;
-                }
-            });
-            
-            // Event listener para click en el botón enviar
-            btnSend.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('📤 Click en botón enviar del chat');
-                this.sendChatMessage(chatInput.value.trim());
-                chatInput.value = '';
-                chatInput.focus();
-                return false;
-            });
-            
             console.log('✅ Input del chat configurado correctamente');
-            
-            // ✨ NUEVO: Agregar mensaje de bienvenida
-            setTimeout(() => {
-                this.addChatMessage('system', '¡Bienvenido al chat en vivo del Bingo! Escribe un mensaje para comenzar.');
-            }, 1000);
         } else {
             console.warn('⚠️ Elementos del chat no encontrados');
         }
@@ -5673,4 +5645,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('✅ Event listeners del chat configurados correctamente');
+    
+    // ✨ NUEVO: Agregar mensaje de bienvenida cuando se expanda el chat
+    const chatSection = document.getElementById('chatSectionFixed');
+    if (chatSection && !chatSection.dataset.welcomeSent) {
+        chatSection.dataset.welcomeSent = 'true';
+        console.log('🎉 Chat configurado para mostrar mensaje de bienvenida');
+    }
 });
