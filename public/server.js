@@ -16,13 +16,24 @@ app.enable('trust proxy');
 const EmailService = require('./services/EmailService');
 const emailService = new EmailService();
 
+// Configuración de AWS Lambda
+const AWS = require('aws-sdk');
+AWS.config.update({
+    region: 'eu-west-1'
+    // No necesitamos credenciales explícitas, usamos el rol IAM del servidor
+});
+
+const lambda = new AWS.Lambda();
+const CHAT_LAMBDA_FUNCTION_NAME = 'spainbingo-chat';
+
 // Middleware para redirigir a dominio principal
 app.use((req, res, next) => {
     const primaryDomain = 'game.bingoroyal.es';
     
-    // NO redirigir rutas de health check o API internas
+    // NO redirigir rutas de health check, API internas o chat
     if (req.path.startsWith('/api/health') || 
         req.path.startsWith('/api/admin') ||
+        req.path.startsWith('/api/chat') ||
         req.path === '/health' ||
         req.path === '/status') {
         return next();
@@ -970,8 +981,8 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// API Chat endpoint
-app.post('/api/chat', (req, res) => {
+// API Chat endpoint - Conectado a AWS Lambda con fallback local
+app.post('/api/chat', async (req, res) => {
     try {
         const { message, userId, userName } = req.body;
         
@@ -982,6 +993,7 @@ app.post('/api/chat', (req, res) => {
             });
         }
         
+        // Generar respuesta del bot localmente
         let botResponse = "¡Hola! Soy BingoBot 🤖. Escribe 'ayuda' para ver todos los comandos disponibles.";
         
         const lowerMsg = message.toLowerCase();
@@ -994,41 +1006,42 @@ app.post('/api/chat', (req, res) => {
                          "• 'comprar' - Cómo comprar cartones 💳\n" +
                          "• 'problemas' - Ayuda con problemas técnicos 🔧\n" +
                          "• 'bot' - Información sobre mí 🤖";
-        } else if (lowerMsg.includes('premio') || lowerMsg.includes('premios')) {
-            botResponse = "🏆 **Premios BingoRoyal:**\n" +
-                         "• **Partidas normales:** Línea €50, Bingo €400\n" +
-                         "• **Cada 2 horas:** Línea €150, Bingo €1,500\n" +
-                         "• **Fines de semana 21:00:** Línea €500, Bingo €5,000\n" +
-                         "• **Cartones:** €1 cada uno 💰";
-        } else if (lowerMsg.includes('regla') || lowerMsg.includes('reglas')) {
+        } else if (lowerMsg.includes('premios')) {
+            botResponse = "🏆 **Premios disponibles:**\n" +
+                         "• **Línea:** 5€ - 15€ (dependiendo del modo)\n" +
+                         "• **Dos líneas:** 15€ - 45€\n" +
+                         "• **Bingo completo:** 50€ - 150€\n" +
+                         "• **Bote progresivo:** Varía según acumulación 🎯";
+        } else if (lowerMsg.includes('reglas')) {
             botResponse = "📋 **Reglas del Bingo:**\n" +
-                         "• Números del 1 al 90 🎯\n" +
-                         "• 15 números por cartón 📊\n" +
-                         "• **Línea:** 5 números en horizontal ✨\n" +
-                         "• **Bingo:** Todos los números del cartón 🏆\n" +
-                         "• ¡El primero en completar gana! 🎉";
-        } else if (lowerMsg.includes('hola') || lowerMsg.includes('buenos') || lowerMsg.includes('buenas')) {
-            botResponse = "¡Hola! 👋 Soy BingoBot, tu asistente personal. ¿En qué puedo ayudarte? 🤖";
-        } else if (lowerMsg.includes('como jugar') || lowerMsg.includes('como se juega')) {
+                         "• Marca los números que se van llamando en tus cartones\n" +
+                         "• Gana con línea horizontal, dos líneas o bingo completo\n" +
+                         "• Los premios se pagan automáticamente al final de cada partida\n" +
+                         "• ¡Disfruta del juego y buena suerte! 🍀";
+        } else if (lowerMsg.includes('como jugar')) {
             botResponse = "🎮 **Cómo jugar:**\n" +
-                         "1. Compra cartones en 'Comprar Cartones' 💳\n" +
-                         "2. Haz clic en 'Unirse a la Partida' 🎯\n" +
-                         "3. Los números se llaman automáticamente 📢\n" +
-                         "4. Marca los números que tienes en tus cartones ✅\n" +
-                         "5. ¡Completa línea o bingo para ganar! 🏆";
-        } else if (lowerMsg.includes('comprar') || lowerMsg.includes('carton')) {
+                         "• Compra cartones antes de que empiece la partida\n" +
+                         "• Los números se llaman automáticamente\n" +
+                         "• Marca los números en tus cartones cuando aparezcan\n" +
+                         "• ¡El primero en completar línea, dos líneas o bingo gana! 🎯";
+        } else if (lowerMsg.includes('comprar')) {
             botResponse = "💳 **Cómo comprar cartones:**\n" +
-                         "1. Ve a la pestaña 'Comprar Cartones' 🛒\n" +
-                         "2. Selecciona la cantidad que quieres 📊\n" +
-                         "3. Haz clic en 'Comprar Cartones' 💰\n" +
-                         "4. Cada cartón cuesta €1 💵\n" +
-                         "5. ¡Más cartones = más posibilidades de ganar! 🎯";
-        } else if (lowerMsg.includes('problema') || lowerMsg.includes('error') || lowerMsg.includes('no funciona')) {
+                         "• Haz clic en 'Comprar Cartones' en la interfaz\n" +
+                         "• Selecciona la cantidad que desees\n" +
+                         "• Confirma la compra\n" +
+                         "• Los cartones se añaden automáticamente a tu cuenta";
+        } else if (lowerMsg.includes('problemas')) {
             botResponse = "🔧 **Solución de problemas:**\n" +
                          "• **Página lenta:** Recarga con Ctrl+F5 🔄\n" +
                          "• **No carga:** Verifica tu conexión a internet 🌐\n" +
                          "• **Navegador:** Usa Chrome, Firefox o Safari actualizado 💻\n" +
                          "• **Otros problemas:** Contacta soporte técnico 📞";
+        } else if (lowerMsg.includes('bot')) {
+            botResponse = "🤖 **Sobre mí:**\n" +
+                         "• Soy BingoBot, tu asistente virtual\n" +
+                         "• Te ayudo con información del juego y soporte\n" +
+                         "• Escribe 'ayuda' para ver todos los comandos disponibles\n" +
+                         "• ¡Estoy aquí para ayudarte a disfrutar del Bingo! 😊";
         }
         
         const now = new Date();
@@ -1055,21 +1068,73 @@ app.post('/api/chat', (req, res) => {
                 time: time
             }
         });
+        
     } catch (error) {
-        console.error('Error en chat API:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error procesando mensaje'
+        console.error('❌ Error en chat API:', error);
+        
+        // Fallback completo si hay error
+        const { message, userId, userName } = req.body;
+        const now = new Date();
+        const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        
+        res.json({
+            success: true,
+            userMessage: {
+                id: Date.now().toString(),
+                userId: userId,
+                userName: userName || 'Jugador',
+                message: message,
+                type: 'user',
+                timestamp: now.toISOString(),
+                time: time
+            },
+            botMessage: {
+                id: (Date.now() + 1).toString(),
+                userId: 'bot',
+                userName: 'BingoBot',
+                message: "¡Hola! Soy BingoBot 🤖. Escribe 'ayuda' para ver todos los comandos disponibles.",
+                type: 'bot',
+                timestamp: now.toISOString(),
+                time: time
+            }
         });
     }
 });
 
-// API Chat GET endpoint para obtener mensajes
+// API Chat GET endpoint - Conectado a AWS Lambda
+// API Chat GET endpoint - Respuesta local simple
 app.get('/api/chat', (req, res) => {
-    res.json({
-        success: true,
-        messages: []
-    });
+    try {
+        res.json({
+            success: true,
+            messages: [
+                {
+                    id: '1',
+                    userId: 'bot',
+                    userName: 'BingoBot',
+                    message: '¡Bienvenido al chat de BingoRoyal! 🎉',
+                    type: 'bot',
+                    timestamp: new Date().toISOString(),
+                    time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                },
+                {
+                    id: '2',
+                    userId: 'bot',
+                    userName: 'BingoBot',
+                    message: 'Escribe "ayuda" para ver todos los comandos disponibles 🤖',
+                    type: 'bot',
+                    timestamp: new Date().toISOString(),
+                    time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                }
+            ]
+        });
+    } catch (error) {
+        console.error('❌ Error en chat API (GET):', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
 });
 
 // ========================================

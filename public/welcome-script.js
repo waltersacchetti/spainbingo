@@ -24,22 +24,67 @@ function animateFloatingNumbers() {
     });
 }
 
-// Animación de cartón de bingo
+// Verificar que todos los elementos necesarios estén disponibles
+function verifyRequiredElements() {
+    const requiredElements = {
+        cardCells: document.querySelectorAll('.card-cell'),
+        gameCards: document.querySelectorAll('.game-card'),
+        offerCards: document.querySelectorAll('.offer-card'),
+        floatingNumbers: document.querySelectorAll('.floating-number'),
+        heroSection: document.querySelector('.hero-section'),
+        statCounters: document.querySelectorAll('.stat-content h3')
+    };
+    
+    const missingElements = [];
+    
+    Object.entries(requiredElements).forEach(([name, elements]) => {
+        if (!elements || elements.length === 0) {
+            missingElements.push(name);
+        }
+    });
+    
+    if (missingElements.length > 0) {
+        console.log(`⚠️ Elementos faltantes: ${missingElements.join(', ')}`);
+        return false;
+    }
+    
+    console.log('✅ Todos los elementos requeridos están disponibles');
+    return true;
+}
+
 function animateBingoCard() {
     const cardCells = document.querySelectorAll('.card-cell');
+    
+    // Verificar que existan elementos card-cell antes de continuar
+    if (!cardCells || cardCells.length === 0) {
+        console.log('⚠️ No se encontraron elementos card-cell, reintentando en 2 segundos...');
+        setTimeout(animateBingoCard, 2000);
+        return;
+    }
+    
     let currentIndex = 0;
     
     const interval = setInterval(() => {
-        if (currentIndex < cardCells.length) {
-            // Marcar celda como llamada
-            cardCells[currentIndex].classList.add('called');
-            
-            // Remover la clase después de un tiempo
-            setTimeout(() => {
-                cardCells[currentIndex].classList.remove('called');
-            }, 2000);
-            
-            currentIndex++;
+        // Verificar que el elemento actual existe y es válido
+        if (currentIndex < cardCells.length && cardCells[currentIndex]) {
+            try {
+                // Marcar celda como llamada
+                cardCells[currentIndex].classList.add('called');
+                
+                // Remover la clase después de un tiempo
+                setTimeout(() => {
+                    if (cardCells[currentIndex] && cardCells[currentIndex].classList) {
+                        cardCells[currentIndex].classList.remove('called');
+                    }
+                }, 2000);
+                
+                currentIndex++;
+            } catch (error) {
+                console.error('❌ Error al animar celda:', error);
+                clearInterval(interval);
+                // Reintentar después de un tiempo
+                setTimeout(animateBingoCard, 5000);
+            }
         } else {
             clearInterval(interval);
             // Reiniciar después de un tiempo
@@ -316,25 +361,37 @@ function setupProgressiveLoading() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Welcome script inicializado');
     
-    // Inicializar todas las animaciones y efectos
-    animateFloatingNumbers();
-    animateBingoCard();
-    setupCardHoverEffects();
-    setupParallaxEffect();
-    setupEntranceAnimations();
-    setupButtonEffects();
-    setupTextAnimations();
-    setupSmoothScroll();
-    setupProgressiveLoading();
+    function initializeWelcomeScript() {
+        // Verificar que todos los elementos estén disponibles
+        if (!verifyRequiredElements()) {
+            console.log('🔄 Reintentando inicialización en 1 segundo...');
+            setTimeout(initializeWelcomeScript, 1000);
+            return;
+        }
+        
+        // Inicializar todas las animaciones y efectos
+        animateFloatingNumbers();
+        animateBingoCard();
+        setupCardHoverEffects();
+        setupParallaxEffect();
+        setupEntranceAnimations();
+        setupButtonEffects();
+        setupTextAnimations();
+        setupSmoothScroll();
+        setupProgressiveLoading();
+        
+        // Efectos opcionales (descomentar si se desean)
+        // setupSoundEffects();
+        // setupParticleEffects();
+        
+        // Iniciar contadores después de un delay
+        setTimeout(animateCounters, 1000);
+        
+        console.log('✅ Todos los efectos de bienvenida inicializados');
+    }
     
-    // Efectos opcionales (descomentar si se desean)
-    // setupSoundEffects();
-    // setupParticleEffects();
-    
-    // Iniciar contadores después de un delay
-    setTimeout(animateCounters, 1000);
-    
-    console.log('✅ Todos los efectos de bienvenida inicializados');
+    // Iniciar con un pequeño delay para asegurar renderizado completo
+    setTimeout(initializeWelcomeScript, 100);
 });
 
 // Efectos adicionales para dispositivos móviles

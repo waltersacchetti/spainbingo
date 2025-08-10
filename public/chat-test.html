@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test del Chat - BingoRoyal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .chat-section-fixed {
+            position: fixed;
+            top: 160px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
+            z-index: 1000;
+            transform: translateY(-20px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .chat-section-fixed.expanded {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        .chat-container {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            color: #333;
+        }
+        .chat-close-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        .chat-close-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .chat-message {
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .chat-message.system {
+            background: #f8f9fa;
+            color: #666;
+            align-self: center;
+            font-style: italic;
+        }
+        .chat-message.bot {
+            background: #007bff;
+            color: white;
+            align-self: flex-start;
+        }
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .chat-input input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        .btn-send {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-send:hover {
+            background: #0056b3;
+        }
+        .chat-toggle-btn-fixed {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        .chat-toggle-btn-fixed:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .chat-toggle-btn-fixed.active {
+            background: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test del Chat - BingoRoyal</h1>
+        
+        <div class="test-section">
+            <h3>🔧 Controles de Test</h3>
+            <button class="test-button" onclick="testChatElements()">Verificar Elementos del Chat</button>
+            <button class="test-button" onclick="testChatToggle()">Probar Toggle del Chat</button>
+            <button class="test-button" onclick="testChatAPI()">Probar API del Chat</button>
+            <button class="test-button" onclick="clearLogs()">Limpiar Logs</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Estado del Chat</h3>
+            <div id="chatStatus">Estado: No inicializado</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Logs de Debug</h3>
+            <div class="log-output" id="logOutput"></div>
+        </div>
+    </div>
+
+    <!-- Botón de toggle del chat -->
+    <button class="chat-toggle-btn-fixed" onclick="toggleChat()">
+        <i>💬</i> Chat en Vivo
+    </button>
+
+    <!-- Sección del chat -->
+    <div class="chat-section-fixed" id="chatSectionFixed">
+        <div class="chat-container">
+            <div class="chat-header">
+                <span>Chat en Vivo</span>
+                <button class="chat-close-btn" onclick="toggleChat()" title="Cerrar chat">
+                    ✕
+                </button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message system">
+                    <span class="message-time">15:30</span>
+                    <span class="message-text">¡Bienvenido al chat de prueba!</span>
+                </div>
+                <div class="chat-message bot">
+                    <span class="message-time">15:31</span>
+                    <span class="message-user">BingoBot:</span>
+                    <span class="message-text">¡Hola! Este es un test del chat 🧪</span>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Escribe un mensaje..." id="chatInput">
+                <button class="btn-send">
+                    📤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para agregar logs
+        function addLog(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logOutput.appendChild(logEntry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // Función para limpiar logs
+        function clearLogs() {
+            document.getElementById('logOutput').innerHTML = '';
+            addLog('Logs limpiados');
+        }
+
+        // Función para verificar elementos del chat
+        function testChatElements() {
+            addLog('🔍 Verificando elementos del chat...');
+            
+            const chatSection = document.getElementById('chatSectionFixed');
+            const chatInput = document.getElementById('chatInput');
+            const btnSend = document.querySelector('.btn-send');
+            const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+            
+            addLog(`Chat section: ${chatSection ? '✅ Encontrado' : '❌ No encontrado'}`);
+            addLog(`Chat input: ${chatInput ? '✅ Encontrado' : '❌ No encontrado'}`);
+            addLog(`Botón enviar: ${btnSend ? '✅ Encontrado' : '❌ No encontrado'}`);
+            addLog(`Botón toggle: ${toggleBtn ? '✅ Encontrado' : '❌ No encontrado'}`);
+            
+            if (chatSection) {
+                addLog(`Clases del chat section: ${chatSection.classList.toString()}`);
+                addLog(`Estilo display: ${chatSection.style.display}`);
+                addLog(`Estilo visibility: ${chatSection.style.visibility}`);
+                addLog(`Estilo opacity: ${chatSection.style.opacity}`);
+            }
+        }
+
+        // Función para probar toggle del chat
+        function testChatToggle() {
+            addLog('🔄 Probando toggle del chat...');
+            toggleChat();
+        }
+
+        // Función para probar API del chat
+        async function testChatAPI() {
+            addLog('🌐 Probando API del chat...');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ API respondió correctamente: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    addLog(`❌ API respondió con error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Error al conectar con la API: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para alternar el chat
+        function toggleChat() {
+            const chatSection = document.getElementById('chatSectionFixed');
+            const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+            
+            addLog('🔧 Toggle chat clicked');
+            
+            if (!chatSection || !toggleBtn) {
+                addLog('❌ Chat elements not found', 'error');
+                return;
+            }
+            
+            const isExpanded = chatSection.classList.contains('expanded');
+            addLog(`Estado actual: ${isExpanded ? 'Expandido' : 'Colapsado'}`);
+            
+            if (isExpanded) {
+                // Colapsar el chat
+                chatSection.classList.remove('expanded');
+                toggleBtn.classList.remove('active');
+                addLog('🔽 Chat colapsado');
+            } else {
+                // Expandir el chat
+                chatSection.classList.add('expanded');
+                toggleBtn.classList.add('active');
+                addLog('🔼 Chat expandido');
+                
+                // Configurar input del chat
+                setTimeout(() => {
+                    const chatInput = document.getElementById('chatInput');
+                    const btnSend = document.querySelector('.btn-send');
+                    
+                    if (chatInput && btnSend) {
+                        addLog('🔧 Configurando input del chat...');
+                        
+                        // Event listener para Enter
+                        chatInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const message = chatInput.value.trim();
+                                if (message) {
+                                    addChatMessage('user', message);
+                                    chatInput.value = '';
+                                }
+                            }
+                        });
+                        
+                        // Event listener para botón enviar
+                        btnSend.addEventListener('click', () => {
+                            const message = chatInput.value.trim();
+                            if (message) {
+                                addChatMessage('user', message);
+                                chatInput.value = '';
+                            }
+                        });
+                        
+                        chatInput.focus();
+                        addLog('✅ Input del chat configurado');
+                    }
+                }, 100);
+            }
+        }
+
+        // Función para agregar mensaje al chat
+        function addChatMessage(type, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            
+            const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${time}</span>
+                    <span class="message-user">Tú:</span>
+                    <span class="message-text">${message}</span>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${time}</span>
+                    <span class="message-text">${message}</span>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            addLog(`💬 Mensaje agregado: ${type} - ${message}`);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('🚀 Página cargada, chat listo para testing');
+            addLog('💡 Usa los botones de arriba para probar el chat');
+        });
+    </script>
+</body>
+</html>

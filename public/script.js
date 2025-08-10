@@ -234,12 +234,10 @@ class BingoPro {
             }
         });
         // Variables para chat en vivo
-        this.chatApiUrl = '/api/chat';
-        // Usar userId persistente basado en sesión o generar uno único
-        this.userId = this.getOrCreateUserId();
-        this.userName = 'Jugador';
+        this.chatApiUrl = '/api/chat'; // Corregido: el servidor tiene endpoints en /api/chat
         this.chatPollingInterval = null;
         this.lastMessageId = null;
+        this.chatInitialized = false; // ✨ NUEVO: Flag para evitar inicializaciones múltiples
         this.newsScrollInterval = null;
         
         // Enhanced Analytics and Statistics
@@ -371,6 +369,10 @@ class BingoPro {
         
         // Conectar al bingo global inmediatamente para mantener estado
         this.connectToGlobalBingo();
+        
+        // ✨ NUEVO: Inicializar chat en vivo
+        console.log('🚀 Inicializando chat en vivo...');
+        this.initializeLiveChat();
         
         // Inicializar contadores de modo independientes con delay reducido
         setTimeout(() => {
@@ -2212,8 +2214,13 @@ class BingoPro {
     }
 
     addChatMessage(type, message) {
+        console.log('💬 Agregando mensaje al chat:', type, message);
+        
         const chatMessages = document.getElementById('chatMessages');
-        if (!chatMessages) return;
+        if (!chatMessages) {
+            console.warn('⚠️ Contenedor de mensajes del chat no encontrado');
+            return;
+        }
         
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${type}`;
@@ -2262,6 +2269,29 @@ class BingoPro {
      * Inicializar chat en vivo
      */
     initializeLiveChat() {
+        console.log('🔧 Inicializando chat en vivo...');
+        console.log('🔗 URL del chat:', this.chatApiUrl);
+        
+        // Verificar que los elementos del chat existan
+        const chatSection = document.getElementById('chatSectionFixed');
+        const chatInput = document.getElementById('chatInput');
+        const btnSend = document.querySelector('.btn-send');
+        const toggleBtn = document.querySelector('.chat-toggle-btn-fixed');
+        
+        console.log('🔍 Elementos del chat encontrados:');
+        console.log('- Chat section:', chatSection);
+        console.log('- Chat input:', chatInput);
+        console.log('- Botón enviar:', btnSend);
+        console.log('- Botón toggle:', toggleBtn);
+        
+        if (!chatSection || !chatInput || !btnSend || !toggleBtn) {
+            console.error('❌ Faltan elementos del chat');
+            return;
+        }
+        
+        // Detectar y corregir problemas de URL del chat
+        this.detectChatUrlIssues();
+        
         // Probar conexión con la API
         this.testChatConnection();
         
@@ -2271,7 +2301,74 @@ class BingoPro {
         // Iniciar polling para nuevos mensajes
         this.startChatPolling();
         
-        console.log('Chat en vivo inicializado');
+        // ✨ NUEVO: Configurar input del chat
+        this.setupChatInput();
+        
+        // Marcar como inicializado
+        this.chatInitialized = true;
+        
+        console.log('✅ Chat en vivo inicializado correctamente');
+    }
+    
+    /**
+     * Configurar input del chat
+     */
+    setupChatInput() {
+        console.log('🔧 Configurando input del chat...');
+        console.log('🔍 Buscando elementos del chat...');
+        
+        const chatInput = document.getElementById('chatInput');
+        const btnSend = document.querySelector('.btn-send');
+        
+        console.log('📝 Chat input encontrado:', !!chatInput);
+        console.log('📤 Botón enviar encontrado:', !!btnSend);
+        
+        if (chatInput && btnSend) {
+            console.log('🔧 Configurando input del chat...');
+            
+            // Configurar input
+            chatInput.readOnly = false;
+            chatInput.disabled = false;
+            chatInput.style.pointerEvents = 'auto';
+            chatInput.style.userSelect = 'text';
+            chatInput.style.webkitUserSelect = 'text';
+            
+            // Configurar botón enviar
+            btnSend.style.pointerEvents = 'auto';
+            btnSend.style.cursor = 'pointer';
+            
+            // Event listener para Enter en el input
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('⌨️ Enter presionado en chat');
+                    this.sendChatMessage(chatInput.value.trim());
+                    chatInput.value = '';
+                    return false;
+                }
+            });
+            
+            // Event listener para click en el botón enviar
+            btnSend.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📤 Click en botón enviar del chat');
+                this.sendChatMessage(chatInput.value.trim());
+                chatInput.value = '';
+                chatInput.focus();
+                return false;
+            });
+            
+            console.log('✅ Input del chat configurado correctamente');
+            
+            // ✨ NUEVO: Agregar mensaje de bienvenida
+            setTimeout(() => {
+                this.addChatMessage('system', '¡Bienvenido al chat en vivo del Bingo! Escribe un mensaje para comenzar.');
+            }, 1000);
+        } else {
+            console.warn('⚠️ Elementos del chat no encontrados');
+        }
     }
 
     /**
@@ -2280,22 +2377,41 @@ class BingoPro {
     async testChatConnection() {
         try {
             console.log('🔍 Probando conexión con la API del chat...');
+            console.log('🔗 URL de la API:', this.chatApiUrl);
+            console.log('🌐 Protocolo:', window.location.protocol);
+            console.log('🏠 Origen:', window.location.origin);
+            
             const response = await fetch(this.chatApiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                // Agregar timeout y evitar redirecciones
+                signal: AbortSignal.timeout(15000), // 15 segundos de timeout
+                redirect: 'error' // No seguir redirecciones
             });
             
             console.log('📡 Estado de la conexión:', response.status, response.statusText);
             
             if (response.ok) {
                 console.log('✅ Conexión con la API del chat exitosa');
+            } else if (response.status === 404) {
+                console.warn('⚠️ Endpoint del chat no encontrado (404)');
+            } else if (response.status >= 500) {
+                console.error('❌ Error del servidor en la API del chat:', response.status);
             } else {
                 console.error('❌ Error en la conexión con la API del chat:', response.status);
             }
         } catch (error) {
-            console.error('❌ Error probando conexión con la API del chat:', error);
+            if (error.name === 'AbortError') {
+                console.error('❌ Timeout en la conexión con la API del chat');
+            } else if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+                console.error('❌ Error de red en la conexión con la API del chat:', error.message);
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error('❌ Error de fetch en la conexión con la API del chat:', error.message);
+            } else {
+                console.error('❌ Error probando conexión con la API del chat:', error);
+            }
         }
     }
 
@@ -2304,11 +2420,17 @@ class BingoPro {
      */
     async loadChatMessages() {
         try {
+            console.log('📥 Cargando mensajes del chat...');
+            console.log('🔗 URL de la API:', this.chatApiUrl);
+            
             const response = await fetch(this.chatApiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                // Agregar timeout y evitar redirecciones
+                signal: AbortSignal.timeout(10000), // 10 segundos de timeout
+                redirect: 'error' // No seguir redirecciones
             });
             
             if (response.ok) {
@@ -2316,9 +2438,19 @@ class BingoPro {
                 if (data.success && data.messages) {
                     this.displayChatMessages(data.messages);
                 }
+            } else if (response.status === 404) {
+                console.warn('⚠️ Endpoint del chat no encontrado al cargar mensajes');
+            } else if (response.status >= 500) {
+                console.error('❌ Error del servidor al cargar mensajes del chat:', response.status);
             }
         } catch (error) {
-            console.error('Error cargando mensajes del chat:', error);
+            if (error.name === 'AbortError') {
+                console.warn('⚠️ Timeout al cargar mensajes del chat');
+            } else if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+                console.error('❌ Error de red al cargar mensajes del chat:', error.message);
+            } else {
+                console.error('❌ Error cargando mensajes del chat:', error);
+            }
         }
     }
 
@@ -2326,8 +2458,13 @@ class BingoPro {
      * Mostrar mensajes en el chat
      */
     displayChatMessages(messages) {
+        console.log('📋 Mostrando mensajes del chat:', messages?.length || 0);
+        
         const chatMessages = document.getElementById('chatMessages');
-        if (!chatMessages) return;
+        if (!chatMessages) {
+            console.warn('⚠️ Contenedor de mensajes del chat no encontrado');
+            return;
+        }
         
         // Limpiar mensajes existentes
         chatMessages.innerHTML = '';
@@ -2370,6 +2507,8 @@ class BingoPro {
         try {
             console.log('📤 Enviando mensaje a la API:', message);
             console.log('🔗 URL de la API:', this.chatApiUrl);
+            console.log('👤 User ID:', this.userId);
+            console.log('👤 User Name:', this.userName);
             
             const response = await fetch(this.chatApiUrl, {
                 method: 'POST',
@@ -2423,13 +2562,25 @@ class BingoPro {
      * Iniciar polling para nuevos mensajes
      */
     startChatPolling() {
+        console.log('🔄 Iniciando polling del chat...');
+        console.log('🔗 URL del chat:', this.chatApiUrl);
+        
         this.chatPollingInterval = setInterval(async () => {
             try {
+                // Verificar que la URL sea válida
+                if (!this.chatApiUrl || this.chatApiUrl === '') {
+                    console.warn('⚠️ URL del chat no configurada, deteniendo polling');
+                    this.stopChatPolling();
+                    return;
+                }
+
                 const response = await fetch(this.chatApiUrl, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    // Agregar timeout para evitar bloqueos
+                    signal: AbortSignal.timeout(10000) // 10 segundos de timeout
                 });
                 
                 if (response.ok) {
@@ -2441,9 +2592,26 @@ class BingoPro {
                             this.loadChatMessages();
                         }
                     }
+                } else if (response.status === 404) {
+                    console.warn('⚠️ Endpoint del chat no encontrado (404)');
+                    this.stopChatPolling();
+                } else if (response.status >= 500) {
+                    console.error('❌ Error del servidor en el chat:', response.status);
                 }
             } catch (error) {
-                console.error('Error en polling del chat:', error);
+                if (error.name === 'AbortError') {
+                    console.warn('⚠️ Timeout en polling del chat');
+                } else if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+                    console.error('❌ Error de red en polling del chat:', error.message);
+                    // Reintentar después de un delay más largo
+                    setTimeout(() => {
+                        if (this.chatPollingInterval) {
+                            this.startChatPolling();
+                        }
+                    }, 30000); // 30 segundos
+                } else {
+                    console.error('❌ Error en polling del chat:', error);
+                }
             }
         }, 3000); // Polling cada 3 segundos
     }
@@ -2453,6 +2621,7 @@ class BingoPro {
      */
     stopChatPolling() {
         if (this.chatPollingInterval) {
+            console.log('🛑 Deteniendo polling del chat...');
             clearInterval(this.chatPollingInterval);
             this.chatPollingInterval = null;
         }
@@ -2814,6 +2983,9 @@ class BingoPro {
         this.updateLastNumber();
         this.updateStats();
         
+        // ✨ NUEVO: Configurar event listeners del chat
+        this.setupEventListeners();
+        
         console.log('Display actualizado');
     }
 
@@ -3110,6 +3282,22 @@ class BingoPro {
             else if (e.target.closest('#viewCardsBtn')) {
                 console.log('Botón ver cartones clickeado');
                 this.showBingoCardsModal();
+            }
+            
+            // ✨ NUEVO: Event listeners del chat
+            else if (e.target.closest('.chat-toggle-btn-fixed')) {
+                console.log('Botón toggle del chat clickeado');
+                toggleChat();
+            } else if (e.target.closest('.btn-send')) {
+                console.log('Botón enviar del chat clickeado');
+                sendChatMessage();
+            } else if (e.target.closest('#chatInput')) {
+                console.log('Input del chat clickeado');
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.focus();
+                    chatInput.select();
+                }
             }
             
             // Botones de monto
@@ -4826,6 +5014,31 @@ class BingoPro {
         
         return true;
     }
+
+    /**
+     * Detectar y corregir problemas de URL del chat
+     */
+    detectChatUrlIssues() {
+        try {
+            // Verificar si estamos en HTTPS y si la URL del chat es relativa
+            if (window.location.protocol === 'https:' && this.chatApiUrl.startsWith('/')) {
+                // Si estamos en HTTPS, usar la URL completa del servidor
+                const serverUrl = window.location.origin;
+                this.chatApiUrl = `${serverUrl}/api/chat`; // Corregido: usar /api/chat
+                console.log('🔧 URL del chat corregida para HTTPS:', this.chatApiUrl);
+            }
+            
+            // Verificar si la URL es válida
+            try {
+                new URL(this.chatApiUrl, window.location.origin);
+            } catch (e) {
+                console.warn('⚠️ URL del chat inválida, usando URL por defecto');
+                this.chatApiUrl = '/api/chat'; // Corregido: usar /api/chat
+            }
+        } catch (error) {
+            console.error('❌ Error detectando problemas de URL del chat:', error);
+        }
+    }
 }
 
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
@@ -4868,6 +5081,15 @@ document.addEventListener('DOMContentLoaded', function() {
             window.bingoGame = new BingoPro();
             window.bingoGame.initializeGame();
             
+            // ✨ NUEVO: Asegurar que el chat se inicialice
+            setTimeout(() => {
+                if (window.bingoGame && !window.bingoGame.chatInitialized) {
+                    console.log('🔧 Reinicializando chat...');
+                    window.bingoGame.initializeLiveChat();
+                    window.bingoGame.chatInitialized = true;
+                }
+            }, 1000);
+            
             // Configuración adicional del chat después de la inicialización
             setTimeout(() => {
                 console.log('🔧 Configuración adicional del chat...');
@@ -4905,6 +5127,15 @@ document.addEventListener('DOMContentLoaded', function() {
         window.bingoGame = new BingoPro();
         window.bingoGame.initializeGame();
         
+        // ✨ NUEVO: Asegurar que el chat se inicialice
+        setTimeout(() => {
+            if (window.bingoGame && !window.bingoGame.chatInitialized) {
+                console.log('🔧 Reinicializando chat...');
+                window.bingoGame.initializeLiveChat();
+                window.bingoGame.chatInitialized = true;
+            }
+        }, 1000);
+        
         // Configuración adicional del chat después de la inicialización
         setTimeout(() => {
             console.log('🔧 Configuración adicional del chat...');
@@ -4933,6 +5164,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inicializar el juego en modo global
         window.bingoGame = new BingoPro();
         window.bingoGame.initializeGame();
+        
+        // ✨ NUEVO: Asegurar que el chat se inicialice
+        setTimeout(() => {
+            if (window.bingoGame && !window.bingoGame.chatInitialized) {
+                console.log('🔧 Reinicializando chat...');
+                window.bingoGame.initializeLiveChat();
+                window.bingoGame.chatInitialized = true;
+            }
+        }, 1000);
         
         // Configuración adicional del chat después de la inicialización
         setTimeout(() => {
@@ -5058,6 +5298,9 @@ function toggleChat() {
     console.log('🔧 Toggle chat clicked');
     console.log('Chat section:', chatSection);
     console.log('Toggle button:', toggleBtn);
+    console.log('Chat section classes:', chatSection?.classList?.toString());
+    console.log('Chat section style:', chatSection?.style?.display);
+    console.log('Chat section computed style:', window.getComputedStyle(chatSection)?.display);
     
     if (!chatSection || !toggleBtn) {
         console.error('❌ Chat elements not found');
@@ -5065,6 +5308,7 @@ function toggleChat() {
     }
     
     const isExpanded = chatSection.classList.contains('expanded');
+    console.log('Is expanded:', isExpanded);
     
     if (isExpanded) {
         // Colapsar el chat
