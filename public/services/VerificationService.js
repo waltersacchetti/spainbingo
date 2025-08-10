@@ -3,404 +3,169 @@
  * Maneja la generación y envío de códigos de verificación
  */
 
-const { v4: uuidv4 } = require('uuid');
-const { Sequelize } = require('sequelize');
-const { sequelize } = require('../config/database');
-const VerificationCode = require('../models/VerificationCode')(sequelize);
-const User = require('../models/User')(sequelize);
+const crypto = require('crypto');
 const EmailService = require('./EmailService');
 
 class VerificationService {
     constructor() {
-        this.codeExpiryMinutes = 15; // 15 minutos
-        this.maxAttempts = 3;
         this.emailService = new EmailService();
-        console.log('🔐 Servicio de verificación inicializado con AWS SES');
+        this.verificationCodes = new Map(); // Almacenar códigos temporalmente
+        this.codeExpiration = 10 * 60 * 1000; // 10 minutos
+        
+        console.log('🔐 Servicio de verificación inicializado con SendGrid');
     }
 
     /**
-     * Generar código de verificación de 6 dígitos
+     * Generar código de verificación
+     * @param {string} userId - ID del usuario
+     * @param {string} email - Email del usuario
+     * @returns {string} - Código de verificación generado
      */
-    generateCode() {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-
-    /**
-     * Crear código de verificación en la base de datos
-     */
-    async createVerificationCode(userId, method, target) {
-        try {
-            // Invalidar códigos anteriores del usuario
-            await VerificationCode.update(
-                { used: true },
-                { 
-                    where: { 
-                        user_id: userId,
-                        method: method,
-                        used: false
-                    }
-                }
-            );
-
-            // Crear nuevo código
-            const code = this.generateCode();
-            const expiresAt = new Date(Date.now() + (this.codeExpiryMinutes * 60 * 1000));
-            
-            // Generar token de verificación para URL
-            const verificationToken = this.emailService.generateVerificationToken();
-
-            const verificationCode = await VerificationCode.create({
-                user_id: userId,
-                code: code,
-                method: method,
-                target: target,
-                expires_at: expiresAt,
-                verification_token: verificationToken,
-                used: false,
-                attempts: 0
-            });
-
-            console.log(`✅ Código de verificación creado para usuario ${userId}: ${code}`);
-            
-            return {
-                success: true,
-                code: code,
-                verificationToken: verificationToken,
-                expiresAt: expiresAt,
-                verificationId: verificationCode.id
-            };
-
-        } catch (error) {
-            console.error('❌ Error al crear código de verificación:', error);
-            return {
-                success: false,
-                error: 'Error al generar código de verificación'
-            };
-        }
-    }
-
-    /**
-     * Enviar código por email usando AWS SES
-     */
-    async sendEmailCode(email, code, username, verificationToken) {
-        try {
-            console.log(`📧 Enviando código de verificación real a ${email} usando AWS SES`);
-            
-            // Usar AWS SES para enviar el email
-            const result = await this.emailService.sendVerificationEmail(
-                email, 
-                username, 
-                code, 
-                verificationToken
-            );
-
-            if (result.success) {
-                console.log(`✅ Email enviado exitosamente a ${email}`);
-                console.log(`📊 Message ID: ${result.messageId}`);
-                
-                return {
-                    success: true,
-                    message: 'Código enviado por email',
-                    messageId: result.messageId
-                };
-            } else {
-                console.error(`❌ Error enviando email a ${email}:`, result.error);
-                return {
-                    success: false,
-                    error: result.error || 'Error al enviar email de verificación'
-                };
-            }
-
-        } catch (error) {
-            console.error('❌ Error en sendEmailCode:', error);
-            return {
-                success: false,
-                error: 'Error al enviar email de verificación'
-            };
-        }
-    }
-
-    /**
-     * Enviar código por SMS (placeholder - implementar con AWS SNS en el futuro)
-     */
-    async sendSMSCode(phone, code, username) {
-        try {
-            // Por ahora simulamos el SMS
-            console.log(`📱 SMS simulado enviado a ${phone}: Código ${code}`);
-            
-            // TODO: Implementar AWS SNS para SMS real
-            const smsContent = `BingoRoyal: Tu código de verificación es ${code}. Expira en ${this.codeExpiryMinutes} minutos.`;
-
-            console.log('📱 SMS simulado enviado:', {
-                to: phone,
-                content: smsContent
-            });
-
-            return {
-                success: true,
-                message: 'Código enviado por SMS (simulado)'
-            };
-
-        } catch (error) {
-            console.error('❌ Error al enviar SMS:', error);
-            return {
-                success: false,
-                error: 'Error al enviar SMS'
-            };
-        }
-    }
-
-    /**
-     * Enviar código de verificación
-     */
-    async sendVerificationCode(userId, method) {
-        try {
-            // Obtener datos del usuario
-            const user = await User.findByPk(userId);
-            if (!user) {
-                return {
-                    success: false,
-                    error: 'Usuario no encontrado'
-                };
-            }
-
-            let target;
-            let sendFunction;
-
-            if (method === 'email') {
-                target = user.email;
-                sendFunction = this.sendEmailCode.bind(this);
-            } else if (method === 'sms') {
-                target = user.phone || user.telefono;
-                sendFunction = this.sendSMSCode.bind(this);
-                
-                if (!target) {
-                    return {
-                        success: false,
-                        error: 'Usuario no tiene número de teléfono registrado'
-                    };
-                }
-            } else {
-                return {
-                    success: false,
-                    error: 'Método de verificación inválido'
-                };
-            }
-
-            // Crear código en la base de datos
-            const codeResult = await this.createVerificationCode(userId, method, target);
-            if (!codeResult.success) {
-                return codeResult;
-            }
-
-            // Enviar código
-            const sendResult = await sendFunction(
-                target, 
-                codeResult.code, 
-                user.username,
-                codeResult.verificationToken
-            );
-
-            if (sendResult.success) {
-                return {
-                    success: true,
-                    message: sendResult.message,
-                    expiresIn: this.codeExpiryMinutes,
-                    messageId: sendResult.messageId
-                };
-            } else {
-                return sendResult;
-            }
-
-        } catch (error) {
-            console.error('❌ Error al enviar código de verificación:', error);
-            return {
-                success: false,
-                error: 'Error interno del servidor'
-            };
-        }
+    generateVerificationCode(userId, email) {
+        // Generar código de 6 dígitos
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Crear hash del código para almacenamiento seguro
+        const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+        
+        // Almacenar código con timestamp de expiración
+        this.verificationCodes.set(`${userId}-${email}`, {
+            hash: codeHash,
+            timestamp: Date.now(),
+            attempts: 0
+        });
+        
+        console.log(`🔐 Código de verificación generado para ${email}: ${code}`);
+        return code;
     }
 
     /**
      * Verificar código de verificación
+     * @param {string} userId - ID del usuario
+     * @param {string} email - Email del usuario
+     * @param {string} code - Código a verificar
+     * @returns {boolean} - True si el código es válido
      */
-    async verifyCode(userId, code) {
+    verifyCode(userId, email, code) {
+        const key = `${userId}-${email}`;
+        const stored = this.verificationCodes.get(key);
+        
+        if (!stored) {
+            console.log(`❌ No se encontró código de verificación para ${email}`);
+            return false;
+        }
+        
+        // Verificar expiración
+        if (Date.now() - stored.timestamp > this.codeExpiration) {
+            console.log(`❌ Código de verificación expirado para ${email}`);
+            this.verificationCodes.delete(key);
+            return false;
+        }
+        
+        // Verificar código
+        const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+        if (codeHash === stored.hash) {
+            console.log(`✅ Código de verificación válido para ${email}`);
+            this.verificationCodes.delete(key);
+            return true;
+        }
+        
+        // Incrementar intentos fallidos
+        stored.attempts++;
+        if (stored.attempts >= 3) {
+            console.log(`🚨 Demasiados intentos fallidos para ${email}, eliminando código`);
+            this.verificationCodes.delete(key);
+        }
+        
+        console.log(`❌ Código de verificación inválido para ${email}`);
+        return false;
+    }
+
+    /**
+     * Enviar código de verificación por email
+     * @param {string} userId - ID del usuario
+     * @param {string} email - Email del usuario
+     * @param {string} username - Nombre de usuario
+     * @returns {Object} - Resultado del envío
+     */
+    async sendVerificationCode(userId, email, username) {
         try {
-            const verification = await VerificationCode.findOne({
-                where: {
-                    user_id: userId,
-                    code: code,
-                    used: false,
-                    expires_at: {
-                        [Sequelize.Op.gt]: new Date()
-                    }
-                }
-            });
-
-            if (!verification) {
+            // Generar código de verificación
+            const code = this.generateVerificationCode(userId, email);
+            
+            console.log(`📧 Enviando código de verificación real a ${email} usando SendGrid`);
+            
+            // Usar SendGrid para enviar el email
+            const result = await this.emailService.sendVerificationEmail(email, username, code);
+            
+            if (result.success) {
+                console.log(`✅ Código de verificación enviado exitosamente a ${email}`);
                 return {
-                    success: false,
-                    error: 'Código inválido o expirado'
+                    success: true,
+                    message: 'Código de verificación enviado por email',
+                    expiresIn: this.codeExpiration / 1000 // en segundos
                 };
+            } else {
+                throw new Error(result.error || 'Error desconocido al enviar email');
             }
-
-            // Marcar como usado
-            await verification.update({ used: true });
-
-            // Activar usuario si el email fue verificado
-            if (verification.method === 'email') {
-                await User.update(
-                    { 
-                        verified: true,
-                        email_verified: true,
-                        email_verified_at: new Date()
-                    },
-                    { where: { id: userId } }
-                );
-
-                // Enviar email de bienvenida
-                const user = await User.findByPk(userId);
-                if (user) {
-                    await this.emailService.sendWelcomeEmail(user.email, user.username);
-                }
-            }
-
-            console.log(`✅ Código verificado para usuario ${userId}`);
-
-            return {
-                success: true,
-                message: 'Código verificado correctamente'
-            };
-
+            
         } catch (error) {
-            console.error('❌ Error al verificar código:', error);
+            console.error(`❌ Error enviando código de verificación a ${email}:`, error);
             return {
                 success: false,
-                error: 'Error interno del servidor'
+                error: `Error al enviar código de verificación: ${error.message}`
             };
         }
     }
 
     /**
-     * Verificar código por token (desde URL)
+     * Enviar código por SMS (placeholder - implementar con servicio SMS en el futuro)
+     * @param {string} userId - ID del usuario
+     * @param {string} phone - Número de teléfono
+     * @returns {Object} - Resultado del envío
      */
-    async verifyByToken(email, token) {
-        try {
-            const verification = await VerificationCode.findOne({
-                include: [{
-                    model: User,
-                    where: { email: email }
-                }],
-                where: {
-                    verification_token: token,
-                    used: false,
-                    expires_at: {
-                        [Sequelize.Op.gt]: new Date()
-                    }
-                }
-            });
-
-            if (!verification) {
-                return {
-                    success: false,
-                    error: 'Token inválido o expirado'
-                };
-            }
-
-            // Marcar como usado
-            await verification.update({ used: true });
-
-            // Activar usuario
-            await User.update(
-                { 
-                    verified: true,
-                    email_verified: true,
-                    email_verified_at: new Date()
-                },
-                { where: { id: verification.user_id } }
-            );
-
-            // Enviar email de bienvenida
-            const user = await User.findByPk(verification.user_id);
-            if (user) {
-                await this.emailService.sendWelcomeEmail(user.email, user.username);
-            }
-
-            console.log(`✅ Email verificado por token para usuario ${verification.user_id}`);
-
-            return {
-                success: true,
-                message: 'Email verificado correctamente'
-            };
-
-        } catch (error) {
-            console.error('❌ Error al verificar por token:', error);
-            return {
-                success: false,
-                error: 'Error interno del servidor'
-            };
-        }
+    async sendVerificationSMS(userId, phone) {
+        // TODO: Implementar servicio SMS real
+        console.log(`📱 Enviando código SMS a ${phone} (placeholder)`);
+        
+        // Simular envío exitoso para desarrollo
+        return {
+            success: true,
+            message: 'Código SMS enviado (simulado)',
+            expiresIn: this.codeExpiration / 1000
+        };
     }
 
     /**
      * Limpiar códigos expirados
      */
-    async cleanExpiredCodes() {
-        try {
-            const expiredCount = await VerificationCode.destroy({
-                where: {
-                    expires_at: {
-                        [Sequelize.Op.lt]: new Date()
-                    }
-                }
-            });
-
-            if (expiredCount > 0) {
-                console.log(`🧹 Limpiados ${expiredCount} códigos expirados`);
+    cleanupExpiredCodes() {
+        const now = Date.now();
+        let cleanedCount = 0;
+        
+        for (const [key, value] of this.verificationCodes.entries()) {
+            if (now - value.timestamp > this.codeExpiration) {
+                this.verificationCodes.delete(key);
+                cleanedCount++;
             }
-
-            return {
-                success: true,
-                cleaned: expiredCount
-            };
-
-        } catch (error) {
-            console.error('❌ Error al limpiar códigos expirados:', error);
-            return {
-                success: false,
-                error: 'Error al limpiar códigos expirados'
-            };
+        }
+        
+        if (cleanedCount > 0) {
+            console.log(`🧹 Limpiados ${cleanedCount} códigos de verificación expirados`);
         }
     }
 
     /**
-     * Obtener estadísticas de verificación
+     * Obtener estadísticas del servicio
+     * @returns {Object} - Estadísticas del servicio
      */
-    async getVerificationStats() {
-        try {
-            const stats = await VerificationCode.findAll({
-                attributes: [
-                    'method',
-                    [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
-                    [Sequelize.fn('SUM', Sequelize.literal('CASE WHEN used = true THEN 1 ELSE 0 END')), 'verified']
-                ],
-                group: ['method'],
-                raw: true
-            });
-
-            return {
-                success: true,
-                stats: stats
-            };
-
-        } catch (error) {
-            console.error('❌ Error al obtener estadísticas:', error);
-            return {
-                success: false,
-                error: 'Error al obtener estadísticas'
-            };
-        }
+    getStats() {
+        return {
+            activeCodes: this.verificationCodes.size,
+            codeExpiration: this.codeExpiration / 1000, // en segundos
+            emailService: this.emailService.getServiceStats()
+        };
     }
 }
 
-module.exports = new VerificationService(); 
+module.exports = VerificationService; 

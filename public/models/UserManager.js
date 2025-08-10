@@ -8,10 +8,11 @@ const { v4: uuidv4 } = require('uuid');
 const { sequelize } = require('../config/database');
 const User = require('./User')(sequelize);
 const userCache = require('./UserCache');
-const verificationService = require('../services/VerificationService');
+const VerificationService = require('../services/VerificationService');
 
 class UserManager {
     constructor() {
+        this.verificationService = new VerificationService();
         this.registrationAttempts = new Map();
         this.maxRegistrationAttempts = 5;
         this.registrationCooldown = 15 * 60 * 1000; // 15 minutos
@@ -499,21 +500,90 @@ class UserManager {
      * Enviar código de verificación
      */
     async sendVerificationCode(userId, method) {
-        return await verificationService.sendVerificationCode(userId, method);
+        try {
+            // Obtener datos del usuario
+            const user = await User.findByPk(userId);
+            if (!user) {
+                return {
+                    success: false,
+                    error: 'Usuario no encontrado'
+                };
+            }
+
+            if (method === 'email') {
+                return await this.verificationService.sendVerificationCode(userId, user.email, user.username);
+            } else if (method === 'sms') {
+                return await this.verificationService.sendVerificationSMS(userId, user.phone || user.telefono);
+            } else {
+                return {
+                    success: false,
+                    error: 'Método de verificación inválido'
+                };
+            }
+        } catch (error) {
+            console.error('Error al enviar código de verificación:', error);
+            return {
+                success: false,
+                error: 'Error interno del servidor'
+            };
+        }
     }
 
     /**
      * Verificar código de verificación
      */
     async verifyCode(userId, code) {
-        return await verificationService.verifyCode(userId, code);
+        try {
+            // Obtener datos del usuario
+            const user = await User.findByPk(userId);
+            if (!user) {
+                return {
+                    success: false,
+                    error: 'Usuario no encontrado'
+                };
+            }
+
+            const isValid = this.verificationService.verifyCode(userId, user.email, code);
+            
+            if (isValid) {
+                // Activar usuario
+                await User.update(
+                    { 
+                        is_verified: true,
+                        email_verified: true,
+                        email_verified_at: new Date()
+                    },
+                    { where: { id: userId } }
+                );
+
+                // Enviar email de bienvenida
+                await this.verificationService.emailService.sendWelcomeEmail(user.email, user.username);
+
+                return {
+                    success: true,
+                    message: 'Código verificado correctamente'
+                };
+            } else {
+                return {
+                    success: false,
+                    error: 'Código inválido o expirado'
+                };
+            }
+        } catch (error) {
+            console.error('Error al verificar código:', error);
+            return {
+                success: false,
+                error: 'Error interno del servidor'
+            };
+        }
     }
 
     /**
      * Limpiar códigos expirados
      */
     async cleanExpiredCodes() {
-        return await verificationService.cleanExpiredCodes();
+        this.verificationService.cleanupExpiredCodes();
+        return { success: true, message: 'Códigos expirados limpiados' };
     }
 }
 

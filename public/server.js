@@ -1418,20 +1418,20 @@ app.get('/api/verification/verify-token', async (req, res) => {
     }
 });
 
-// API para test de conexión SES
-app.get('/api/admin/ses-test', async (req, res) => {
+// API para test de conexión SendGrid
+app.get('/api/admin/sendgrid-test', async (req, res) => {
     try {
-        const result = await emailService.testConnection();
+        const result = await emailService.healthCheck();
         
         res.json({
             success: result.success,
-            message: result.success ? 'Conexión SES exitosa' : 'Error en conexión SES',
-            data: result.quota || null,
+            message: result.success ? 'Conexión SendGrid exitosa' : 'Error en conexión SendGrid',
+            data: result.details || null,
             error: result.error || null
         });
 
     } catch (error) {
-        console.error('Error al probar SES:', error);
+        console.error('Error al probar SendGrid:', error);
         res.status(500).json({
             success: false,
             error: 'Error interno del servidor'

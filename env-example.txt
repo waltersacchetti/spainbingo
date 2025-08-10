@@ -1,18 +1,17 @@
 # ========================================
-# CONFIGURACIÓN AWS SES PARA BINGOROYAL
+# CONFIGURACIÓN SENDGRID PARA BINGOROYAL
 # ========================================
 
-# Región de AWS SES (recomendado: eu-west-1 para España)
-AWS_REGION=eu-west-1
-
-# Credenciales de AWS IAM (crear usuario con permisos AmazonSESFullAccess)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
+# API Key de SendGrid (obtener desde dashboard.sendgrid.com)
+SENDGRID_API_KEY=tu_api_key_aqui
 
 # Configuración de emails (usando info.bingoroyal.es)
-SES_FROM_EMAIL=noreply@bingoroyal.es
-SES_FROM_NAME=BingoRoyal
-SES_REPLY_TO=support@bingoroyal.es
+SENDGRID_FROM_EMAIL=noreply@info.bingoroyal.es
+SENDGRID_FROM_NAME=BingoRoyal
+SENDGRID_REPLY_TO=support@info.bingoroyal.es
+
+# ID de template de SendGrid (opcional)
+SENDGRID_TEMPLATE_ID=d-verification-template-id
 
 # ========================================
 # CONFIGURACIÓN DE BASE DE DATOS
@@ -47,4 +46,17 @@ MAIN_DOMAIN=game.bingoroyal.es
 # Límites de rate limiting
 API_RATE_LIMIT=200
 BINGO_API_RATE_LIMIT=5000
-LOGIN_RATE_LIMIT=20 
+LOGIN_RATE_LIMIT=20
+
+# ========================================
+# CONFIGURACIÓN DE EMAIL
+# ========================================
+
+# Habilitar fallback de email (opcional)
+EMAIL_FALLBACK_ENABLED=false
+
+# Número máximo de reintentos
+EMAIL_MAX_RETRIES=3
+
+# Delay entre reintentos (ms)
+EMAIL_RETRY_DELAY=1000 
