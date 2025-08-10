@@ -17,10 +17,10 @@ module.exports = {
       DB_NAME: process.env.DB_NAME || 'spainbingo',
       DB_USERNAME: process.env.DB_USERNAME || 'spainbingo_admin',
       DB_PASSWORD: process.env.DB_PASSWORD || 'SpainBingo2024!',
-      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || 'YOUR_SENDGRID_API_KEY_HERE',
       SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL || 'noreply@info.bingoroyal.es',
       SENDGRID_FROM_NAME: process.env.SENDGRID_FROM_NAME || 'BingoRoyal',
-      SENDGRID_TEMPLATE_ID: process.env.SENDGRID_TEMPLATE_ID
+      SENDGRID_TEMPLATE_ID: process.env.SENDGRID_TEMPLATE_ID || 'd-verification-template-id'
     }
   }]
 };
