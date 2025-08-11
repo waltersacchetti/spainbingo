@@ -2676,6 +2676,9 @@ class BingoPro {
         console.log('🔧 Inicializando chat en vivo...');
         console.log('🔗 URL del chat:', this.chatApiUrl);
         
+        // ✨ NUEVO: Preservar mensajes estáticos del HTML inmediatamente
+        this.preserveStaticChatMessages();
+        
         // Esperar a que el DOM esté completamente listo
         if (document.readyState !== 'complete') {
             console.log('⏳ DOM no está listo, esperando...');
@@ -2883,17 +2886,68 @@ class BingoPro {
                 }
             } else if (response.status === 404) {
                 console.warn('⚠️ Endpoint del chat no encontrado al cargar mensajes');
+                // ✨ NUEVO: Si la API no funciona, preservar mensajes estáticos del HTML
+                this.preserveStaticChatMessages();
             } else if (response.status >= 500) {
                 console.error('❌ Error del servidor al cargar mensajes del chat:', response.status);
+                // ✨ NUEVO: También preservar mensajes estáticos en caso de error del servidor
+                this.preserveStaticChatMessages();
             }
         } catch (error) {
             if (error.name === 'AbortError') {
                 console.warn('⚠️ Timeout al cargar mensajes del chat');
+                this.preserveStaticChatMessages();
             } else if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
                 console.error('❌ Error de red al cargar mensajes del chat:', error.message);
+                this.preserveStaticChatMessages();
             } else {
                 console.error('❌ Error cargando mensajes del chat:', error);
+                this.preserveStaticChatMessages();
             }
+        }
+    }
+
+    /**
+     * ✨ NUEVO: Preservar mensajes estáticos del HTML cuando la API falla
+     */
+    preserveStaticChatMessages() {
+        console.log('🛡️ Preservando mensajes estáticos del HTML...');
+        
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) {
+            console.warn('⚠️ Contenedor de mensajes del chat no encontrado');
+            return;
+        }
+        
+        // Verificar si ya hay mensajes estáticos
+        const staticMessages = chatMessages.querySelectorAll('.chat-message');
+        if (staticMessages.length > 0) {
+            console.log(`✅ Encontrados ${staticMessages.length} mensajes estáticos, preservándolos...`);
+            
+            // Marcar todos los mensajes estáticos como persistentes
+            staticMessages.forEach((msg, index) => {
+                // Generar ID único si no tiene uno
+                if (!msg.getAttribute('data-message-id')) {
+                    msg.setAttribute('data-message-id', `static-${Date.now()}-${index}`);
+                }
+                
+                // Marcar como persistente y protegido
+                msg.setAttribute('data-persistent', 'true');
+                msg.setAttribute('data-protected', 'true');
+                msg.setAttribute('data-static', 'true');
+                
+                // Agregar borde verde para indicar que está protegido
+                msg.style.borderLeft = '3px solid #4CAF50';
+                
+                console.log(`🛡️ Mensaje estático protegido: ${msg.textContent?.substring(0, 50)}...`);
+            });
+            
+            // Hacer scroll al final
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            console.log('✅ Mensajes estáticos preservados y protegidos correctamente');
+        } else {
+            console.log('📋 No hay mensajes estáticos para preservar');
         }
     }
 
@@ -3001,7 +3055,14 @@ class BingoPro {
             return;
         }
         
-        // Solo limpiar si es la primera carga
+        // ✨ NUEVO: Verificar si hay mensajes estáticos del HTML
+        const hasStaticMessages = chatMessages.querySelectorAll('.chat-message[data-static="true"]').length > 0;
+        if (hasStaticMessages) {
+            console.log('📋 Chat ya tiene mensajes estáticos preservados, saltando carga inicial');
+            return;
+        }
+        
+        // Solo limpiar si es la primera carga y no hay mensajes estáticos
         chatMessages.innerHTML = '';
         
         // Mostrar mensajes en orden cronológico
@@ -5664,7 +5725,14 @@ class BingoPro {
             return;
         }
         
-        // Solo limpiar si es la primera carga
+        // ✨ NUEVO: Verificar si hay mensajes estáticos del HTML
+        const hasStaticMessages = chatMessages.querySelectorAll('.chat-message[data-static="true"]').length > 0;
+        if (hasStaticMessages) {
+            console.log('📋 Chat ya tiene mensajes estáticos preservados, saltando carga inicial');
+            return;
+        }
+        
+        // Solo limpiar si es la primera carga y no hay mensajes estáticos
         chatMessages.innerHTML = '';
         
         // Mostrar mensajes en orden cronológico
