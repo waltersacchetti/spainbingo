@@ -4769,6 +4769,10 @@ body {
     margin: 10px 0;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mode-countdown i {
@@ -5576,19 +5580,50 @@ html {
 .countdown.next-game {
     background: linear-gradient(135deg, #4CAF50, #45a049);
     color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 12px 20px;
+    border-radius: 8px;
     font-weight: bold;
     text-align: center;
-    min-width: 160px;
+    min-width: 180px;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     border: 2px solid #4CAF50;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 14px;
+    letter-spacing: 0.8px;
+    font-size: 15px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: block;
+    margin: 10px auto;
+    transition: all 0.3s ease;
+}
+
+.countdown.next-game:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* 🎯 NUEVO: ESTILOS PARA "PARTIDA EN CURSO" */
+.countdown.active-game {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 180px;
+    box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+    border: 2px solid #ff4444;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    margin: 10px auto;
+    transition: all 0.3s ease;
+    animation: pulse-active 2s infinite;
 }
 
 /* 🎯 NUEVO: BANNER ANIMADO CON NOTIFICACIONES DESLIZANTES */

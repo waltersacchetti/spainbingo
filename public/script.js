@@ -752,8 +752,6 @@ class BingoPro {
                 countdownElement.textContent = '🎮 PARTIDA EN CURSO';
                 countdownElement.className = 'countdown active-game';
                 countdownElement.setAttribute('data-status', 'active');
-                countdownElement.style.color = '#ff4444'; // Rojo para partida activa
-                countdownElement.style.fontWeight = 'bold';
                 
                 // 🔒 BLOQUEAR COMPRAS
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
@@ -768,8 +766,6 @@ class BingoPro {
                 countdownElement.textContent = '✅ COMPRAR CARTONES';
                 countdownElement.className = 'countdown next-game';
                 countdownElement.setAttribute('data-status', 'waiting');
-                countdownElement.style.color = '#44ff44'; // Verde para permitir compras
-                countdownElement.style.fontWeight = 'normal';
                 
                 // ✅ PERMITIR COMPRAS
                 this.allowPurchasesForMode(modeId);
