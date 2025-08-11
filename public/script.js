@@ -549,6 +549,11 @@ class BingoPro {
         
         // 3. ACTUALIZAR COUNTDOWNS INMEDIATAMENTE
         this.updateAllModeCountdownsCoordinated();
+        
+        // 4. ✨ NUEVO: RESET INMEDIATO DE CARTONES AL INICIALIZAR
+        setTimeout(() => {
+            this.forceCompleteReset();
+        }, 1000); // Esperar 1 segundo para que todo esté listo
     }
     
     /**
@@ -1631,7 +1636,7 @@ class BingoPro {
      * ⚡ CAMBIO DE MODO DE JUEGO PROFESIONAL
      * SOLUCIONA: Reset automático de cartones y limpieza de números llamados
      */
-    changeGameMode(modeId) {
+    async changeGameMode(modeId) {
         console.log(`⚡ Cambiando modo de juego a: ${modeId} (PROFESIONAL)`);
         
         const check = this.checkGameModeRequirements(modeId);
@@ -1669,9 +1674,9 @@ class BingoPro {
             this.saveGameMode(modeId);
         });
         
-        // 7. ✨ NUEVO: FORZAR RESET DE CARTONES DEL MODO ANTERIOR
+        // 7. ✨ NUEVO: FORZAR RESET DE CARTONES DEL MODO ANTERIOR (ESPERAR A QUE TERMINE)
         if (previousMode) {
-            this.forceResetCardsForMode(previousMode.id || previousMode);
+            await this.forceResetCardsForMode(previousMode.id || previousMode);
         }
         
         // 8. ✨ NUEVO: CARGAR CARTONES DEL NUEVO MODO (debería estar vacío)
@@ -1814,30 +1819,25 @@ class BingoPro {
      * ✨ NUEVO: Cargar cartones del nuevo modo (si existen)
      */
     loadUserCardsForNewMode(modeId) {
-        console.log(`📂 Cargando cartones para nuevo modo: ${modeId}`);
+        console.log(`🗑️ RESETEANDO cartones para nuevo modo: ${modeId}`);
         
         try {
-            const storageKey = `bingoroyal_user_cards_${modeId}`;
-            const savedCards = localStorage.getItem(storageKey);
+            // 1. 🗑️ RESETEAR CARTONES ANTES DE CARGAR
+            this.userCards = [];
+            this.selectedCards = [];
             
-            if (savedCards) {
-                const cardsData = JSON.parse(savedCards);
-                // Filtrar solo cartones del nuevo modo
-                this.userCards = cardsData
-                    .filter(cardData => cardData.gameMode === modeId)
-                    .map(cardData => ({
-                        ...cardData,
-                        markedNumbers: new Set(cardData.markedNumbers || []),
-                        purchaseTime: new Date(cardData.purchaseTime)
-                    }));
-                console.log(`✅ ${this.userCards.length} cartones cargados para modo ${modeId}`);
-            } else {
-                // No hay cartones para este modo
-                this.userCards = [];
-                console.log(`ℹ️ No hay cartones guardados para modo ${modeId}`);
-            }
+            // 2. LIMPIAR LOCALSTORAGE DEL MODO
+            const storageKey = `bingoroyal_user_cards_${modeId}`;
+            localStorage.removeItem(storageKey);
+            
+            // 3. ✅ INICIALIZAR ARRAY VACÍO (SIN CARTONES)
+            this.userCards = [];
+            
+            console.log(`✅ Cartones reseteados a 0 para modo: ${modeId}`);
+            
         } catch (error) {
-            console.error('❌ Error cargando cartones del nuevo modo:', error);
+            console.error(`❌ Error reseteando cartones para modo ${modeId}:`, error);
+            // 4. EN CASO DE ERROR - INICIALIZAR ARRAY VACÍO
             this.userCards = [];
         }
     }
