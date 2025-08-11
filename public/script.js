@@ -2100,6 +2100,14 @@ class BingoPro {
     loadUserCards() {
         try {
             const currentMode = this.getCurrentGameMode();
+            
+            // 🚨 NUEVO: NO CARGAR CARTONES SI NO HAY MODO ACTUAL
+            if (!currentMode || !currentMode.id) {
+                console.log('⚠️ No hay modo de juego actual, no se cargan cartones');
+                this.userCards = [];
+                return false;
+            }
+            
             const storageKey = `bingoroyal_user_cards_${currentMode.id}`;
             const savedCards = localStorage.getItem(storageKey);
             
@@ -2114,11 +2122,18 @@ class BingoPro {
                     }));
                 console.log(`📂 Cartones cargados para modo ${currentMode.id}: ${this.userCards.length} cartones`);
                 return true;
+            } else {
+                // 🚨 NUEVO: INICIALIZAR ARRAY VACÍO SI NO HAY CARTONES
+                this.userCards = [];
+                console.log(`✅ No hay cartones para modo ${currentMode.id}, inicializado vacío`);
+                return false;
             }
         } catch (error) {
             console.error('❌ Error cargando cartones:', error);
+            // 🚨 NUEVO: EN CASO DE ERROR, INICIALIZAR VACÍO
+            this.userCards = [];
+            return false;
         }
-        return false;
     }
 
     /**
@@ -2152,11 +2167,20 @@ class BingoPro {
      */
     loadGameState() {
         const modeLoaded = this.loadGameMode();
-        const cardsLoaded = this.loadUserCards();
         
+        // 🚨 NUEVO: ESTABLECER EL MODO ANTES DE CARGAR CARTONES
         if (modeLoaded) {
             this.currentGameMode = modeLoaded;
+            console.log(`✅ Modo de juego establecido: ${modeLoaded}`);
+        } else {
+            // 🚨 NUEVO: SI NO HAY MODO, NO CARGAR CARTONES
+            console.log('⚠️ No se pudo cargar modo de juego, no se cargan cartones');
+            this.userCards = [];
+            return { modeLoaded: false, cardsLoaded: false };
         }
+        
+        // 🚨 NUEVO: CARGAR CARTONES SOLO DESPUÉS DE ESTABLECER EL MODO
+        const cardsLoaded = this.loadUserCards();
         
         // Cargar números llamados guardados
         try {
@@ -2334,12 +2358,24 @@ class BingoPro {
         const currentMode = this.getCurrentGameMode();
         const cardInfoElement = document.querySelector('.selected-cards');
         
+        // 🚨 NUEVO: VERIFICAR QUE SOLO SE MUESTREN CARTONES VÁLIDOS
+        const validCards = this.userCards.filter(card => {
+            return card.gameMode && card.gameMode === this.currentGameMode;
+        });
+        
+        const validSelectedCards = this.selectedCards.filter(card => {
+            return card.gameMode && card.gameMode === this.currentGameMode;
+        });
+        
         if (cardInfoElement) {
             cardInfoElement.innerHTML = `
-                <span id="selectedCardsCount">0</span> cartones seleccionados
-                <br><small style="color: var(--text-secondary);">Modo: ${currentMode.name}</small>
+                <span id="selectedCardsCount">${validSelectedCards.length}</span> cartones seleccionados
+                <br><small style="color: var(--text-secondary);">Modo: ${currentMode?.name || 'No definido'}</small>
+                <br><small style="color: var(--text-secondary);">Total: ${validCards.length} cartones válidos</small>
             `;
         }
+        
+        console.log(`📊 Info de cartones actualizada: ${validCards.length} válidos de ${this.userCards.length} totales`);
     }
 
 
@@ -2454,10 +2490,20 @@ class BingoPro {
             return;
         }
         
-        console.log(`🎯 Renderizando ${this.userCards.length} cartones...`);
+        // 🚨 NUEVO: VERIFICAR QUE SOLO SE RENDERICEN CARTONES VÁLIDOS
+        const validCards = this.userCards.filter(card => {
+            // Solo cartones del modo actual
+            if (!card.gameMode || card.gameMode !== this.currentGameMode) {
+                console.log(`⚠️ Cartón inválido detectado:`, card);
+                return false;
+            }
+            return true;
+        });
+        
+        console.log(`🎯 Renderizando ${validCards.length} cartones válidos de ${this.userCards.length} totales...`);
         cardsContainer.innerHTML = '';
 
-        this.userCards.forEach((card, index) => {
+        validCards.forEach((card, index) => {
             const cardElement = document.createElement('div');
             // Asignar colores aleatorios a los cartones
             const colorClasses = ['card-red', 'card-blue', 'card-green', 'card-purple'];
@@ -4859,33 +4905,42 @@ class BingoPro {
         if (balanceElement) {
             balanceElement.textContent = `€${this.userBalance.toFixed(2)}`;
         }
+        // 🚨 NUEVO: VERIFICAR QUE SOLO SE MUESTREN CARTONES VÁLIDOS
+        const validCards = this.userCards.filter(card => {
+            return card.gameMode && card.gameMode === this.currentGameMode;
+        });
+        
+        const validSelectedCards = this.selectedCards.filter(card => {
+            return card.gameMode && card.gameMode === this.currentGameMode;
+        });
+        
         if (totalCardsElement) {
-            totalCardsElement.textContent = this.userCards.length;
+            totalCardsElement.textContent = validCards.length;
         }
         if (activeCardsElement) {
-            activeCardsElement.textContent = this.userCards.filter(card => card.isActive).length;
+            activeCardsElement.textContent = validCards.filter(card => card.isActive).length;
         }
         if (selectedCardsElement) {
-            selectedCardsElement.textContent = this.selectedCards.length;
+            selectedCardsElement.textContent = validSelectedCards.length;
         }
         if (joinGameBtn) {
-            joinGameBtn.disabled = this.selectedCards.length === 0 || this.gameState === 'playing';
+            joinGameBtn.disabled = validSelectedCards.length === 0 || this.gameState === 'playing';
         }
         
         // Actualizar preview de cartones
         if (cardsCountElement) {
-            cardsCountElement.textContent = this.userCards.length;
+            cardsCountElement.textContent = validCards.length;
         }
         if (activeCardsCountElement) {
-            activeCardsCountElement.textContent = this.userCards.filter(card => card.isActive).length;
+            activeCardsCountElement.textContent = validCards.filter(card => card.isActive).length;
         }
         
         // Actualizar elementos del hero
         if (totalCardsHero) {
-            totalCardsHero.textContent = this.userCards.length;
+            totalCardsHero.textContent = validCards.length;
         }
         if (activeCardsHero) {
-            activeCardsHero.textContent = this.userCards.filter(card => card.isActive).length;
+            activeCardsHero.textContent = validCards.filter(card => card.isActive).length;
         }
         if (winRateHero) {
             const winRate = this.gameAnalytics.totalGamesPlayed > 0 
