@@ -2524,36 +2524,287 @@ class BingoPro {
         };
     }
 
+    /**
+     * 🎯 FIN DE PARTIDA PROFESIONAL - LÓGICA DE BINGO ONLINE
+     * SOLUCIONA: Reset de cartones y cronómetro para próxima partida
+     */
     endGame() {
-        console.log('Terminando partida...');
-        this.gameState = 'waiting'; // Cambiar a 'waiting' en lugar de 'finished'
+        console.log('🎯 Terminando partida con lógica profesional de bingo online...');
+        
+        // 1. 🎮 Cambiar estado del juego
+        this.gameState = 'waiting';
         this.stopAutoPlay();
         
-        // Update analytics
+        // 2. 📊 Actualizar analytics
         this.updateAnalytics('game_end', {
             gameId: this.currentGameId,
             duration: this.gameStartTime ? Date.now() - this.gameStartTime.getTime() : 0,
             numbersCalled: this.calledNumbers.size,
-            finalBalance: this.userBalance
+            finalBalance: this.userBalance,
+            cardsPlayed: this.userCards.length
         });
         
-        this.showGameOverModal();
+        // 3. ✨ NUEVO: RESETEAR COMPLETAMENTE LOS CARTONES DEL USUARIO
+        this.resetUserCardsForNextGame();
         
-        // La próxima partida se programa desde el servidor global
-        // No necesitamos programar localmente
+        // 4. ✨ NUEVO: INICIAR CRONÓMETRO PARA PRÓXIMA PARTIDA
+        this.startNextGameCountdown();
         
-        // Resetear estado del jugador
-        this.isPlayerJoined = false;
+        // 5. ✨ NUEVO: RESETEAR ESTADO DEL JUGADOR
+        this.resetPlayerStateForNextGame();
+        
+        // 6. ✨ NUEVO: ACTUALIZAR INTERFAZ PROFESIONALMENTE
+        this.updateProfessionalInterface();
+        
+        // 7. ✨ NUEVO: MOSTRAR MODAL DE FIN DE PARTIDA MEJORADO
+        this.showProfessionalGameOverModal();
+        
+        // 8. ✨ NUEVO: NOTIFICAR AL USUARIO SOBRE PRÓXIMA PARTIDA
+        this.notifyUserAboutNextGame();
+        
+        console.log('✅ Partida terminada profesionalmente - Cartones reseteados y cronómetro iniciado');
+    }
+    
+    /**
+     * ✨ NUEVO: Resetear cartones del usuario para próxima partida
+     */
+    resetUserCardsForNextGame() {
+        console.log('🔄 Reseteando cartones del usuario para próxima partida...');
+        
+        // Limpiar cartones seleccionados
         this.selectedCards = [];
         
-        // Actualizar interfaz
-        this.updateDisplay();
-        this.updateUI();
+        // Resetear estado de todos los cartones
+        this.userCards.forEach(card => {
+            card.linesCompleted = 0;
+            card.markedNumbers.clear();
+            card.isSelected = false;
+            card.lastModified = new Date();
+            card.gameId = null; // Desvincular del juego anterior
+        });
+        
+        // Limpiar números llamados
+        this.calledNumbers.clear();
+        this.callHistory = [];
+        
+        // Resetear último número
+        this.lastNumberCalled = null;
+        this.lastCallTime = null;
+        
+        console.log(`✅ ${this.userCards.length} cartones reseteados para próxima partida`);
+    }
+    
+    /**
+     * ✨ NUEVO: Iniciar cronómetro para próxima partida
+     */
+    startNextGameCountdown() {
+        console.log('⏰ Iniciando cronómetro para próxima partida...');
         
         const currentMode = this.getCurrentGameMode();
-        const durationMinutes = Math.floor(currentMode.duration / 60000);
-        this.addChatMessage('system', `¡Partida terminada! La próxima partida de ${currentMode.name} comenzará en ${durationMinutes} minutos.`);
-        console.log('Juego terminado, estado cambiado a waiting');
+        const breakTime = currentMode.breakTime;
+        
+        // Calcular tiempo hasta próxima partida
+        const now = Date.now();
+        const nextGameStart = now + breakTime;
+        
+        // Guardar tiempo de próxima partida
+        this.nextGameStartTime = nextGameStart;
+        
+        // Iniciar countdown en tiempo real
+        this.startRealTimeCountdown(currentMode.id, breakTime);
+        
+        console.log(`⏰ Próxima partida de ${currentMode.name} en ${Math.floor(breakTime / 60000)} minutos`);
+    }
+    
+    /**
+     * ✨ NUEVO: Countdown en tiempo real para próxima partida
+     */
+    startRealTimeCountdown(modeId, totalTime) {
+        // Limpiar countdown anterior si existe
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+        }
+        
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) return;
+        
+        let timeLeft = totalTime;
+        
+        this.countdownInterval = setInterval(() => {
+            timeLeft -= 1000; // Reducir 1 segundo
+            
+            if (timeLeft <= 0) {
+                // ⏰ Tiempo agotado - Próxima partida debe comenzar
+                clearInterval(this.countdownInterval);
+                countdownElement.textContent = 'En curso';
+                countdownElement.className = 'countdown active-game';
+                
+                // 🎮 Cambiar estado a partida activa
+                this.gameState = 'playing';
+                
+                // 🔒 Bloquear compras durante partida activa
+                this.blockPurchasesForMode(modeId, 'Partida en curso');
+                
+                console.log(`🎮 ${modeId}: Tiempo agotado - Partida activa`);
+                return;
+            }
+            
+            // ⏰ Mostrar tiempo restante
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            countdownElement.textContent = countdownText;
+            countdownElement.className = 'countdown next-game';
+            
+            // ✅ Permitir compras durante descanso
+            this.allowPurchasesForMode(modeId);
+            
+        }, 1000); // Actualizar cada segundo
+        
+        console.log(`⏰ Countdown en tiempo real iniciado para ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Resetear estado del jugador para próxima partida
+     */
+    resetPlayerStateForNextGame() {
+        console.log('🔄 Reseteando estado del jugador para próxima partida...');
+        
+        // Resetear estado de participación
+        this.isPlayerJoined = false;
+        
+        // Resetear cartones seleccionados
+        this.selectedCards = [];
+        
+        // Resetear estadísticas del juego
+        this.gameStartTime = null;
+        this.currentGameId = null;
+        
+        // Limpiar estado de victoria
+        this.hasWon = false;
+        this.winType = null;
+        
+        console.log('✅ Estado del jugador reseteado para próxima partida');
+    }
+    
+    /**
+     * ✨ NUEVO: Actualizar interfaz profesionalmente
+     */
+    updateProfessionalInterface() {
+        console.log('🎨 Actualizando interfaz profesionalmente...');
+        
+        // Actualizar display principal
+        this.updateDisplay();
+        
+        // Actualizar UI completa
+        this.updateUI();
+        
+        // ✨ NUEVO: Actualizar estado de botones de compra
+        this.updatePurchaseButtonsStateFromCountdowns();
+        
+        // ✨ NUEVO: Actualizar contadores de modo
+        this.updateAllModeCountdowns();
+        
+        // ✨ NUEVO: Limpiar números llamados en la interfaz
+        this.clearCalledNumbersDisplay();
+        
+        console.log('✅ Interfaz actualizada profesionalmente');
+    }
+    
+    /**
+     * ✨ NUEVO: Limpiar display de números llamados
+     */
+    clearCalledNumbersDisplay() {
+        // Limpiar contenedor de números llamados
+        const calledNumbersContainer = document.getElementById('calledNumbers');
+        if (calledNumbersContainer) {
+            calledNumbersContainer.innerHTML = '';
+        }
+        
+        // Limpiar último número llamado
+        const lastNumberDisplay = document.getElementById('lastNumber');
+        if (lastNumberDisplay) {
+            lastNumberDisplay.textContent = '-';
+        }
+        
+        console.log('✅ Display de números llamados limpiado');
+    }
+    
+    /**
+     * ✨ NUEVO: Modal de fin de partida profesional
+     */
+    showProfessionalGameOverModal() {
+        const modal = document.getElementById('winModal');
+        const winDetails = document.getElementById('winDetails');
+        
+        if (winDetails) {
+            const currentMode = this.getCurrentGameMode();
+            const breakTimeMinutes = Math.floor(currentMode.breakTime / 60000);
+            
+            winDetails.innerHTML = `
+                <div class="game-over-professional">
+                    <div class="game-over-icon">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <h3>🎯 ¡Fin de Partida Profesional!</h3>
+                    <p>La partida de <strong>${currentMode.name}</strong> ha terminado.</p>
+                    
+                    <div class="next-game-info">
+                        <h4>⏰ Próxima Partida</h4>
+                        <p>La siguiente partida comenzará en <strong>${breakTimeMinutes} minutos</strong>.</p>
+                        <div class="countdown-display">
+                            <span class="countdown-label">Tiempo restante:</span>
+                            <span class="countdown-value" id="modal-countdown-${currentMode.id}">${breakTimeMinutes}:00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="final-stats">
+                        <div class="stat">
+                            <span class="stat-label">Números Llamados:</span>
+                            <span class="stat-value">${this.calledNumbers.size}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Saldo Final:</span>
+                            <span class="stat-value">€${this.userBalance.toFixed(2)}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Cartones Jugados:</span>
+                            <span class="stat-value">${this.userCards.length}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="next-game-actions">
+                        <p>🔄 <strong>Los cartones han sido reseteados.</strong></p>
+                        <p>📝 <strong>Puedes comprar nuevos cartones para la próxima partida.</strong></p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (modal) {
+            modal.style.display = 'block';
+        }
+        
+        console.log('✅ Modal profesional de fin de partida mostrado');
+    }
+    
+    /**
+     * ✨ NUEVO: Notificar al usuario sobre próxima partida
+     */
+    notifyUserAboutNextGame() {
+        const currentMode = this.getCurrentGameMode();
+        const breakTimeMinutes = Math.floor(currentMode.breakTime / 60000);
+        
+        // Mensaje en el chat
+        this.addChatMessage('system', `🎯 ¡Partida terminada! Los cartones han sido reseteados.`);
+        this.addChatMessage('system', `⏰ La próxima partida de ${currentMode.name} comenzará en ${breakTimeMinutes} minutos.`);
+        this.addChatMessage('system', `📝 Compra nuevos cartones para participar en la próxima partida.`);
+        
+        // Notificación visual
+        this.showNotification(`🎯 Partida terminada - Próxima en ${breakTimeMinutes} min`, 'info');
+        
+        console.log(`✅ Usuario notificado sobre próxima partida en ${breakTimeMinutes} minutos`);
     }
 
     joinGame() {
