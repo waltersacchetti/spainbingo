@@ -1,3 +1,70 @@
+// ===== ELIMINACIÓN INMEDIATA DE OVERLAYS NO DESEADOS =====
+// Función para eliminar inmediatamente cualquier overlay o modal visible
+function removeAllOverlays() {
+    console.log('🔧 Ejecutando limpieza inmediata de overlays...');
+    
+    // Eliminar cualquier modal que se esté mostrando
+    const allModals = document.querySelectorAll('.modal, [id*="modal"], [class*="modal"]');
+    allModals.forEach(modal => {
+        if (modal.style.display !== 'none' || modal.classList.contains('show') || modal.classList.contains('active')) {
+            console.log('🔧 Eliminando modal visible:', modal);
+            modal.style.display = 'none';
+            modal.classList.remove('show', 'active');
+            modal.style.opacity = '0';
+            modal.style.visibility = 'hidden';
+            modal.style.pointerEvents = 'none';
+        }
+    });
+    
+    // Eliminar cualquier overlay que se esté mostrando
+    const allOverlays = document.querySelectorAll('.modal-overlay, .overlay, [class*="overlay"]');
+    allOverlays.forEach(overlay => {
+        if (overlay.style.display !== 'none' || overlay.classList.contains('show') || overlay.classList.contains('active')) {
+            console.log('🔧 Eliminando overlay visible:', overlay);
+            overlay.style.display = 'none';
+            overlay.classList.remove('show', 'active');
+            overlay.style.opacity = '0';
+            overlay.style.visibility = 'hidden';
+            overlay.style.pointerEvents = 'none';
+        }
+    });
+    
+    // Limpiar backdrop-filters problemáticos
+    const backdropElements = document.querySelectorAll('[style*="backdrop-filter"], [style*="filter: blur"]');
+    backdropElements.forEach(element => {
+        if (element.style.backdropFilter || element.style.filter) {
+            console.log('🔧 Limpiando backdrop-filter:', element);
+            element.style.backdropFilter = '';
+            element.style.filter = '';
+        }
+    });
+    
+    // Asegurar que el body y app-container no tengan opacidad 0
+    if (document.body.style.opacity === '0') {
+        document.body.style.opacity = '1';
+        console.log('🔧 Corrigiendo opacidad del body');
+    }
+    
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer && appContainer.style.opacity === '0') {
+        appContainer.style.opacity = '1';
+        console.log('🔧 Corrigiendo opacidad del app-container');
+    }
+}
+
+// Ejecutar limpieza inmediatamente
+removeAllOverlays();
+
+// También ejecutar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeAllOverlays);
+} else {
+    removeAllOverlays();
+}
+
+// Y ejecutar cuando la ventana esté completamente cargada
+window.addEventListener('load', removeAllOverlays);
+
 // Polyfill para requestIdleCallback para mejor compatibilidad
 if (!window.requestIdleCallback) {
     window.requestIdleCallback = function(callback) {

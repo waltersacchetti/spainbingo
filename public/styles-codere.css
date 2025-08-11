@@ -5249,28 +5249,63 @@ html {
     100% { transform: rotate(360deg); }
 }
 
-/* ===== PREVENCIÓN DE MODALES NO DESEADOS ===== */
-/* Asegurar que ningún modal se muestre por defecto */
-.modal:not(.show),
-.modal:not(.active) {
+/* ===== PREVENCIÓN AGRESIVA DE MODALES NO DESEADOS ===== */
+/* Asegurar que NINGÚN modal se muestre por defecto */
+.modal,
+[id*="modal"],
+[class*="modal"] {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    filter: none !important;
 }
 
-/* Asegurar que ningún overlay se muestre por defecto */
-.modal-overlay:not(.show),
-.overlay:not(.show) {
+/* Solo mostrar modales cuando tengan la clase show o active */
+.modal.show,
+.modal.active,
+[id*="modal"].show,
+[id*="modal"].active,
+[class*="modal"].show,
+[class*="modal"].active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* Asegurar que NINGÚN overlay se muestre por defecto */
+.modal-overlay,
+.overlay,
+[class*="overlay"] {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    filter: none !important;
 }
 
-/* Eliminar backdrop-filter por defecto */
-.modal:not(.show) .modal-content,
-.modal:not(.active) .modal-content {
+/* Solo mostrar overlays cuando tengan la clase show o active */
+.modal-overlay.show,
+.modal-overlay.active,
+.overlay.show,
+.overlay.active,
+[class*="overlay"].show,
+[class*="overlay"].active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* Eliminar backdrop-filter por defecto en TODOS los modales */
+.modal .modal-content,
+[id*="modal"] .modal-content,
+[class*="modal"] .modal-content {
     backdrop-filter: none !important;
     filter: none !important;
 }
