@@ -616,10 +616,10 @@ class BingoPro {
             this.modeCycles = {};
         }
         
-        // 1. ✨ NUEVO: ACTUALIZAR CICLO DEL MODO
+        // 1. 🎯 NUEVO: ACTUALIZAR CICLO DEL MODO
         this.updateModeCycle(modeId);
         
-        // 2. ✨ NUEVO: VERIFICAR SI HAY PARTIDA ACTIVA POR CICLO
+        // 2. 🎯 NUEVO: VERIFICAR SI HAY PARTIDA ACTIVA POR CICLO
         const cycle = this.modeCycles[modeId];
         if (cycle && cycle.isActive) {
             // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
@@ -659,8 +659,17 @@ class BingoPro {
             nextGameIn: null,
             timeRemaining: 0,
             status: 'should_start',
-            displayText: 'PARTIDA EN CURSO'
+            displayText: '🎮 PARTIDA EN CURSO'
         };
+    }
+    
+    /**
+     * 🎯 NUEVO: FORMATEAR TIEMPO PARA COUNTDOWNS
+     */
+    formatTime(milliseconds) {
+        const minutes = Math.floor(milliseconds / 60000);
+        const seconds = Math.floor((milliseconds % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
     
     /**
@@ -6193,7 +6202,15 @@ class BingoPro {
         const modeConfig = this.gameModes[modeId];
         if (!modeConfig) return;
         
-        // 1. ✨ NUEVO: CONFIGURAR CICLO INDEPENDIENTE CON OFFSET DIFERENTE POR MODO
+        // 🎯 SISTEMA REAL DE PERSISTENCIA - CARGAR ESTADO GUARDADO
+        const savedState = this.loadModeCycleState(modeId);
+        if (savedState && savedState.isValid) {
+            console.log(`🎯 Estado persistido cargado para ${modeId}:`, savedState);
+            this.modeCycles[modeId] = savedState;
+            return;
+        }
+        
+        // 🎯 NUEVO: CONFIGURAR CICLO INDEPENDIENTE CON OFFSET DIFERENTE POR MODO
         const modeOffset = {
             'CLASSIC': 0,      // Empieza inmediatamente
             'RAPID': 30,       // Empieza en 30 segundos
@@ -6228,6 +6245,56 @@ class BingoPro {
         this.updateModeCycle(modeId);
         
         console.log(`🎯 Ciclo REAL inicializado para modo: ${modeId} con offset de ${offset}s`);
+        
+        // 🎯 NUEVO: GUARDAR ESTADO INMEDIATAMENTE
+        this.saveModeCycleState(modeId);
+    }
+    
+    /**
+     * 🎯 NUEVO: GUARDAR ESTADO DEL CICLO DEL MODO
+     */
+    saveModeCycleState(modeId) {
+        const cycle = this.modeCycles[modeId];
+        if (!cycle) return;
+        
+        const stateToSave = {
+            ...cycle,
+            savedAt: Date.now(),
+            isValid: true
+        };
+        
+        const storageKey = `bingoroyal_mode_cycle_${modeId}`;
+        localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+        console.log(`💾 Estado del ciclo ${modeId} guardado en localStorage`);
+    }
+    
+    /**
+     * 🎯 NUEVO: CARGAR ESTADO DEL CICLO DEL MODO
+     */
+    loadModeCycleState(modeId) {
+        const storageKey = `bingoroyal_mode_cycle_${modeId}`;
+        const savedData = localStorage.getItem(storageKey);
+        
+        if (!savedData) return null;
+        
+        try {
+            const savedState = JSON.parse(savedData);
+            const now = Date.now();
+            
+            // 🎯 VERIFICAR SI EL ESTADO SIGUE SIENDO VÁLIDO
+            if (savedState.savedAt && (now - savedState.savedAt) < (24 * 60 * 60 * 1000)) { // 24 horas
+                console.log(`📂 Estado persistido válido cargado para ${modeId}`);
+                return savedState;
+            } else {
+                console.log(`⏰ Estado persistido expirado para ${modeId}, creando nuevo`);
+                localStorage.removeItem(storageKey);
+                return null;
+            }
+        } catch (error) {
+            console.error(`❌ Error cargando estado persistido para ${modeId}:`, error);
+            localStorage.removeItem(storageKey);
+            return null;
+        }
     }
     
     /**
@@ -6259,7 +6326,19 @@ class BingoPro {
         const timeSinceLastGame = now - cycle.lastGameEnd;
         cycle.isActive = timeSinceLastGame >= 0 && timeSinceLastGame < cycle.duration;
         
-        console.log(`🔄 Ciclo actualizado para ${modeId}: Activo=${cycle.isActive}, Próxima=${new Date(cycle.nextGameStart).toLocaleTimeString()}`);
+        // 🎯 NUEVO: ACTUALIZAR ESTADO DE LA PARTIDA
+        if (cycle.isActive) {
+            cycle.gameState = 'playing';
+        } else if (now < cycle.nextGameStart) {
+            cycle.gameState = 'waiting';
+        } else {
+            cycle.gameState = 'finished';
+        }
+        
+        // 🎯 NUEVO: GUARDAR ESTADO ACTUALIZADO
+        this.saveModeCycleState(modeId);
+        
+        console.log(`🔄 Ciclo actualizado para ${modeId}: Activo=${cycle.isActive}, Estado=${cycle.gameState}, Próxima=${new Date(cycle.nextGameStart).toLocaleTimeString()}`);
     }
     
     /**
