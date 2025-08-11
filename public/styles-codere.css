@@ -5572,3 +5572,86 @@ html {
     }
 }
 
+/* 🎯 NUEVO: MEJORAR VISIBILIDAD DE "COMPRAR CARTONES" */
+.countdown.next-game {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 160px;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    border: 2px solid #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 🎯 NUEVO: BANNER ANIMADO CON NOTIFICACIONES DESLIZANTES */
+.banner-animated {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.banner-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.banner-icon {
+    font-size: 20px;
+    color: #4CAF50;
+    animation: pulse 2s infinite;
+}
+
+.banner-message {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* 🎯 NUEVO: NOTIFICACIONES DESLIZANTES */
+.banner-notifications {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    white-space: nowrap;
+    animation: slideNotification 15s linear infinite;
+}
+
+.banner-notification {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin-left: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes slideNotification {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-200%); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+

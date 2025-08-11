@@ -684,6 +684,58 @@ class BingoPro {
     }
     
     /**
+     * 🎯 NUEVO: ACTUALIZAR BANNER ANIMADO DINÁMICAMENTE
+     */
+    updateAnimatedBanner(modeId, isAvailable = true) {
+        const bannerElement = document.getElementById('gameStatusMessage');
+        if (!bannerElement) return;
+        
+        const modeName = this.gameModes[modeId]?.name || modeId;
+        
+        if (isAvailable) {
+            // ✅ MODO DISPONIBLE
+            bannerElement.innerHTML = `
+                <div class="banner-content">
+                    <div class="banner-text">
+                        <div class="banner-icon">✅</div>
+                        <div class="banner-message">
+                            <strong>${modeName} disponible</strong> - Puedes comprar cartones y unirte a la próxima partida
+                        </div>
+                    </div>
+                    <div class="banner-notifications">
+                        <div class="banner-notification">🎮 ¡Únete ahora y gana premios increíbles!</div>
+                        <div class="banner-notification">🎯 Partidas cada 2 minutos - Nunca te aburrirás</div>
+                        <div class="banner-notification">🏆 Compite con jugadores de toda España</div>
+                        <div class="banner-notification">💎 Modo VIP disponible para expertos</div>
+                        <div class="banner-notification">🌙 Bingo Nocturno para madrugadores</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // 🔒 MODO NO DISPONIBLE
+            bannerElement.innerHTML = `
+                <div class="banner-content">
+                    <div class="banner-text">
+                        <div class="banner-icon">🔒</div>
+                        <div class="banner-message">
+                            <strong>${modeName} en curso</strong> - Espera a que termine la partida para comprar cartones
+                        </div>
+                    </div>
+                    <div class="banner-notifications">
+                        <div class="banner-notification">⏰ La partida está en progreso - ¡Sigue el juego!</div>
+                        <div class="banner-notification">🎯 Prepárate para la próxima ronda</div>
+                        <div class="banner-notification">🏆 ¡Alguien podría cantar BINGO en cualquier momento!</div>
+                        <div class="banner-notification">💎 Mientras tanto, revisa otros modos de juego</div>
+                        <div class="banner-notification">🌙 El Bingo Nocturno te espera</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        console.log(`🎯 Banner actualizado para ${modeId}: ${isAvailable ? 'Disponible' : 'No disponible'}`);
+    }
+    
+    /**
      * 🎨 INTERFAZ CORRECTA DE COUNTDOWN
      * SOLUCIONA: Secciones "Próxima" que no muestran estados correctos
      */
@@ -706,6 +758,9 @@ class BingoPro {
                 // 🔒 BLOQUEAR COMPRAS
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
+                // 🎯 ACTUALIZAR BANNER - MODO NO DISPONIBLE
+                this.updateAnimatedBanner(modeId, false);
+                
                 console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO`);
                 
             } else {
@@ -718,6 +773,9 @@ class BingoPro {
                 
                 // ✅ PERMITIR COMPRAS
                 this.allowPurchasesForMode(modeId);
+                
+                // 🎯 ACTUALIZAR BANNER - MODO DISPONIBLE
+                this.updateAnimatedBanner(modeId, true);
                 
                 console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES`);
             }
