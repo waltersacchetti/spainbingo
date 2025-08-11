@@ -104,6 +104,9 @@ class BingoPro {
         this.nextGameStartTime = null;
         this.gameCountdown = null;
         this.isPlayerJoined = false;
+        
+        // 🚨 NUEVO: INICIALIZAR modeCycles EN EL CONSTRUCTOR
+        this.modeCycles = {};
         this.selectedCards = [];
         this.cardPrice = 1.00; // 1 euro por cartón
         
@@ -606,6 +609,12 @@ class BingoPro {
     calculateCoordinatedCountdown(modeId, serverData = null) {
         const modeConfig = this.gameModes[modeId];
         if (!modeConfig) return { isActive: false, nextGameIn: null, timeRemaining: 0 };
+        
+        // 🚨 NUEVO: VERIFICACIÓN DE SEGURIDAD
+        if (!this.modeCycles) {
+            console.log('⚠️ modeCycles no inicializado en calculateCoordinatedCountdown, inicializando...');
+            this.modeCycles = {};
+        }
         
         // 1. ✨ NUEVO: ACTUALIZAR CICLO DEL MODO
         this.updateModeCycle(modeId);
@@ -1324,6 +1333,12 @@ class BingoPro {
      */
     isGlobalGameActive(modeId) {
         console.log(`🔍 Verificando estado de partida para modo: ${modeId}`);
+        
+        // 🚨 NUEVO: VERIFICACIÓN DE SEGURIDAD
+        if (!this.modeCycles) {
+            console.log('⚠️ modeCycles no inicializado en isGlobalGameActive, inicializando...');
+            this.modeCycles = {};
+        }
         
         // 1. ✨ NUEVO: VERIFICACIÓN POR ATRIBUTO DATA-STATUS
         const countdownElement = document.getElementById(`countdown-${modeId}`);
@@ -6206,6 +6221,12 @@ class BingoPro {
      * ✨ NUEVO: Actualizar ciclo de un modo específico
      */
     updateModeCycle(modeId) {
+        // 🚨 NUEVO: VERIFICACIÓN DE SEGURIDAD
+        if (!this.modeCycles) {
+            console.log('⚠️ modeCycles no inicializado, inicializando...');
+            this.modeCycles = {};
+        }
+        
         const cycle = this.modeCycles[modeId];
         if (!cycle) return;
         
