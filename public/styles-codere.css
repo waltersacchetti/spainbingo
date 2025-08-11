@@ -5338,3 +5338,103 @@ html {
     filter: none !important;
 }
 
+/* ===== ESTILOS PARA COUNTDOWNS INTELIGENTES ===== */
+/* ✨ NUEVO: Sistema de countdowns que muestra próxima partida */
+
+.countdown {
+    font-family: 'Orbitron', monospace;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 80px;
+    transition: all 0.3s ease;
+}
+
+/* 🎮 Partida activa - BLOQUEAR compras */
+.countdown.active-game {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border: 2px solid #ff4757;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    animation: pulse-active 2s infinite;
+}
+
+/* ⏰ Próxima partida - PERMITIR compras */
+.countdown.next-game {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: white;
+    border: 2px solid #26d0ce;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+}
+
+/* ❓ Estado desconocido */
+.countdown.unknown {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: white;
+    border: 2px solid #95a5a6;
+    opacity: 0.7;
+}
+
+/* 🔒 Botones bloqueados durante partida activa */
+.btn-buy.game-blocked,
+.btn-buy-cards.game-blocked {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+    border: 2px solid #e74c3c !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    position: relative !important;
+}
+
+.btn-buy.game-blocked::after,
+.btn-buy-cards.game-blocked::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #e74c3c;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    border: 2px solid white;
+}
+
+/* ✅ Botones habilitados para compra */
+.btn-buy:not(.game-blocked),
+.btn-buy-cards:not(.game-blocked) {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    color: white !important;
+    border: 2px solid #2ecc71 !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-buy:not(.game-blocked):hover,
+.btn-buy-cards:not(.game-blocked):hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4) !important;
+}
+
+/* 🎯 Animación para partida activa */
+@keyframes pulse-active {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* 📱 Responsive para countdowns */
+@media (max-width: 768px) {
+    .countdown {
+        font-size: 14px;
+        padding: 6px 10px;
+        min-width: 70px;
+    }
+}
+
