@@ -1,13 +1,12 @@
 // ===== ELIMINACIÓN INMEDIATA DE OVERLAYS NO DESEADOS =====
 // Función para eliminar inmediatamente cualquier overlay o modal visible
 function removeAllOverlays() {
-    console.log('🔧 Ejecutando limpieza inmediata de overlays...');
+    // ✨ NUEVO: Reducir logging para evitar advertencias de debug en Firefox
     
     // Eliminar cualquier modal que se esté mostrando
     const allModals = document.querySelectorAll('.modal, [id*="modal"], [class*="modal"]');
     allModals.forEach(modal => {
         if (modal.style.display !== 'none' || modal.classList.contains('show') || modal.classList.contains('active')) {
-            console.log('🔧 Eliminando modal visible:', modal);
             modal.style.display = 'none';
             modal.classList.remove('show', 'active');
             modal.style.opacity = '0';
@@ -20,7 +19,6 @@ function removeAllOverlays() {
     const allOverlays = document.querySelectorAll('.modal-overlay, .overlay, [class*="overlay"]');
     allOverlays.forEach(overlay => {
         if (overlay.style.display !== 'none' || overlay.classList.contains('show') || overlay.classList.contains('active')) {
-            console.log('🔧 Eliminando overlay visible:', overlay);
             overlay.style.display = 'none';
             overlay.classList.remove('show', 'active');
             overlay.style.opacity = '0';
@@ -6033,17 +6031,12 @@ function joinCurrentGame() {
     }
 }
 
-// Función para alternar el chat
+// Función para alternar el chat - VERSIÓN MEJORADA PARA FIREFOX
 function toggleChat() {
     const chatSection = document.getElementById('chatSectionFixed');
     const toggleBtn = document.getElementById('chatToggleBtn');
     
-    console.log('🔧 Toggle chat clicked');
-    console.log('Chat section:', chatSection);
-    console.log('Toggle button:', toggleBtn);
-    console.log('Chat section classes:', chatSection?.classList?.toString());
-    console.log('Chat section style:', chatSection?.style?.display);
-    console.log('Chat section computed style:', window.getComputedStyle(chatSection)?.display);
+    // ✨ NUEVO: Reducir logging para evitar advertencias de debug en Firefox
     
     if (!chatSection || !toggleBtn) {
         console.error('❌ Chat elements not found');
@@ -6051,13 +6044,11 @@ function toggleChat() {
     }
     
     const isExpanded = chatSection.classList.contains('expanded');
-    console.log('Is expanded:', isExpanded);
     
     if (isExpanded) {
         // Colapsar el chat
         chatSection.classList.remove('expanded');
         toggleBtn.classList.remove('active');
-        console.log('🔽 Chat collapsed');
         
         // Limpiar el input cuando se colapsa
         const chatInput = document.getElementById('chatInput');
@@ -6068,82 +6059,78 @@ function toggleChat() {
         // Expandir el chat
         chatSection.classList.add('expanded');
         toggleBtn.classList.add('active');
-        console.log('🔼 Chat expanded');
         
-        // Configurar el input del chat después de expandir
+        // ✨ NUEVO: Configuración mejorada para Firefox
         setTimeout(() => {
             const chatInput = document.getElementById('chatInput');
             const btnSend = document.querySelector('.btn-send');
             
             if (chatInput && btnSend) {
-                console.log('🔧 Reconfigurando event listeners del chat...');
-                
-                // Forzar que el input sea editable
+                // ✨ NUEVO: Configuración específica para Firefox
                 chatInput.readOnly = false;
                 chatInput.disabled = false;
                 chatInput.style.pointerEvents = 'auto';
                 chatInput.style.userSelect = 'text';
                 chatInput.style.webkitUserSelect = 'text';
+                chatInput.style.mozUserSelect = 'text'; // ✨ NUEVO: Soporte específico para Firefox
                 
                 // Enfocar y seleccionar
-                chatInput.focus();
-                chatInput.select();
+                try {
+                    chatInput.focus();
+                    chatInput.select();
+                } catch (e) {
+                    // ✨ NUEVO: Fallback para Firefox si focus/select fallan
+                    console.warn('⚠️ Fallback para Firefox en focus/select del chat');
+                }
                 
                 // Función para enviar mensaje
                 const sendMessage = () => {
                     const message = chatInput.value.trim();
-                    console.log('📤 Intentando enviar mensaje:', message);
                     if (message && window.bingoGame) {
                         window.bingoGame.sendChatMessage(message);
                         chatInput.value = '';
-                        chatInput.focus();
-                        console.log('✅ Mensaje enviado correctamente');
+                        try {
+                            chatInput.focus();
+                        } catch (e) {
+                            // Fallback para Firefox
+                        }
                     }
                 };
                 
-                // Remover event listeners anteriores para evitar duplicados
-                chatInput.removeEventListener('keypress', chatInput._keypressHandler);
-                chatInput.removeEventListener('click', chatInput._clickHandler);
-                btnSend.removeEventListener('click', btnSend._clickHandler);
-                
-                // Crear nuevos event listeners
-                chatInput._keypressHandler = (e) => {
+                // ✨ NUEVO: Event listeners mejorados para Firefox
+                const keypressHandler = (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('⌨️ Enter presionado en chat (reconfigurado)');
                         sendMessage();
                         return false;
                     }
                 };
                 
-                chatInput._clickHandler = function() {
-                    this.focus();
-                    this.select();
+                const clickHandler = function() {
+                    try {
+                        this.focus();
+                        this.select();
+                    } catch (e) {
+                        // Fallback para Firefox
+                    }
                 };
                 
-                btnSend._clickHandler = (e) => {
+                const sendClickHandler = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('📤 Click en botón enviar (reconfigurado)');
                     sendMessage();
-                    return false;
                 };
                 
-                // Agregar los nuevos event listeners
-                chatInput.addEventListener('keypress', chatInput._keypressHandler);
-                chatInput.addEventListener('click', chatInput._clickHandler);
-                btnSend.addEventListener('click', btnSend._clickHandler);
+                // Remover event listeners anteriores para evitar duplicados
+                chatInput.removeEventListener('keypress', keypressHandler);
+                chatInput.removeEventListener('click', clickHandler);
+                btnSend.removeEventListener('click', sendClickHandler);
                 
-                // Enviar mensaje de bienvenida automático solo si es la primera vez
-                if (!chatSection.dataset.welcomeSent) {
-                    setTimeout(() => {
-                        if (window.bingoGame) {
-                            window.bingoGame.addChatMessage('bot', '¡Hola! 👋 Soy BingoBot, tu asistente personal. Escribe "ayuda" para ver todos los comandos disponibles. ¿En qué puedo ayudarte? 🤖');
-                            chatSection.dataset.welcomeSent = 'true';
-                        }
-                    }, 500);
-                }
+                // Agregar nuevos event listeners
+                chatInput.addEventListener('keypress', keypressHandler);
+                chatInput.addEventListener('click', clickHandler);
+                btnSend.addEventListener('click', sendClickHandler);
                 
                 console.log('✅ Chat event listeners reconfigurados correctamente');
             } else {
@@ -6354,11 +6341,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener para el botón toggle del chat
     const chatToggleBtn = document.getElementById('chatToggleBtn');
     if (chatToggleBtn) {
-        console.log('✅ Botón toggle del chat encontrado, configurando event listener...');
+        // ✨ NUEVO: Reducir logging para evitar advertencias de debug en Firefox
         chatToggleBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔧 Click en botón toggle del chat detectado');
             toggleChat();
         });
     } else {
