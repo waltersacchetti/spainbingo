@@ -573,15 +573,19 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: CÁLCULO COORDINADO DE COUNTDOWN
-     * SOLUCIONA: Lógica fragmentada de countdowns
+     * ✨ NUEVO: CÁLCULO COORDINADO DE COUNTDOWN CON CICLOS INDEPENDIENTES
+     * SOLUCIONA: Lógica fragmentada y countdowns que "saltan"
      */
     calculateCoordinatedCountdown(modeId, serverData = null) {
         const modeConfig = this.gameModes[modeId];
         if (!modeConfig) return { isActive: false, nextGameIn: null, timeRemaining: 0 };
         
-        // 1. VERIFICAR SI HAY PARTIDA ACTIVA
-        if (this.isGlobalGameActive(modeId)) {
+        // 1. ✨ NUEVO: ACTUALIZAR CICLO DEL MODO
+        this.updateModeCycle(modeId);
+        
+        // 2. ✨ NUEVO: VERIFICAR SI HAY PARTIDA ACTIVA POR CICLO
+        const cycle = this.modeCycles[modeId];
+        if (cycle && cycle.isActive) {
             return { 
                 isActive: true, 
                 nextGameIn: null, 
@@ -590,35 +594,32 @@ class BingoPro {
             };
         }
         
-        // 2. CALCULAR TIEMPO HASTA PRÓXIMA PARTIDA
-        const totalCycleTime = modeConfig.duration + modeConfig.breakTime;
-        const now = Date.now();
-        
-        // 3. SIMULAR CICLO DE PARTIDAS (en producción esto vendría del servidor)
-        const lastGameEnd = this.getLastGameEndTime(modeId);
-        const nextGameStart = lastGameEnd + totalCycleTime;
-        const timeUntilNextGame = nextGameStart - now;
-        
-        if (timeUntilNextGame > 0) {
-            // ⏰ TIEMPO RESTANTE VÁLIDO
-            const minutes = Math.floor(timeUntilNextGame / 60000);
-            const seconds = Math.floor((timeUntilNextGame % 60000) / 1000);
+        // 3. ✨ NUEVO: CALCULAR TIEMPO HASTA PRÓXIMA PARTIDA USANDO CICLO
+        if (cycle && cycle.nextGameStart) {
+            const now = Date.now();
+            const timeUntilNextGame = cycle.nextGameStart - now;
             
-            return { 
-                isActive: false, 
-                nextGameIn: `${minutes}:${seconds.toString().padStart(2, '0')}`,
-                timeRemaining: timeUntilNextGame,
-                status: 'waiting'
-            };
-        } else {
-            // 🎮 PARTIDA DEBERÍA ESTAR ACTIVA
-            return { 
-                isActive: true, 
-                nextGameIn: null,
-                timeRemaining: 0,
-                status: 'should_start'
-            };
+            if (timeUntilNextGame > 0) {
+                // ⏰ TIEMPO RESTANTE VÁLIDO
+                const minutes = Math.floor(timeUntilNextGame / 60000);
+                const seconds = Math.floor((timeUntilNextGame % 60000) / 1000);
+                
+                return { 
+                    isActive: false, 
+                    nextGameIn: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+                    timeRemaining: timeUntilNextGame,
+                    status: 'waiting'
+                };
+            }
         }
+        
+        // 4. 🎮 PARTIDA DEBERÍA ESTAR ACTIVA
+        return { 
+            isActive: true, 
+            nextGameIn: null,
+            timeRemaining: 0,
+            status: 'should_start'
+        };
     }
     
     /**
@@ -1329,6 +1330,12 @@ class BingoPro {
         // 6. ✨ NUEVO: VERIFICACIÓN POR SISTEMA DE COUNTDOWN COORDINADO
         if (this.countdownSystem && this.countdownSystem.isActive && this.countdownSystem.currentMode === modeId) {
             console.log(`🎯 Sistema de countdown indica partida activa en ${modeId}`);
+            return true;
+        }
+        
+        // 7. ✨ NUEVO: VERIFICACIÓN POR SISTEMA DE CICLOS INDEPENDIENTES
+        if (this.modeCycles && this.modeCycles[modeId] && this.modeCycles[modeId].isActive) {
+            console.log(`🎯 Sistema de ciclos indica partida activa en ${modeId}`);
             return true;
         }
 
@@ -3138,33 +3145,106 @@ class BingoPro {
     resetUserCardsForNextGame() {
         console.log('🔄 Reseteando cartones del usuario para próxima partida...');
         
-        // Limpiar cartones seleccionados
+        // 1. ✨ NUEVO: RESETEAR CARTONES COMPLETAMENTE A 0
+        this.userCards = [];
         this.selectedCards = [];
         
-        // Resetear estado de todos los cartones
-        this.userCards.forEach(card => {
-            card.linesCompleted = 0;
-            card.markedNumbers.clear();
-            card.isSelected = false;
-            card.lastModified = new Date();
-            card.gameId = null; // Desvincular del juego anterior
+        // 2. ✨ NUEVO: LIMPIAR CARTONES DEL MODO ACTUAL EN LOCALSTORAGE
+        const currentMode = this.getCurrentGameMode();
+        if (currentMode) {
+            const storageKey = `bingoroyal_user_cards_${currentMode.id}`;
+            localStorage.removeItem(storageKey);
+            console.log(`🗑️ Cartones del modo ${currentMode.id} eliminados del localStorage`);
+        }
+        
+        // 3. ✨ NUEVO: LIMPIAR TODOS LOS CARTONES DE TODOS LOS MODOS
+        Object.keys(this.gameModes).forEach(modeId => {
+            const storageKey = `bingoroyal_user_cards_${modeId}`;
+            localStorage.removeItem(storageKey);
         });
         
-        // Limpiar números llamados
+        // 4. Limpiar números llamados
         this.calledNumbers.clear();
         this.callHistory = [];
         
-        // Resetear último número
+        // 5. Resetear último número
         this.lastNumberCalled = null;
         this.lastCallTime = null;
         
-        // ✨ NUEVO: Guardar cartones reseteados en localStorage
-        this.saveUserCards();
-        
-        // ✨ NUEVO: Limpiar interfaz de números llamados
+        // 6. ✨ NUEVO: ACTUALIZAR INTERFAZ INMEDIATAMENTE
+        this.renderCards();
+        this.updateCardInfo();
         this.clearCalledNumbersDisplay();
         
-        console.log(`✅ ${this.userCards.length} cartones reseteados para próxima partida`);
+        // 7. ✨ NUEVO: NOTIFICAR AL USUARIO
+        this.showNotification('🔄 Cartones reseteados a 0 - Compra nuevos para la próxima partida', 'info');
+        
+        console.log(`✅ Cartones reseteados COMPLETAMENTE a 0 para próxima partida`);
+    }
+    
+    /**
+     * ✨ NUEVO: Forzar reset de cartones para un modo específico
+     * SOLUCIONA: Cartones que persisten sin comprar
+     */
+    forceResetCardsForMode(modeId) {
+        console.log(`🚨 Forzando reset de cartones para modo: ${modeId}`);
+        
+        try {
+            // 1. LIMPIAR CARTONES DEL MODO EN MEMORIA
+            this.userCards = this.userCards.filter(card => card.gameMode !== modeId);
+            
+            // 2. LIMPIAR CARTONES SELECCIONADOS DEL MODO
+            this.selectedCards = this.selectedCards.filter(card => card.gameMode !== modeId);
+            
+            // 3. LIMPIAR CARTONES DEL MODO EN LOCALSTORAGE
+            const storageKey = `bingoroyal_user_cards_${modeId}`;
+            localStorage.removeItem(storageKey);
+            
+            // 4. ACTUALIZAR INTERFAZ
+            this.renderCards();
+            this.updateCardInfo();
+            
+            // 5. NOTIFICAR AL USUARIO
+            this.showNotification(`🗑️ Cartones de ${this.gameModes[modeId]?.name || modeId} reseteados a 0`, 'success');
+            
+            console.log(`✅ Reset forzado completado para modo: ${modeId}`);
+            
+        } catch (error) {
+            console.error(`❌ Error en reset forzado para modo ${modeId}:`, error);
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Verificar y corregir cartones incorrectos
+     * SOLUCIONA: Cartones que aparecen sin comprar
+     */
+    verifyAndCorrectCards() {
+        console.log('🔍 Verificando y corrigiendo cartones incorrectos...');
+        
+        try {
+            // 1. VERIFICAR CARTONES EN MEMORIA
+            const incorrectCards = this.userCards.filter(card => !card.gameMode);
+            if (incorrectCards.length > 0) {
+                console.log(`⚠️ Encontrados ${incorrectCards.length} cartones sin modo de juego`);
+                this.userCards = this.userCards.filter(card => card.gameMode);
+            }
+            
+            // 2. VERIFICAR CARTONES SELECCIONADOS
+            const incorrectSelected = this.selectedCards.filter(card => !card.gameMode);
+            if (incorrectSelected.length > 0) {
+                console.log(`⚠️ Encontrados ${incorrectCards.length} cartones seleccionados sin modo`);
+                this.selectedCards = this.selectedCards.filter(card => card.gameMode);
+            }
+            
+            // 3. ACTUALIZAR INTERFAZ
+            this.renderCards();
+            this.updateCardInfo();
+            
+            console.log('✅ Verificación y corrección de cartones completada');
+            
+        } catch (error) {
+            console.error('❌ Error verificando cartones:', error);
+        }
     }
     
     /**
@@ -5932,20 +6012,84 @@ class BingoPro {
     /**
      * ✨ NUEVO: Obtener tiempo de fin de última partida (simulado)
      */
+    /**
+     * 🎯 SISTEMA DE CICLOS INDEPENDIENTES POR MODO
+     * SOLUCIONA: Countdowns que "saltan" y lógica no independiente
+     */
     getLastGameEndTime(modeId) {
-        // 🎯 SOLUCIÓN: Simular fin de partida para cálculo de countdown
+        console.log(`🎯 Calculando tiempo de última partida para modo: ${modeId}`);
         
-        // En producción, esto vendría del servidor
-        // Por ahora, simulamos que la última partida terminó hace X tiempo
+        // 1. ✨ NUEVO: SISTEMA DE CICLOS INDEPENDIENTES POR MODO
+        if (!this.modeCycles) {
+            this.modeCycles = {};
+        }
         
-        const modeConfig = this.gameModes[modeId];
+        // 2. ✨ NUEVO: INICIALIZAR CICLO DEL MODO SI NO EXISTE
+        if (!this.modeCycles[modeId]) {
+            this.initializeModeCycle(modeId);
+        }
+        
+        // 3. ✨ NUEVO: CALCULAR TIEMPO DE ÚLTIMA PARTIDA BASADO EN CICLO REAL
+        const cycle = this.modeCycles[modeId];
         const now = Date.now();
         
-        // Simular que la última partida terminó hace 1-5 minutos
-        const randomOffset = Math.random() * 4 * 60 * 1000; // 0-4 minutos
-        const lastGameEnd = now - randomOffset;
+        // 4. ✨ NUEVO: SIMULAR CICLO CONTINUO DE PARTIDAS
+        const totalCycleTime = cycle.duration + cycle.breakTime;
+        const cyclesCompleted = Math.floor((now - cycle.startTime) / totalCycleTime);
+        const lastGameEnd = cycle.startTime + (cyclesCompleted * totalCycleTime) + cycle.duration;
         
+        console.log(`✅ Tiempo de última partida para ${modeId}: ${new Date(lastGameEnd).toLocaleTimeString()}`);
         return lastGameEnd;
+    }
+    
+    /**
+     * ✨ NUEVO: Inicializar ciclo independiente para un modo
+     */
+    initializeModeCycle(modeId) {
+        const modeConfig = this.gameModes[modeId];
+        if (!modeConfig) return;
+        
+        // 1. CONFIGURAR CICLO INDEPENDIENTE
+        this.modeCycles[modeId] = {
+            startTime: Date.now(),
+            duration: modeConfig.duration,
+            breakTime: modeConfig.breakTime,
+            totalCycleTime: modeConfig.duration + modeConfig.breakTime,
+            lastGameEnd: null,
+            nextGameStart: null,
+            isActive: false
+        };
+        
+        // 2. CALCULAR PRIMERA PARTIDA
+        this.updateModeCycle(modeId);
+        
+        console.log(`✅ Ciclo independiente inicializado para modo: ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Actualizar ciclo de un modo específico
+     */
+    updateModeCycle(modeId) {
+        const cycle = this.modeCycles[modeId];
+        if (!cycle) return;
+        
+        const now = Date.now();
+        const totalCycleTime = cycle.duration + cycle.breakTime;
+        
+        // 1. CALCULAR CICLOS COMPLETADOS
+        const cyclesCompleted = Math.floor((now - cycle.startTime) / totalCycleTime);
+        
+        // 2. CALCULAR TIEMPO DE ÚLTIMA PARTIDA
+        cycle.lastGameEnd = cycle.startTime + (cyclesCompleted * totalCycleTime) + cycle.duration;
+        
+        // 3. CALCULAR TIEMPO DE PRÓXIMA PARTIDA
+        cycle.nextGameStart = cycle.startTime + ((cyclesCompleted + 1) * totalCycleTime);
+        
+        // 4. DETERMINAR SI HAY PARTIDA ACTIVA
+        const timeSinceLastGame = now - cycle.lastGameEnd;
+        cycle.isActive = timeSinceLastGame >= 0 && timeSinceLastGame < cycle.duration;
+        
+        console.log(`🔄 Ciclo actualizado para ${modeId}: Activo=${cycle.isActive}, Próxima=${new Date(cycle.nextGameStart).toLocaleTimeString()}`);
     }
     
     /**
