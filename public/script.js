@@ -6150,3 +6150,32 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🎉 Chat configurado para mostrar mensaje de bienvenida');
     }
 });
+
+// ===== PRELOADER Y TRANSICIONES SUAVES =====
+// Función para ocultar el preloader
+function hidePreloader() {
+    const preloader = document.getElementById('pagePreloader');
+    if (preloader) {
+        preloader.classList.add('fade-out');
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    }
+}
+
+// Ocultar preloader cuando la página esté completamente cargada
+window.addEventListener('load', function() {
+    // Pequeño delay para asegurar que todo esté renderizado
+    setTimeout(hidePreloader, 300);
+});
+
+// También ocultar si el DOM está listo y no hay imágenes pesadas
+document.addEventListener('DOMContentLoaded', function() {
+    // Si no hay imágenes, ocultar inmediatamente
+    const images = document.querySelectorAll('img');
+    if (images.length === 0) {
+        setTimeout(hidePreloader, 200);
+    }
+});
+
+// ===== CLASE PRINCIPAL BINGO PRO =====
