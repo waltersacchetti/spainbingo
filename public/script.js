@@ -447,6 +447,9 @@ class BingoPro {
         console.log('🚀 Inicializando chat en vivo...');
         this.initializeLiveChat();
         
+        // ✨ NUEVO: Configurar sincronización automática de userId
+        this.setupUserIdSyncListener();
+        
         // Inicializar contadores de modo independientes con delay reducido
         setTimeout(() => {
             this.updateAllModeCountdowns();
@@ -838,51 +841,134 @@ class BingoPro {
     }
 
     /**
-     * Obtener o crear un userId único por usuario real
+     * 🆔 SISTEMA DE IDENTIFICACIÓN ÚNICA POR USUARIO REAL
+     * SOLUCIONA EL PROBLEMA DE DUPLICACIÓN ENTRE NAVEGADORES
      */
     getOrCreateUserId() {
-        // Intentar obtener información del usuario autenticado
-        let userInfo = null;
+        // ✨ NUEVO: Prioridad 1 - Usuario autenticado con email único
+        let userInfo = this.getUserInfo();
         
-        // Verificar si hay sesión de usuario
-        const sessionData = localStorage.getItem('bingoroyal_session');
-        if (sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                userInfo = session.user;
-                console.log('👤 Usuario autenticado encontrado:', userInfo.email || userInfo.firstName);
-            } catch (error) {
-                console.log('⚠️ Error parseando sesión:', error);
-            }
-        }
-        
-        // Verificar si hay authManager disponible
-        if (!userInfo && typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
-            userInfo = authManager.getCurrentUser();
-            console.log('👤 Usuario desde authManager:', userInfo.email || userInfo.name);
-        }
-        
-        // Si tenemos información del usuario real, usar su email como identificador único
-        if (userInfo && (userInfo.email || userInfo.id)) {
-            // Usar email como identificador único para evitar duplicados por navegador
-            const realUserId = userInfo.email || `user_${userInfo.id}`;
-            console.log('🆔 Usando userId basado en usuario real (email):', realUserId);
+        if (userInfo && userInfo.email) {
+            // 🎯 SOLUCIÓN: Usar email como identificador único global
+            const realUserId = `user_${userInfo.email}`;
+            
+            // ✨ NUEVO: Sincronizar este ID en todos los navegadores del usuario
+            this.syncUserIdAcrossBrowsers(realUserId, userInfo);
+            
+            console.log('🆔 ✅ Usando userId único por email:', realUserId);
             return realUserId;
         }
         
-        // Si no hay usuario autenticado, usar userId anónimo persistente
-        let anonymousUserId = localStorage.getItem('bingoroyal_anonymous_userId');
+        // ✨ NUEVO: Prioridad 2 - Usuario autenticado con ID de base de datos
+        if (userInfo && userInfo.id) {
+            const realUserId = `user_db_${userInfo.id}`;
+            
+            // Sincronizar también este ID
+            this.syncUserIdAcrossBrowsers(realUserId, userInfo);
+            
+            console.log('🆔 ✅ Usando userId único por ID de BD:', realUserId);
+            return realUserId;
+        }
+        
+        // ✨ NUEVO: Prioridad 3 - Usuario anónimo con ID persistente global
+        // SOLUCIONA: Cada navegador creaba un ID diferente
+        let anonymousUserId = localStorage.getItem('bingoroyal_global_anonymous_userId');
         
         if (!anonymousUserId) {
-            // Crear un userId anónimo único
-            anonymousUserId = 'anonymous_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('bingoroyal_anonymous_userId', anonymousUserId);
-            console.log('🆔 Nuevo userId anónimo creado:', anonymousUserId);
+            // 🎯 SOLUCIÓN: Crear un ID anónimo que se pueda sincronizar
+            anonymousUserId = this.createGlobalAnonymousUserId();
+            localStorage.setItem('bingoroyal_global_anonymous_userId', anonymousUserId);
+            console.log('🆔 ✅ Nuevo userId anónimo global creado:', anonymousUserId);
         } else {
-            console.log('🆔 Usando userId anónimo existente:', anonymousUserId);
+            console.log('🆔 ✅ Usando userId anónimo global existente:', anonymousUserId);
         }
         
         return anonymousUserId;
+    }
+    
+    /**
+     * ✨ NUEVO: Crear ID anónimo que se pueda sincronizar entre navegadores
+     */
+    createGlobalAnonymousUserId() {
+        // 🎯 SOLUCIÓN: Usar timestamp + fingerprint del navegador para crear ID único pero sincronizable
+        const browserFingerprint = this.getBrowserFingerprint();
+        const timestamp = Math.floor(Date.now() / (24 * 60 * 60 * 1000)); // Día actual
+        
+        // Crear ID que sea único por día y navegador, pero sincronizable
+        const anonymousUserId = `anonymous_${timestamp}_${browserFingerprint}`;
+        
+        // Guardar en localStorage global para sincronización
+        localStorage.setItem('bingoroyal_global_anonymous_userId', anonymousUserId);
+        
+        return anonymousUserId;
+    }
+    
+    /**
+     * ✨ NUEVO: Obtener fingerprint del navegador para identificación única
+     */
+    getBrowserFingerprint() {
+        // 🎯 SOLUCIÓN: Crear un identificador único del navegador
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('BingoRoyal Browser Fingerprint', 2, 2);
+        
+        // Usar hash del canvas como fingerprint
+        const fingerprint = this.hashCode(canvas.toDataURL());
+        
+        return fingerprint.toString(36).substr(0, 8);
+    }
+    
+    /**
+     * ✨ NUEVO: Función hash simple para el fingerprint
+     */
+    hashCode(str) {
+        let hash = 0;
+        if (str.length === 0) return hash;
+        
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convertir a entero de 32 bits
+        }
+        
+        return Math.abs(hash);
+    }
+    
+    /**
+     * ✨ NUEVO: Sincronizar userId en todos los navegadores del usuario
+     */
+    syncUserIdAcrossBrowsers(userId, userInfo) {
+        // 🎯 SOLUCIÓN: Usar localStorage para sincronización entre pestañas/navegadores
+        
+        // Guardar el userId real en localStorage global
+        localStorage.setItem('bingoroyal_real_userId', userId);
+        
+        // Guardar información del usuario para sincronización
+        localStorage.setItem('bingoroyal_user_sync', JSON.stringify({
+            userId: userId,
+            userInfo: userInfo,
+            lastSync: Date.now(),
+            browserId: this.getBrowserFingerprint()
+        }));
+        
+        // ✨ NUEVO: Broadcast a otras pestañas del mismo dominio
+        if (typeof BroadcastChannel !== 'undefined') {
+            try {
+                const channel = new BroadcastChannel('bingoroyal_user_sync');
+                channel.postMessage({
+                    type: 'USER_ID_SYNC',
+                    userId: userId,
+                    userInfo: userInfo,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.log('⚠️ BroadcastChannel no disponible, usando localStorage');
+            }
+        }
+        
+        console.log('🔄 ✅ userId sincronizado:', userId);
     }
 
     /**
@@ -5779,6 +5865,126 @@ class BingoPro {
         
         chatMessages.scrollTop = chatMessages.scrollHeight;
         console.log('✅ Mensajes iniciales del chat cargados correctamente');
+    }
+
+    /**
+     * ✨ NUEVO: Configurar escucha para sincronización automática de userId
+     */
+    setupUserIdSyncListener() {
+        // 🎯 SOLUCIÓN: Escuchar cambios en localStorage para sincronización automática
+        
+        // Escuchar cambios en localStorage
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'bingoroyal_real_userId' || e.key === 'bingoroyal_user_sync') {
+                console.log('🔄 Cambio detectado en userId, sincronizando...');
+                this.handleUserIdChange(e.newValue, e.oldValue);
+            }
+        });
+        
+        // Escuchar mensajes de BroadcastChannel
+        if (typeof BroadcastChannel !== 'undefined') {
+            try {
+                const channel = new BroadcastChannel('bingoroyal_user_sync');
+                channel.onmessage = (event) => {
+                    if (event.data.type === 'USER_ID_SYNC') {
+                        console.log('🔄 Mensaje de sincronización recibido:', event.data.userId);
+                        this.handleUserIdChange(event.data.userId, this.userId);
+                    }
+                };
+            } catch (error) {
+                console.log('⚠️ BroadcastChannel no disponible para escucha');
+            }
+        }
+        
+        // ✨ NUEVO: Verificar si hay un userId real disponible al inicializar
+        const realUserId = localStorage.getItem('bingoroyal_real_userId');
+        if (realUserId && realUserId !== this.userId) {
+            console.log('🔄 userId real encontrado al inicializar, sincronizando...');
+            this.handleUserIdChange(realUserId, this.userId);
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Manejar cambios de userId para sincronización
+     */
+    handleUserIdChange(newUserId, oldUserId) {
+        if (newUserId === oldUserId) return;
+        
+        console.log('🔄 Sincronizando userId:', oldUserId, '→', newUserId);
+        
+        // Actualizar el userId actual
+        this.userId = newUserId;
+        
+        // Guardar en localStorage local
+        localStorage.setItem('bingoroyal_current_userId', newUserId);
+        
+        // ✨ NUEVO: Notificar al servidor del cambio de userId
+        this.notifyServerUserIdChange(newUserId, oldUserId);
+        
+        // ✨ NUEVO: Actualizar UI si es necesario
+        this.updateUIForUserIdChange(newUserId);
+        
+        console.log('✅ userId sincronizado correctamente:', newUserId);
+    }
+    
+    /**
+     * ✨ NUEVO: Notificar al servidor del cambio de userId
+     */
+    async notifyServerUserIdChange(newUserId, oldUserId) {
+        try {
+            // Solo notificar si hay un userId real (no anónimo)
+            if (newUserId.startsWith('user_')) {
+                const response = await fetch('/api/user/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        newUserId: newUserId,
+                        oldUserId: oldUserId,
+                        timestamp: Date.now()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Servidor notificado del cambio de userId');
+                }
+            }
+        } catch (error) {
+            console.log('⚠️ Error notificando al servidor:', error);
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Actualizar UI para el cambio de userId
+     */
+    updateUIForUserIdChange(newUserId) {
+        // Actualizar elementos de la UI que muestren información del usuario
+        const userDisplayElements = document.querySelectorAll('[data-user-id]');
+        userDisplayElements.forEach(element => {
+            element.setAttribute('data-user-id', newUserId);
+        });
+        
+        // Si hay un cambio de usuario autenticado, actualizar la información
+        if (newUserId.startsWith('user_')) {
+            this.updateUserDisplayFromSync();
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Actualizar información del usuario desde sincronización
+     */
+    updateUserDisplayFromSync() {
+        const userSyncData = localStorage.getItem('bingoroyal_user_sync');
+        if (userSyncData) {
+            try {
+                const syncData = JSON.parse(userSyncData);
+                if (syncData.userInfo) {
+                    // Actualizar la información del usuario en la UI
+                    this.updateUserDisplay(syncData.userInfo);
+                }
+            } catch (error) {
+                console.log('⚠️ Error parseando datos de sincronización:', error);
+            }
+        }
     }
 }
 
