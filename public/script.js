@@ -400,6 +400,9 @@ class BingoPro {
         // Cargar estado del juego guardado (optimizado)
         this.loadGameState();
         
+        // 🎯 NUEVO: CARGAR CARTONES DEL USUARIO INMEDIATAMENTE
+        this.loadUserCards();
+        
         // Cargar datos guardados de forma asíncrona para no bloquear
         requestIdleCallback(() => {
             this.loadFavoriteCards();
@@ -565,6 +568,12 @@ class BingoPro {
         setTimeout(() => {
             this.forceCompleteReset();
         }, 1000); // Esperar 1 segundo para que todo esté listo
+        
+        // 5. 🎯 NUEVO: SINCRONIZACIÓN AUTOMÁTICA CADA 5 SEGUNDOS
+        setInterval(() => {
+            this.updatePurchaseButtonsState();
+            this.updateAllModeCountdownsCoordinated();
+        }, 5000);
     }
     
     /**
@@ -860,10 +869,10 @@ class BingoPro {
                 countdownElement.className = 'countdown active-game';
                 countdownElement.setAttribute('data-status', 'active');
                 
-                // 🔒 BLOQUEAR COMPRAS
+                // 🔒 BLOQUEAR COMPRAS INMEDIATAMENTE
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
-                console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO`);
+                console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO - COMPRAS BLOQUEADAS`);
                 
             } else {
                 // ✅ PARTIDA TERMINADA - PERMITIR COMPRAS
@@ -871,14 +880,17 @@ class BingoPro {
                 countdownElement.className = 'countdown next-game';
                 countdownElement.setAttribute('data-status', 'waiting');
                 
-                // ✅ PERMITIR COMPRAS
+                // ✅ PERMITIR COMPRAS INMEDIATAMENTE
                 this.allowPurchasesForMode(modeId);
                 
-                console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES`);
+                console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES - COMPRAS PERMITIDAS`);
             }
             
             // 🎯 ACTUALIZAR PANEL INFORMATIVO EN VIVO
             this.updateLiveInfoPanel();
+            
+            // 🎯 ACTUALIZAR ESTADO DE BOTONES DE COMPRA
+            this.updatePurchaseButtonsState();
             
             return true;
             
@@ -1570,7 +1582,7 @@ class BingoPro {
     canPurchaseCards(modeId = null) {
         const targetMode = modeId || this.currentGameMode;
         
-        // No permitir compra durante partidas activas
+        // 🔒 BLOQUEO 1: No permitir compra durante partidas activas
         if (this.gameState === 'playing') {
             return { 
                 canPurchase: false, 
@@ -1579,12 +1591,22 @@ class BingoPro {
             };
         }
 
-        // Verificar partida global activa
+        // 🔒 BLOQUEO 2: Verificar partida global activa
         if (this.isGlobalGameActive(targetMode.id)) {
             return { 
                 canPurchase: false, 
                 reason: `Hay una partida global activa en ${targetMode.name}`,
                 code: 'GLOBAL_GAME_ACTIVE'
+            };
+        }
+        
+        // 🔒 BLOQUEO 3: Verificar estado del ciclo del modo
+        const cycle = this.modeCycles[targetMode.id];
+        if (cycle && cycle.isActive) {
+            return { 
+                canPurchase: false, 
+                reason: `${targetMode.name} está en curso`,
+                code: 'MODE_ACTIVE'
             };
         }
 
@@ -1599,7 +1621,7 @@ class BingoPro {
         }
 
         // Verificar límite de cartones
-        const currentCardsInMode = this.userCards.filter(card => card.mode === targetMode.id).length;
+        const currentCardsInMode = this.userCards.filter(card => card.gameMode === targetMode.id).length;
         if (currentCardsInMode >= targetMode.maxCards) {
             return { 
                 canPurchase: false, 
@@ -3864,90 +3886,10 @@ class BingoPro {
      * Comprar cartones para el modo de juego actual
      * ✅ BLOQUEADO durante partidas activas
      */
+    // 🎯 MÉTODO UNIFICADO PARA COMPRAR CARTONES (ASÍNCRONO)
     async purchaseCards(quantity = 1) {
-        // 🔒 BLOQUEO: No permitir compra durante partidas activas
-        if (this.gameState === 'playing') {
-            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
-            return false;
-        }
-
-        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
-        // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
-        // const currentMode = this.getCurrentGameMode();
-        // if (this.isGlobalGameActive(currentMode.id)) {
-        //     this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
-        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
-        //     return false;
-        // }
-
-        // Validaciones básicas
-        if (quantity <= 0 || quantity > 50) {
-            this.showNotification('❌ Cantidad inválida. Máximo 50 cartones por compra.', 'error');
-            return false;
-        }
-
-        // Verificar requisitos del modo de juego
-        const requirements = this.checkGameModeRequirements(currentMode.id);
-        if (!requirements.canPlay) {
-            this.showNotification(`❌ ${requirements.reason}`, 'error');
-            return false;
-        }
-
-        // 🎯 VERIFICAR LÍMITE DE CARTONES POR MODO
-        const currentCardsInMode = this.userCards.filter(card => card.gameMode === currentMode.id).length;
-        const maxCardsPerMode = currentMode.maxCards || 10; // Límite por defecto
-        
-        if (currentCardsInMode + quantity > maxCardsPerMode) {
-            this.showNotification(`❌ Solo puedes tener máximo ${maxCardsPerMode} cartones en ${currentMode.name}`, 'error');
-            return false;
-        }
-
-        // Calcular costo total
-        const cardPrice = currentMode.cardPrice;
-        const totalCost = quantity * cardPrice;
-
-        // Verificar saldo
-        if (this.userBalance < totalCost) {
-            this.showNotification(`❌ Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
-            return false;
-        }
-
-        try {
-            // Descontar dinero
-            this.userBalance -= totalCost;
-            this.updateBalanceDisplay();
-
-            // Crear cartones
-            for (let i = 0; i < quantity; i++) {
-                const card = this.generateCard();
-                card.purchasePrice = cardPrice;
-                card.mode = currentMode.id;
-                card.purchaseTime = new Date();
-                card.gameMode = currentMode.id;
-                this.userCards.push(card);
-                this.selectedCards.push(card.id);
-                
-                // ✨ NUEVO: Agregar experiencia por comprar cartón
-                this.addUserExperience('buyCard');
-            }
-
-            // Guardar y actualizar UI
-            this.saveUserCards();
-            this.renderCards();
-            this.updateCardInfo();
-
-            this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
-            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
-
-            console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
-            return true;
-
-        } catch (error) {
-            console.error('❌ Error en la compra:', error);
-            this.showNotification('Error al procesar la compra', 'error');
-            return false;
-        }
+        // 🔒 USAR LA LÓGICA UNIFICADA DE BUYCARDS
+        return this.buyCards(quantity);
     }
 
     showDepositModal() {
@@ -7012,94 +6954,95 @@ class BingoPro {
         }
     }
 
-    // ✅ MÉTODO BUYCARDS ORIGINAL RESTAURADO
+    // 🎯 MÉTODO UNIFICADO PARA COMPRAR CARTONES
     buyCards(quantity = 1) {
         console.log(`🛒 Comprando ${quantity} cartón(es)...`);
         
-        // 🎯 SISTEMA REAL DE BINGO ONLINE - BLOQUEOS ACTIVADOS
+        // 🔒 BLOQUEO PRINCIPAL: Verificar estado del juego
         const currentMode = this.getCurrentGameMode();
+        if (!currentMode) {
+            this.showNotification('❌ Error: Modo de juego no válido', 'error');
+            return false;
+        }
         
         // 🔒 BLOQUEO: No permitir compra durante partidas activas
         if (this.gameState === 'playing') {
-            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
+            this.showNotification('❌ No puedes comprar cartones durante una partida activa', 'error');
             return false;
         }
-
-        // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
+        
+        // 🔒 BLOQUEO: Verificar que no haya partida global activa
         if (this.isGlobalGameActive(currentMode.id)) {
-            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+            this.showNotification(`❌ No puedes comprar cartones. ${currentMode.name} está en curso`, 'error');
             return false;
         }
-
+        
+        // 🔒 BLOQUEO: Verificar que el modo esté disponible
+        const canPurchase = this.canPurchaseCards(currentMode.id);
+        if (!canPurchase.canPurchase) {
+            this.showNotification(`❌ ${canPurchase.reason}`, 'error');
+            return false;
+        }
+        
+        // ✅ TODAS LAS VALIDACIONES PASARON - PROCEDER CON LA COMPRA
+        return this.processCardPurchase(quantity, currentMode);
+    }
+    
+    // 🎯 MÉTODO PRIVADO PARA PROCESAR COMPRA
+    processCardPurchase(quantity, currentMode) {
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
-
-        // Validaciones mejoradas
+        
+        // Validaciones de cantidad y saldo
         if (quantity < 1 || quantity > 50) {
-            this.showNotification('❌ Cantidad inválida. Puedes comprar entre 1 y 50 cartones por vez', 'error');
+            this.showNotification('❌ Cantidad inválida (1-50 cartones)', 'error');
             return false;
         }
-
-        // Verificar requisitos del modo de juego
-        const requirements = this.checkGameModeRequirements(currentMode.id);
-        if (!requirements.canPlay) {
-            this.showNotification(`❌ ${requirements.reason}`, 'error');
-            return false;
-        }
-
+        
         if (this.userBalance < totalCost) {
             this.showNotification(`❌ Saldo insuficiente. Necesitas €${totalCost.toFixed(2)}`, 'error');
             return false;
         }
-
-        // 🎯 VERIFICAR LÍMITE DE CARTONES POR MODO
+        
+        // Verificar límite de cartones por modo
         const currentCardsInMode = this.userCards.filter(card => card.gameMode === currentMode.id).length;
-        const maxCardsPerMode = currentMode.maxCards || 10; // Límite por defecto
+        const maxCardsPerMode = currentMode.maxCards || 10;
         
         if (currentCardsInMode + quantity > maxCardsPerMode) {
-            this.showNotification(`❌ Solo puedes tener máximo ${maxCardsPerMode} cartones en ${currentMode.name}`, 'error');
+            this.showNotification(`❌ Máximo ${maxCardsPerMode} cartones en ${currentMode.name}`, 'error');
             return false;
         }
-
+        
         try {
             // Descontar dinero
             this.userBalance -= totalCost;
             this.updateBalanceDisplay();
-
+            
             // Crear cartones
             for (let i = 0; i < quantity; i++) {
                 const card = this.addCard();
                 if (card) {
                     card.purchasePrice = cardPrice;
-                    card.mode = currentMode.id;
-                    card.purchaseTime = new Date();
                     card.gameMode = currentMode.id;
+                    card.purchaseTime = new Date();
                     this.selectedCards.push(card.id);
-                    
-                    // Agregar experiencia
                     this.addUserExperience('buyCard');
                 }
             }
-
-            // Guardar y actualizar UI
+            
+            // Guardar y actualizar
             this.saveUserCards();
             this.renderCards();
             this.updateCardInfo();
-
-            // Mostrar notificación de éxito
+            
+            // Notificaciones
             this.showNotification(`✅ ${quantity} cartón(es) comprado(s) por €${totalCost.toFixed(2)}`, 'success');
-            
-            // Mostrar confirmación
             this.showPurchaseConfirmation(quantity, totalCost);
+            this.addChatMessage('system', `💳 Compra exitosa: ${quantity} cartón(es) para ${currentMode.name}`);
             
-            // Mensaje de chat
-            this.addChatMessage('system', `💳 Has comprado ${quantity} cartón(es) para ${currentMode.name}`);
-
             console.log(`✅ Compra exitosa: ${quantity} cartones por €${totalCost}`);
             return true;
-
+            
         } catch (error) {
             console.error('❌ Error en la compra:', error);
             this.showNotification('Error al procesar la compra', 'error');
