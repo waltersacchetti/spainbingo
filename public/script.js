@@ -5473,6 +5473,11 @@ class BingoPro {
         levelUpModal.className = 'level-up-modal';
         levelUpModal.innerHTML = `
             <div class="level-up-content">
+                <!-- Botón de cerrar -->
+                <button class="level-up-close" onclick="this.closest('.level-up-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
                 <div class="level-up-celebration">
                     <div class="celebration-icon">
                         <i class="fas fa-trophy"></i>
@@ -5498,12 +5503,12 @@ class BingoPro {
                         <span>Nuevos beneficios desbloqueados</span>
                     </div>
                 </div>
-                <button class="btn-level-continue" onclick="this.parentElement.parentElement.remove()">
+                <button class="btn-level-continue" onclick="this.closest('.level-up-modal').remove()">
                     <i class="fas fa-arrow-right"></i>
                     Continuar
                 </button>
             </div>
-            <div class="level-up-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="level-up-overlay" onclick="this.closest('.level-up-modal').remove()"></div>
         `;
         
         // Agregar al DOM

@@ -5106,6 +5106,34 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     border: 2px solid #FFD700;
     position: relative;
+}
+
+/* Botón de cerrar del modal de subida de nivel */
+.level-up-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.level-up-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.level-up-content {
+    position: relative;
     overflow: hidden;
 }
 
