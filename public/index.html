@@ -247,21 +247,40 @@
                             </div>
                         </div>
                         
-                        <!-- 🎯 BANNER ANIMADO CON NOTIFICACIONES DESLIZANTES -->
-                        <div id="gameStatusMessage" class="banner-animated">
-                            <div class="banner-content">
-                                <div class="banner-text">
-                                    <div class="banner-icon">✅</div>
-                                    <div class="banner-message">
-                                        <strong>Bingo Clásico disponible</strong> - Puedes comprar cartones y unirte a la próxima partida
+                        <!-- 🎯 PANEL INFORMATIVO EN VIVO DE PRÓXIMAS PARTIDAS -->
+                        <div id="gameStatusMessage" class="live-info-panel">
+                            <div class="panel-header">
+                                <div class="panel-icon">📡</div>
+                                <h3>Información en Vivo</h3>
+                            </div>
+                            <div class="panel-content">
+                                <div class="live-status">
+                                    <div class="status-item">
+                                        <span class="status-label">Estado:</span>
+                                        <span id="liveGameStatus" class="status-value">🔄 Actualizando...</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Próxima partida:</span>
+                                        <span id="nextGameInfo" class="status-value">⏳ Calculando...</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Jugadores online:</span>
+                                        <span id="livePlayerCount" class="status-value">👥 0</span>
                                     </div>
                                 </div>
-                                <div class="banner-notifications">
-                                    <div class="banner-notification">🎮 ¡Únete ahora y gana premios increíbles!</div>
-                                    <div class="banner-notification">🎯 Partidas cada 2 minutos - Nunca te aburrirás</div>
-                                    <div class="banner-notification">🏆 Compite con jugadores de toda España</div>
-                                    <div class="banner-notification">💎 Modo VIP disponible para expertos</div>
-                                    <div class="banner-notification">🌙 Bingo Nocturno para madrugadores</div>
+                                <div class="live-updates">
+                                    <div class="update-item" id="liveUpdate1">
+                                        <span class="update-icon">🎯</span>
+                                        <span class="update-text">Sistema de bingo sincronizado en tiempo real</span>
+                                    </div>
+                                    <div class="update-item" id="liveUpdate2">
+                                        <span class="update-icon">⚡</span>
+                                        <span class="update-text">Modo Rápido disponible en 2 minutos</span>
+                                    </div>
+                                    <div class="update-item" id="liveUpdate3">
+                                        <span class="update-icon">👑</span>
+                                        <span class="update-text">VIP: Partida en progreso - Espera 3 min</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

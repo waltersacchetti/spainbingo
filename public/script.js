@@ -463,6 +463,14 @@ class BingoPro {
         // ✨ NUEVO: SISTEMA DE SINCRONIZACIÓN CENTRALIZADO
         this.initializeCentralizedSyncSystem();
         
+        // 🎯 NUEVO: INICIALIZAR PANEL INFORMATIVO EN VIVO
+        this.updateLiveInfoPanel();
+        
+        // 🎯 NUEVO: ACTUALIZAR PANEL CADA 5 SEGUNDOS
+        setInterval(() => {
+            this.updateLiveInfoPanel();
+        }, 5000);
+        
         console.log('✅ Inicialización optimizada completada');
     }
     
@@ -684,55 +692,154 @@ class BingoPro {
     }
     
     /**
-     * 🎯 NUEVO: ACTUALIZAR BANNER ANIMADO DINÁMICAMENTE
+     * 🎯 NUEVO: ACTUALIZAR PANEL INFORMATIVO EN VIVO
      */
-    updateAnimatedBanner(modeId, isAvailable = true) {
-        const bannerElement = document.getElementById('gameStatusMessage');
-        if (!bannerElement) return;
+    updateLiveInfoPanel() {
+        const gameStatusElement = document.getElementById('liveGameStatus');
+        const nextGameElement = document.getElementById('nextGameInfo');
+        const playerCountElement = document.getElementById('livePlayerCount');
+        const update1Element = document.getElementById('liveUpdate1');
+        const update2Element = document.getElementById('liveUpdate2');
+        const update3Element = document.getElementById('liveUpdate3');
         
-        const modeName = this.gameModes[modeId]?.name || modeId;
+        if (!gameStatusElement || !nextGameElement || !playerCountElement) return;
         
-        if (isAvailable) {
-            // ✅ MODO DISPONIBLE
-            bannerElement.innerHTML = `
-                <div class="banner-content">
-                    <div class="banner-text">
-                        <div class="banner-icon">✅</div>
-                        <div class="banner-message">
-                            <strong>${modeName} disponible</strong> - Puedes comprar cartones y unirte a la próxima partida
-                        </div>
-                    </div>
-                    <div class="banner-notifications">
-                        <div class="banner-notification">🎮 ¡Únete ahora y gana premios increíbles!</div>
-                        <div class="banner-notification">🎯 Partidas cada 2 minutos - Nunca te aburrirás</div>
-                        <div class="banner-notification">🏆 Compite con jugadores de toda España</div>
-                        <div class="banner-notification">💎 Modo VIP disponible para expertos</div>
-                        <div class="banner-notification">🌙 Bingo Nocturno para madrugadores</div>
-                    </div>
-                </div>
-            `;
+        // 🎮 ESTADO GENERAL DEL JUEGO
+        const activeModes = Object.keys(this.modeCycles).filter(modeId => 
+            this.modeCycles[modeId] && this.modeCycles[modeId].isActive
+        );
+        
+        if (activeModes.length > 0) {
+            gameStatusElement.innerHTML = '🎮 <span style="color: #ff4444;">Partidas activas</span>';
+            gameStatusElement.style.color = '#ff4444';
         } else {
-            // 🔒 MODO NO DISPONIBLE
-            bannerElement.innerHTML = `
-                <div class="banner-content">
-                    <div class="banner-text">
-                        <div class="banner-icon">🔒</div>
-                        <div class="banner-message">
-                            <strong>${modeName} en curso</strong> - Espera a que termine la partida para comprar cartones
-                        </div>
-                    </div>
-                    <div class="banner-notifications">
-                        <div class="banner-notification">⏰ La partida está en progreso - ¡Sigue el juego!</div>
-                        <div class="banner-notification">🎯 Prepárate para la próxima ronda</div>
-                        <div class="banner-notification">🏆 ¡Alguien podría cantar BINGO en cualquier momento!</div>
-                        <div class="banner-notification">💎 Mientras tanto, revisa otros modos de juego</div>
-                        <div class="banner-notification">🌙 El Bingo Nocturno te espera</div>
-                    </div>
-                </div>
-            `;
+            gameStatusElement.innerHTML = '✅ <span style="color: #4CAF50;">Todos los modos disponibles</span>';
+            gameStatusElement.style.color = '#4CAF50';
         }
         
-        console.log(`🎯 Banner actualizado para ${modeId}: ${isAvailable ? 'Disponible' : 'No disponible'}`);
+        // ⏰ PRÓXIMA PARTIDA
+        const nextGameInfo = this.calculateNextGameInfo();
+        nextGameElement.innerHTML = nextGameInfo.text;
+        nextGameElement.style.color = nextGameInfo.color;
+        
+        // 👥 JUGADORES ONLINE (simulado por ahora)
+        const playerCount = Math.floor(Math.random() * 50) + 10;
+        playerCountElement.innerHTML = `👥 ${playerCount}`;
+        
+        // 📡 ACTUALIZACIONES EN VIVO
+        this.updateLiveUpdates(update1Element, update2Element, update3Element);
+        
+        console.log('🎯 Panel informativo en vivo actualizado');
+    }
+    
+    /**
+     * 🎯 NUEVO: CALCULAR INFORMACIÓN DE PRÓXIMA PARTIDA
+     */
+    calculateNextGameInfo() {
+        const now = Date.now();
+        let nextGameTime = Infinity;
+        let nextGameMode = null;
+        
+        // Buscar la próxima partida más cercana
+        Object.keys(this.modeCycles).forEach(modeId => {
+            const cycle = this.modeCycles[modeId];
+            if (cycle && cycle.nextGameStart && cycle.nextGameStart > now) {
+                if (cycle.nextGameStart < nextGameTime) {
+                    nextGameTime = cycle.nextGameStart;
+                    nextGameMode = modeId;
+                }
+            }
+        });
+        
+        if (nextGameTime === Infinity) {
+            return {
+                text: '🎯 Sistema sincronizado',
+                color: '#4CAF50'
+            };
+        }
+        
+        const timeUntilNext = nextGameTime - now;
+        const minutes = Math.floor(timeUntilNext / 60000);
+        const seconds = Math.floor((timeUntilNext % 60000) / 1000);
+        
+        if (minutes > 0) {
+            return {
+                text: `⏰ ${nextGameMode} en ${minutes}:${seconds.toString().padStart(2, '0')}`,
+                color: '#FF9800'
+            };
+        } else {
+            return {
+                text: `⚡ ${nextGameMode} en ${seconds}s`,
+                color: '#E91E63'
+            };
+        }
+    }
+    
+    /**
+     * 🎯 NUEVO: ACTUALIZAR ACTUALIZACIONES EN VIVO
+     */
+    updateLiveUpdates(update1, update2, update3) {
+        if (!update1 || !update2 || !update3) return;
+        
+        const updates = [
+            {
+                icon: '🎯',
+                text: 'Sistema de bingo sincronizado en tiempo real',
+                color: '#4CAF50'
+            },
+            {
+                icon: '⚡',
+                text: this.getRapidModeStatus(),
+                color: '#FF9800'
+            },
+            {
+                icon: '👑',
+                text: this.getVipModeStatus(),
+                color: '#E91E63'
+            }
+        ];
+        
+        // Aplicar actualizaciones con animación
+        [update1, update2, update3].forEach((element, index) => {
+            if (element && updates[index]) {
+                element.querySelector('.update-icon').textContent = updates[index].icon;
+                element.querySelector('.update-text').textContent = updates[index].text;
+                element.style.borderLeftColor = updates[index].color;
+                
+                // Añadir efecto de parpadeo
+                element.style.animation = 'none';
+                element.offsetHeight; // Trigger reflow
+                element.style.animation = 'slideInRight 0.5s ease-out';
+            }
+        });
+    }
+    
+    /**
+     * 🎯 NUEVO: OBTENER ESTADO DEL MODO RÁPIDO
+     */
+    getRapidModeStatus() {
+        const cycle = this.modeCycles['RAPID'];
+        if (!cycle) return 'Modo Rápido: Sistema offline';
+        
+        if (cycle.isActive) {
+            return 'Rápido: Partida en progreso - Espera 1 min';
+        } else {
+            return 'Rápido: Disponible para comprar cartones';
+        }
+    }
+    
+    /**
+     * 🎯 NUEVO: OBTENER ESTADO DEL MODO VIP
+     */
+    getVipModeStatus() {
+        const cycle = this.modeCycles['VIP'];
+        if (!cycle) return 'VIP: Sistema offline';
+        
+        if (cycle.isActive) {
+            return 'VIP: Partida en progreso - Espera 3 min';
+        } else {
+            return 'VIP: Disponible para comprar cartones';
+        }
     }
     
     /**
@@ -756,9 +863,6 @@ class BingoPro {
                 // 🔒 BLOQUEAR COMPRAS
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
-                // 🎯 ACTUALIZAR BANNER - MODO NO DISPONIBLE
-                this.updateAnimatedBanner(modeId, false);
-                
                 console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO`);
                 
             } else {
@@ -770,11 +874,11 @@ class BingoPro {
                 // ✅ PERMITIR COMPRAS
                 this.allowPurchasesForMode(modeId);
                 
-                // 🎯 ACTUALIZAR BANNER - MODO DISPONIBLE
-                this.updateAnimatedBanner(modeId, true);
-                
                 console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES`);
             }
+            
+            // 🎯 ACTUALIZAR PANEL INFORMATIVO EN VIVO
+            this.updateLiveInfoPanel();
             
             return true;
             

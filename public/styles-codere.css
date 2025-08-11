@@ -4769,10 +4769,12 @@ body {
     margin: 10px 0;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    min-height: 60px;
+    min-height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .mode-countdown i {
@@ -5580,22 +5582,24 @@ html {
 .countdown.next-game {
     background: linear-gradient(135deg, #4CAF50, #45a049);
     color: white;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-weight: bold;
     text-align: center;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: 220px;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     border: 2px solid #4CAF50;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-size: 15px;
+    letter-spacing: 0.5px;
+    font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
     margin: 10px auto;
     transition: all 0.3s ease;
+    line-height: 1.2;
 }
 
 .countdown.next-game:hover {
@@ -5603,20 +5607,36 @@ html {
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
+/* 🎯 NUEVO: MEJORAR LEGIBILIDAD CON SOMBRA DE TEXTO */
+.countdown.next-game,
+.countdown.active-game {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    font-family: 'Arial', sans-serif;
+    font-weight: 800;
+}
+
+/* 🎯 NUEVO: EFECTO DE BRILLO EN HOVER */
+.countdown.next-game:hover,
+.countdown.active-game:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px) scale(1.02);
+}
+
 /* 🎯 NUEVO: ESTILOS PARA "PARTIDA EN CURSO" */
 .countdown.active-game {
     background: linear-gradient(135deg, #ff4444, #cc0000);
     color: white;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-weight: bold;
     text-align: center;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: 220px;
     box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
     border: 2px solid #ff4444;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-size: 15px;
+    letter-spacing: 0.5px;
+    font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5624,69 +5644,208 @@ html {
     margin: 10px auto;
     transition: all 0.3s ease;
     animation: pulse-active 2s infinite;
+    line-height: 1.2;
 }
 
-/* 🎯 NUEVO: BANNER ANIMADO CON NOTIFICACIONES DESLIZANTES */
-.banner-animated {
+/* 🎯 NUEVO: PANEL INFORMATIVO EN VIVO */
+.live-info-panel {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
+}
+
+.live-info-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4CAF50, #2196F3, #FF9800, #E91E63);
+    animation: rainbowBorder 3s linear infinite;
+}
+
+@keyframes rainbowBorder {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-}
-
-.banner-text {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-}
-
-.banner-icon {
-    font-size: 20px;
+.panel-icon {
+    font-size: 24px;
     color: #4CAF50;
     animation: pulse 2s infinite;
 }
 
-.banner-message {
-    font-weight: 600;
-    font-size: 16px;
+.panel-header h3 {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-/* 🎯 NUEVO: NOTIFICACIONES DESLIZANTES */
-.banner-notifications {
-    position: absolute;
-    top: 0;
-    left: 100%;
-    white-space: nowrap;
-    animation: slideNotification 15s linear infinite;
+.panel-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
 }
 
-.banner-notification {
+.live-status {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.status-item:hover {
     background: rgba(255, 255, 255, 0.1);
-    padding: 8px 16px;
-    border-radius: 20px;
-    margin-left: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
 }
 
-@keyframes slideNotification {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-200%); }
+.status-label {
+    color: #b0b0b0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-value {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.live-updates {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.update-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 6px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
+    animation: slideInRight 0.5s ease-out;
+}
+
+.update-item:nth-child(2) {
+    animation-delay: 0.2s;
+    border-left-color: #FF9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.update-item:nth-child(3) {
+    animation-delay: 0.4s;
+    border-left-color: #E91E63;
+    background: rgba(233, 30, 99, 0.1);
+}
+
+.update-item:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.update-icon {
+    font-size: 18px;
+    color: #4CAF50;
+}
+
+.update-item:nth-child(2) .update-icon {
+    color: #FF9800;
+}
+
+.update-item:nth-child(3) .update-icon {
+    color: #E91E63;
+}
+
+.update-text {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
+}
+
+/* 📱 Responsive para panel informativo */
+@media (max-width: 768px) {
+    .panel-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .panel-header h3 {
+        font-size: 18px;
+    }
+    
+    .status-item {
+        padding: 10px 12px;
+    }
+    
+    .update-item {
+        padding: 8px 12px;
+    }
+}
+
+/* 📱 Responsive para countdowns */
+@media (max-width: 768px) {
+    .countdown.next-game,
+    .countdown.active-game {
+        min-width: 160px;
+        max-width: 180px;
+        font-size: 12px;
+        padding: 8px 12px;
+        letter-spacing: 0.3px;
+    }
+    
+    .mode-countdown {
+        min-height: 60px;
+        padding: 6px 8px;
+    }
 }
 
