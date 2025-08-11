@@ -2605,10 +2605,17 @@ class BingoPro {
             return;
         }
         
+        // ✨ NUEVO: Verificar si el mensaje ya existe para evitar duplicados
+        const messageId = Date.now() + Math.random();
+        const existingMessage = chatMessages.querySelector(`[data-message-id="${messageId}"]`);
+        if (existingMessage) {
+            console.log('⚠️ Mensaje duplicado detectado, saltando...');
+            return;
+        }
+        
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${type}`;
-        // ✨ NUEVO: Agregar ID único para evitar duplicados
-        messageDiv.setAttribute('data-message-id', Date.now() + Math.random());
+        messageDiv.setAttribute('data-message-id', messageId);
         
         const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
         
@@ -2618,9 +2625,9 @@ class BingoPro {
             // Convertir **texto** a <strong>texto</strong>
             formattedMessage = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             // Convertir • a <li>
-            formattedMessage = formattedMessage.replace(/•/g, '<li>');
+            formattedMessage = message.replace(/•/g, '<li>');
             // Convertir saltos de línea a <br>
-            formattedMessage = formattedMessage.replace(/\n/g, '<br>');
+            formattedMessage = message.replace(/\n/g, '<br>');
             // Envolver listas en <ul>
             if (formattedMessage.includes('<li>')) {
                 formattedMessage = formattedMessage.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>');
@@ -2646,8 +2653,14 @@ class BingoPro {
             `;
         }
         
+        // ✨ NUEVO: Agregar mensaje y asegurar que permanezca visible
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // ✨ NUEVO: Marcar el mensaje como persistente para evitar que se elimine
+        messageDiv.setAttribute('data-persistent', 'true');
+        
+        console.log('✅ Mensaje agregado al chat y marcado como persistente');
     }
 
     /**
@@ -2888,6 +2901,9 @@ class BingoPro {
      * ✨ NUEVO: Agregar solo mensajes nuevos del servidor sin borrar los existentes
      */
     addNewMessagesFromServer(messages) {
+        // ✨ NUEVO: Protección contra eliminación de mensajes locales
+        this.protectLocalChatMessages();
+        
         console.log('📋 Agregando mensajes nuevos del servidor:', messages?.length || 0);
         
         const chatMessages = document.getElementById('chatMessages');
@@ -2896,7 +2912,11 @@ class BingoPro {
             return;
         }
         
+        // ✨ NUEVO: Contar mensajes antes de agregar nuevos
+        const messagesBefore = chatMessages.querySelectorAll('.chat-message').length;
+        
         // Solo agregar mensajes que no estén ya en el chat
+        let newMessagesAdded = 0;
         messages.forEach(msg => {
             // Verificar si el mensaje ya existe (por ID o contenido)
             const existingMessage = chatMessages.querySelector(`[data-message-id="${msg.id}"]`);
@@ -2941,17 +2961,32 @@ class BingoPro {
                 }
                 
                 chatMessages.appendChild(messageDiv);
+                newMessagesAdded++;
             }
         });
         
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        // ✨ NUEVO: Solo hacer scroll si se agregaron mensajes nuevos
+        if (newMessagesAdded > 0) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log(`✅ ${newMessagesAdded} mensajes nuevos agregados del servidor`);
+        } else {
+            console.log('📋 No hay mensajes nuevos del servidor');
+        }
+        
+        // ✨ NUEVO: Verificar que los mensajes locales persistan
+        const messagesAfter = chatMessages.querySelectorAll('.chat-message').length;
+        const expectedMessages = messagesBefore + newMessagesAdded;
+        
+        if (messagesAfter !== expectedMessages) {
+            console.warn(`⚠️ Inconsistencia en el conteo de mensajes: esperado ${expectedMessages}, actual ${messagesAfter}`);
+        }
     }
 
     /**
-     * Mostrar mensajes en el chat
+     * Mostrar mensajes en el chat - SOLO AL INICIALIZAR
      */
     displayChatMessages(messages) {
-        console.log('📋 Mostrando mensajes del chat:', messages?.length || 0);
+        console.log('📋 Cargando mensajes iniciales del chat:', messages?.length || 0);
         
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) {
@@ -2959,13 +2994,21 @@ class BingoPro {
             return;
         }
         
-        // Limpiar mensajes existentes
+        // ✨ NUEVO: Solo limpiar si no hay mensajes locales
+        const hasLocalMessages = chatMessages.querySelectorAll('.chat-message').length > 0;
+        if (hasLocalMessages) {
+            console.log('📋 Chat ya tiene mensajes locales, saltando carga inicial');
+            return;
+        }
+        
+        // Solo limpiar si es la primera carga
         chatMessages.innerHTML = '';
         
         // Mostrar mensajes en orden cronológico
         messages.reverse().forEach(msg => {
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${msg.type}`;
+            messageDiv.setAttribute('data-message-id', msg.id || Date.now() + Math.random());
             
             if (msg.type === 'system') {
                 messageDiv.innerHTML = `
@@ -3006,6 +3049,7 @@ class BingoPro {
         });
         
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        console.log('✅ Mensajes iniciales del chat cargados correctamente');
     }
 
     /**
@@ -5579,6 +5623,96 @@ class BingoPro {
             this.chatApiUrl = '/api/chat';
             console.log('🔧 URL del chat establecida por defecto debido a error:', this.chatApiUrl);
         }
+    }
+
+    /**
+     * ✨ NUEVO: Proteger mensajes locales del chat contra eliminación
+     */
+    protectLocalChatMessages() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        
+        // Verificar que los mensajes locales persistan
+        const localMessages = chatMessages.querySelectorAll('[data-persistent="true"]');
+        if (localMessages.length > 0) {
+            console.log(`🛡️ Protegiendo ${localMessages.length} mensajes locales del chat`);
+            
+            // Marcar todos los mensajes como protegidos
+            localMessages.forEach(msg => {
+                msg.setAttribute('data-protected', 'true');
+                msg.style.borderLeft = '3px solid #4CAF50';
+            });
+        }
+    }
+
+    /**
+     * Mostrar mensajes en el chat - SOLO AL INICIALIZAR
+     */
+    displayChatMessages(messages) {
+        console.log('📋 Cargando mensajes iniciales del chat:', messages?.length || 0);
+        
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) {
+            console.warn('⚠️ Contenedor de mensajes del chat no encontrado');
+            return;
+        }
+        
+        // ✨ NUEVO: Solo limpiar si no hay mensajes locales
+        const hasLocalMessages = chatMessages.querySelectorAll('.chat-message').length > 0;
+        if (hasLocalMessages) {
+            console.log('📋 Chat ya tiene mensajes locales, saltando carga inicial');
+            return;
+        }
+        
+        // Solo limpiar si es la primera carga
+        chatMessages.innerHTML = '';
+        
+        // Mostrar mensajes en orden cronológico
+        messages.reverse().forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${msg.type}`;
+            messageDiv.setAttribute('data-message-id', msg.id || Date.now() + Math.random());
+            
+            if (msg.type === 'system') {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            } else if (msg.type === 'bot') {
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-user">BingoBot:</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            } else {
+                // Obtener información del usuario desde la sesión
+                const sessionData = localStorage.getItem('bingoroyal_session');
+                let currentUserId = 'anonymous';
+                
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        if (session.user) {
+                            currentUserId = session.user.id || session.user.email || 'user_' + Date.now();
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Error parseando sesión:', e);
+                    }
+                }
+                
+                const displayName = msg.userId === currentUserId ? 'Tú' : msg.userName;
+                messageDiv.innerHTML = `
+                    <span class="message-time">${msg.time}</span>
+                    <span class="message-user">${displayName}:</span>
+                    <span class="message-text">${msg.message}</span>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+        });
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        console.log('✅ Mensajes iniciales del chat cargados correctamente');
     }
 }
 
