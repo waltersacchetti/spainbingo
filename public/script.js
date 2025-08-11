@@ -3201,11 +3201,11 @@ class BingoPro {
     resetUserCardsForNextGame() {
         console.log('🔄 Reseteando cartones del usuario para próxima partida...');
         
-        // 1. ✨ NUEVO: RESETEAR CARTONES COMPLETAMENTE A 0
+        // 🎯 SISTEMA REAL DE BINGO ONLINE - RESET COMPLETO
         this.userCards = [];
         this.selectedCards = [];
         
-        // 2. ✨ NUEVO: LIMPIAR CARTONES DEL MODO ACTUAL EN LOCALSTORAGE
+        // 🎯 LIMPIAR CARTONES DEL MODO ACTUAL EN LOCALSTORAGE
         const currentMode = this.getCurrentGameMode();
         if (currentMode) {
             const storageKey = `bingoroyal_user_cards_${currentMode.id}`;
@@ -3213,10 +3213,11 @@ class BingoPro {
             console.log(`🗑️ Cartones del modo ${currentMode.id} eliminados del localStorage`);
         }
         
-        // 3. ✨ NUEVO: LIMPIAR TODOS LOS CARTONES DE TODOS LOS MODOS
+        // 🎯 LIMPIAR TODOS LOS CARTONES DE TODOS LOS MODOS
         Object.keys(this.gameModes).forEach(modeId => {
             const storageKey = `bingoroyal_user_cards_${modeId}`;
             localStorage.removeItem(storageKey);
+            console.log(`🗑️ Cartones de ${modeId} eliminados del localStorage`);
         });
         
         // 4. Limpiar números llamados
@@ -3725,10 +3726,12 @@ class BingoPro {
             return false;
         }
 
-        // Verificar límite de cartones por modo
-        const currentCardsInMode = this.userCards.filter(card => card.mode === currentMode.id).length;
-        if (currentCardsInMode + quantity > currentMode.maxCards) {
-            this.showNotification(`❌ Límite excedido. Máximo ${currentMode.maxCards} cartones para ${currentMode.name}.`, 'error');
+        // 🎯 VERIFICAR LÍMITE DE CARTONES POR MODO
+        const currentCardsInMode = this.userCards.filter(card => card.gameMode === currentMode.id).length;
+        const maxCardsPerMode = currentMode.maxCards || 10; // Límite por defecto
+        
+        if (currentCardsInMode + quantity > maxCardsPerMode) {
+            this.showNotification(`❌ Solo puedes tener máximo ${maxCardsPerMode} cartones en ${currentMode.name}`, 'error');
             return false;
         }
 
@@ -6208,13 +6211,23 @@ class BingoPro {
             totalCycleTime: modeConfig.duration + modeConfig.breakTime,
             lastGameEnd: null,
             nextGameStart: null,
-            isActive: false
+            isActive: false,
+            // 🎯 NUEVO: ESTADO REAL DE LA PARTIDA
+            gameState: 'waiting', // waiting, playing, finished
+            players: [],
+            calledNumbers: [],
+            winner: null,
+            gameStartTime: null,
+            gameEndTime: null,
+            // 🎯 NUEVO: CARTONES DEL USUARIO PARA ESTE MODO
+            userCards: [],
+            selectedCards: []
         };
         
         // 2. ✨ NUEVO: CALCULAR PRIMERA PARTIDA
         this.updateModeCycle(modeId);
         
-        console.log(`✅ Ciclo independiente inicializado para modo: ${modeId} con offset de ${offset}s`);
+        console.log(`🎯 Ciclo REAL inicializado para modo: ${modeId} con offset de ${offset}s`);
     }
     
     /**
@@ -6760,21 +6773,22 @@ class BingoPro {
     buyCards(quantity = 1) {
         console.log(`🛒 Comprando ${quantity} cartón(es)...`);
         
-        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
+        // 🎯 SISTEMA REAL DE BINGO ONLINE - BLOQUEOS ACTIVADOS
+        const currentMode = this.getCurrentGameMode();
+        
         // 🔒 BLOQUEO: No permitir compra durante partidas activas
-        // if (this.gameState === 'playing') {
-        //     this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
-        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
-        //     return false;
-        // }
+        if (this.gameState === 'playing') {
+            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
+            return false;
+        }
 
         // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
-        // const currentMode = this.getCurrentGameMode();
-        // if (this.isGlobalGameActive(currentMode.id)) {
-        //     this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
-        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
-        //     return false;
-        // }
+        if (this.isGlobalGameActive(currentMode.id)) {
+            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
+            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+            return false;
+        }
 
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
@@ -6797,10 +6811,12 @@ class BingoPro {
             return false;
         }
 
-        // Verificar límite de cartones por modo
-        const currentCardsInMode = this.userCards.filter(card => card.mode === currentMode.id).length;
-        if (currentCardsInMode + quantity > currentMode.maxCards) {
-            this.showNotification(`❌ Límite excedido. Máximo ${currentMode.maxCards} cartones para ${currentMode.name}.`, 'error');
+        // 🎯 VERIFICAR LÍMITE DE CARTONES POR MODO
+        const currentCardsInMode = this.userCards.filter(card => card.gameMode === currentMode.id).length;
+        const maxCardsPerMode = currentMode.maxCards || 10; // Límite por defecto
+        
+        if (currentCardsInMode + quantity > maxCardsPerMode) {
+            this.showNotification(`❌ Solo puedes tener máximo ${maxCardsPerMode} cartones en ${currentMode.name}`, 'error');
             return false;
         }
 
@@ -6848,7 +6864,7 @@ class BingoPro {
         }
     }
 
-    // ✅ MÉTODO SHOWNOTIFICATION FALTANTE
+    // ✅ MÉTODO SHOWNOTIFICATION FUNCIONANDO
     showNotification(message, type = 'info') {
         console.log(`📢 Notificación ${type}:`, message);
         
@@ -6878,6 +6894,7 @@ class BingoPro {
             }, 300);
         }, 3000);
         
+        console.log(`✅ Notificación mostrada: ${message}`);
         return true;
     }
 
