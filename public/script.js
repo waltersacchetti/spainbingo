@@ -628,39 +628,18 @@ class BingoPro {
                 nextGameIn: 'PARTIDA EN CURSO',
                 timeRemaining: 0,
                 status: 'playing',
-                displayText: 'PARTIDA EN CURSO'
+                displayText: '🎮 PARTIDA EN CURSO'
+            };
+        } else {
+            // ✅ PARTIDA TERMINADA - PERMITIR COMPRAS
+            return { 
+                isActive: false, 
+                nextGameIn: null,
+                timeRemaining: 0,
+                status: 'waiting',
+                displayText: '✅ COMPRAR CARTONES'
             };
         }
-        
-        // 3. ✨ NUEVO: CALCULAR TIEMPO HASTA PRÓXIMA PARTIDA USANDO CICLO
-        if (cycle && cycle.nextGameStart) {
-            const now = Date.now();
-            const timeUntilNextGame = cycle.nextGameStart - now;
-            
-            if (timeUntilNextGame > 0) {
-                // ⏰ TIEMPO RESTANTE VÁLIDO - MOSTRAR COUNTDOWN
-                const minutes = Math.floor(timeUntilNextGame / 60000);
-                const seconds = Math.floor((timeUntilNextGame % 60000) / 1000);
-                const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                
-                return { 
-                    isActive: false, 
-                    nextGameIn: countdownText,
-                    timeRemaining: timeUntilNextGame,
-                    status: 'waiting',
-                    displayText: `Próxima en ${countdownText}`
-                };
-            }
-        }
-        
-        // 4. 🎮 PARTIDA DEBERÍA ESTAR ACTIVA
-        return { 
-            isActive: true, 
-            nextGameIn: null,
-            timeRemaining: 0,
-            status: 'should_start',
-            displayText: '🎮 PARTIDA EN CURSO'
-        };
     }
     
     /**
@@ -670,6 +649,38 @@ class BingoPro {
         const minutes = Math.floor(milliseconds / 60000);
         const seconds = Math.floor((milliseconds % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    /**
+     * 🎯 NUEVO: POP-UP "YA PUEDES COMPRAR CARTONES"
+     */
+    showBuyCardsPopup(modeId) {
+        const modeName = this.gameModes[modeId]?.name || modeId;
+        
+        const popup = document.createElement('div');
+        popup.className = 'buy-cards-popup';
+        popup.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-icon">🎉</div>
+                <h3>¡Partida Terminada!</h3>
+                <p>Ya puedes comprar cartones para <strong>${modeName}</strong></p>
+                <p class="time-limit">⏰ Tienes 2 minutos para comprar y unirte</p>
+                <button class="btn-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // Auto-remover después de 5 segundos
+        setTimeout(() => {
+            if (popup.parentNode) {
+                popup.remove();
+            }
+        }, 5000);
+        
+        console.log(`🎉 Pop-up mostrado para ${modeId}: Ya puedes comprar cartones`);
     }
     
     /**
@@ -686,7 +697,7 @@ class BingoPro {
         try {
             if (countdownInfo.isActive) {
                 // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
-                countdownElement.textContent = 'PARTIDA EN CURSO';
+                countdownElement.textContent = '🎮 PARTIDA EN CURSO';
                 countdownElement.className = 'countdown active-game';
                 countdownElement.setAttribute('data-status', 'active');
                 countdownElement.style.color = '#ff4444'; // Rojo para partida activa
@@ -697,28 +708,18 @@ class BingoPro {
                 
                 console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO`);
                 
-            } else if (countdownInfo.nextGameIn && countdownInfo.nextGameIn !== 'PARTIDA EN CURSO') {
-                // ⏰ PRÓXIMA PARTIDA - COUNTDOWN
-                countdownElement.textContent = countdownInfo.nextGameIn;
+            } else {
+                // ✅ PARTIDA TERMINADA - PERMITIR COMPRAS
+                countdownElement.textContent = '✅ COMPRAR CARTONES';
                 countdownElement.className = 'countdown next-game';
                 countdownElement.setAttribute('data-status', 'waiting');
-                countdownElement.style.color = '#44ff44'; // Verde para countdown
+                countdownElement.style.color = '#44ff44'; // Verde para permitir compras
                 countdownElement.style.fontWeight = 'normal';
                 
                 // ✅ PERMITIR COMPRAS
                 this.allowPurchasesForMode(modeId);
                 
-                console.log(`⏰ Countdown ${modeId}: Próxima en ${countdownInfo.nextGameIn}`);
-                
-            } else {
-                // ❓ ESTADO DESCONOCIDO
-                countdownElement.textContent = '--:--';
-                countdownElement.className = 'countdown unknown';
-                countdownElement.setAttribute('data-status', 'unknown');
-                countdownElement.style.color = '#888888'; // Gris para desconocido
-                countdownElement.style.fontWeight = 'normal';
-                
-                console.log(`❓ Countdown ${modeId}: Estado desconocido`);
+                console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES`);
             }
             
             return true;
@@ -6210,12 +6211,12 @@ class BingoPro {
             return;
         }
         
-        // 🎯 NUEVO: CONFIGURAR CICLO INDEPENDIENTE CON OFFSET DIFERENTE POR MODO
+        // 🎯 SIMPLIFICADO: TODOS LOS MODOS TIENEN 2 MINUTOS PARA COMPRAR
         const modeOffset = {
             'CLASSIC': 0,      // Empieza inmediatamente
-            'RAPID': 30,       // Empieza en 30 segundos
-            'VIP': 60,         // Empieza en 1 minuto
-            'NIGHT': 90        // Empieza en 1.5 minutos
+            'RAPID': 0,        // Empieza inmediatamente
+            'VIP': 0,          // Empieza inmediatamente
+            'NIGHT': 0         // Empieza inmediatamente
         };
         
         const offset = modeOffset[modeId] || 0;
@@ -6224,8 +6225,8 @@ class BingoPro {
         this.modeCycles[modeId] = {
             startTime: startTime,
             duration: modeConfig.duration,
-            breakTime: modeConfig.breakTime,
-            totalCycleTime: modeConfig.duration + modeConfig.breakTime,
+            breakTime: 2 * 60 * 1000, // 🎯 SIMPLIFICADO: 2 MINUTOS PARA TODOS
+            totalCycleTime: modeConfig.duration + (2 * 60 * 1000),
             lastGameEnd: null,
             nextGameStart: null,
             isActive: false,
@@ -6327,12 +6328,17 @@ class BingoPro {
         cycle.isActive = timeSinceLastGame >= 0 && timeSinceLastGame < cycle.duration;
         
         // 🎯 NUEVO: ACTUALIZAR ESTADO DE LA PARTIDA
+        const wasActive = cycle.gameState === 'playing';
+        
         if (cycle.isActive) {
             cycle.gameState = 'playing';
-        } else if (now < cycle.nextGameStart) {
-            cycle.gameState = 'waiting';
         } else {
-            cycle.gameState = 'finished';
+            cycle.gameState = 'waiting';
+            
+            // 🎯 NUEVO: MOSTRAR POP-UP CUANDO TERMINE LA PARTIDA
+            if (wasActive && cycle.gameState === 'waiting') {
+                this.showBuyCardsPopup(modeId);
+            }
         }
         
         // 🎯 NUEVO: GUARDAR ESTADO ACTUALIZADO
