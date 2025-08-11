@@ -3655,10 +3655,11 @@ class BingoPro {
 
         // 🔒 BLOQUEO: Verificar que no haya partida global activa
         const currentMode = this.getCurrentGameMode();
-        if (this.isGlobalGameActive(currentMode.id)) {
-            this.showNotification(`❌ No puedes unirte. Hay una partida activa en ${currentMode.name}`, 'error');
-            return false;
-        }
+        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
+        // if (this.isGlobalGameActive(currentMode.id)) {
+        //     this.showNotification(`❌ No puedes unirte. Hay una partida activa en ${currentMode.name}`, 'error');
+        //     return false;
+        // }
 
         if (this.selectedCards.length === 0) {
             this.showNotification('❌ Debes comprar al menos 1 cartón para unirte a la partida', 'error');
@@ -3687,13 +3688,14 @@ class BingoPro {
             return false;
         }
 
+        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
         // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
-        const currentMode = this.getCurrentGameMode();
-        if (this.isGlobalGameActive(currentMode.id)) {
-            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
-            return false;
-        }
+        // const currentMode = this.getCurrentGameMode();
+        // if (this.isGlobalGameActive(currentMode.id)) {
+        //     this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
+        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+        //     return false;
+        // }
 
         // Validaciones básicas
         if (quantity <= 0 || quantity > 50) {
@@ -4624,11 +4626,12 @@ class BingoPro {
         console.log(`🎮 Modo de juego: ${currentMode.name}`);
         
         // 🔒 BLOQUEO: Verificar que no haya partida global activa en este modo
-        if (this.isGlobalGameActive(currentMode.id)) {
-            console.log('⚠️ Ya hay una partida global activa en este modo');
-            this.showNotification(`❌ Ya hay una partida activa en ${currentMode.name}. Espera a que termine.`, 'warning');
-            return;
-        }
+        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
+        // if (this.isGlobalGameActive(currentMode.id)) {
+        //     console.log('⚠️ Ya hay una partida global activa en este modo');
+        //     this.showNotification(`❌ Ya hay una partida activa en ${currentMode.name}. Espera a que termine.`, 'warning');
+        //     return;
+        // }
         
         // En un bingo global, el juego funciona independientemente de los cartones del usuario
         // Los cartones del usuario solo afectan si puede ganar, no si el juego puede comenzar
@@ -6736,20 +6739,21 @@ class BingoPro {
     buyCards(quantity = 1) {
         console.log(`🛒 Comprando ${quantity} cartón(es)...`);
         
+        // 🚨 TEMPORALMENTE DESACTIVADO: BLOQUEOS PARA RESTAURAR FUNCIONALIDAD
         // 🔒 BLOQUEO: No permitir compra durante partidas activas
-        if (this.gameState === 'playing') {
-            this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
-            return false;
-        }
+        // if (this.gameState === 'playing') {
+        //     this.showNotification('❌ No puedes comprar cartones durante una partida activa. Espera a que termine.', 'error');
+        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida en curso. Espera al final.');
+        //     return false;
+        // }
 
         // 🔒 BLOQUEO: Verificar que no haya partida global activa en el modo actual
-        const currentMode = this.getCurrentGameMode();
-        if (this.isGlobalGameActive(currentMode.id)) {
-            this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
-            this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
-            return false;
-        }
+        // const currentMode = this.getCurrentGameMode();
+        // if (this.isGlobalGameActive(currentMode.id)) {
+        //     this.showNotification('❌ No puedes comprar cartones. Hay una partida global activa en este modo.', 'error');
+        //     this.addChatMessage('system', '❌ Compra bloqueada: Partida global activa en ' + currentMode.name);
+        //     return false;
+        // }
 
         const cardPrice = currentMode.cardPrice;
         const totalCost = quantity * cardPrice;
