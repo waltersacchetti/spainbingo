@@ -6178,4 +6178,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ===== CLASE PRINCIPAL BINGO PRO =====
+// ===== ELIMINACIÓN DE MODALES/OVERLAYS NO DESEADOS =====
+// Eliminar cualquier modal o overlay que se esté mostrando por defecto
+document.addEventListener('DOMContentLoaded', function() {
+    // Eliminar cualquier modal que se esté mostrando
+    const visibleModals = document.querySelectorAll('.modal.show, .modal[style*="display: block"], .modal[style*="opacity: 1"]');
+    visibleModals.forEach(modal => {
+        console.log('🔧 Eliminando modal visible no deseado:', modal);
+        modal.remove();
+    });
+    
+    // Eliminar cualquier overlay que se esté mostrando
+    const visibleOverlays = document.querySelectorAll('.modal-overlay.show, .overlay.show, [class*="overlay"][style*="display: block"], [class*="overlay"][style*="opacity: 1"]');
+    visibleOverlays.forEach(overlay => {
+        console.log('🔧 Eliminando overlay visible no deseado:', overlay);
+        overlay.remove();
+    });
+    
+    // Eliminar cualquier elemento con backdrop-filter que se esté mostrando
+    const backdropElements = document.querySelectorAll('[style*="backdrop-filter"], [style*="filter: blur"]');
+    backdropElements.forEach(element => {
+        if (element.style.backdropFilter || element.style.filter) {
+            console.log('🔧 Limpiando backdrop-filter no deseado:', element);
+            element.style.backdropFilter = '';
+            element.style.filter = '';
+        }
+    });
+    
+    // Asegurar que el body y app-container no tengan opacidad 0
+    if (document.body.style.opacity === '0') {
+        document.body.style.opacity = '1';
+        console.log('🔧 Corrigiendo opacidad del body');
+    }
+    
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer && appContainer.style.opacity === '0') {
+        appContainer.style.opacity = '1';
+        console.log('🔧 Corrigiendo opacidad del app-container');
+    }
+});
+
+// ===== PRELOADER Y TRANSICIONES SUAVES =====

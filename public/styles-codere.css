@@ -5249,3 +5249,29 @@ html {
     100% { transform: rotate(360deg); }
 }
 
+/* ===== PREVENCIÓN DE MODALES NO DESEADOS ===== */
+/* Asegurar que ningún modal se muestre por defecto */
+.modal:not(.show),
+.modal:not(.active) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Asegurar que ningún overlay se muestre por defecto */
+.modal-overlay:not(.show),
+.overlay:not(.show) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Eliminar backdrop-filter por defecto */
+.modal:not(.show) .modal-content,
+.modal:not(.active) .modal-content {
+    backdrop-filter: none !important;
+    filter: none !important;
+}
+
