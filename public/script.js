@@ -454,27 +454,245 @@ class BingoPro {
         // ✨ NUEVO: Configurar sincronización automática de userId
         this.setupUserIdSyncListener();
         
-        // Inicializar contadores de modo independientes con delay reducido
-        setTimeout(() => {
-            this.updateAllModeCountdowns();
-            
-            // Configurar intervalo para actualizar contadores por modo cada 5 segundos
-            this.modeCountdownInterval = setInterval(() => {
-                this.updateAllModeCountdowns();
-            }, 5000);
-            
-            console.log('✅ Intervalo de contadores por modo configurado (cada 5s)');
-        }, 500);
+        // ✨ NUEVO: SISTEMA DE CRONÓMETROS COORDINADO Y PROFESIONAL
+        this.initializeCoordinatedCountdownSystem();
         
-        // Configurar intervalo adicional para actualización de precios cada 10 segundos
-        setTimeout(() => {
-            setInterval(() => {
-                this.updateCardPriceDisplay();
-            }, 10000);
-            console.log('✅ Intervalo de actualización de precios configurado (cada 10s)');
-        }, 1000);
+        // ✨ NUEVO: SISTEMA DE SINCRONIZACIÓN CENTRALIZADO
+        this.initializeCentralizedSyncSystem();
         
         console.log('✅ Inicialización optimizada completada');
+    }
+    
+    /**
+     * ✨ NUEVO: SISTEMA DE CRONÓMETROS COORDINADO Y PROFESIONAL
+     * SOLUCIONA: Cronómetros no coordinados y lógica fragmentada
+     */
+    initializeCoordinatedCountdownSystem() {
+        console.log('🎯 Inicializando sistema de cronómetros coordinado y profesional...');
+        
+        // 1. LIMPIAR INTERVALOS ANTERIORES
+        if (this.modeCountdownInterval) {
+            clearInterval(this.modeCountdownInterval);
+        }
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+        }
+        
+        // 2. CONFIGURAR SISTEMA CENTRALIZADO
+        this.countdownSystem = {
+            isActive: false,
+            currentMode: null,
+            startTime: null,
+            endTime: null,
+            breakTime: null,
+            interval: null,
+            updateFrequency: 1000, // 1 segundo
+            lastUpdate: 0
+        };
+        
+        // 3. INICIALIZAR COUNTDOWNS INMEDIATAMENTE
+        this.updateAllModeCountdownsCoordinated();
+        
+        // 4. CONFIGURAR INTERVALO COORDINADO
+        this.modeCountdownInterval = setInterval(() => {
+            this.updateAllModeCountdownsCoordinated();
+        }, 1000); // Actualizar cada segundo para máxima precisión
+        
+        // 5. CONFIGURAR ACTUALIZACIÓN DE PRECIOS
+        setInterval(() => {
+            this.updateCardPriceDisplay();
+        }, 10000); // Cada 10 segundos
+        
+        console.log('✅ Sistema de cronómetros coordinado inicializado (actualización cada 1s)');
+    }
+    
+    /**
+     * ✨ NUEVO: SISTEMA DE SINCRONIZACIÓN CENTRALIZADO
+     * SOLUCIONA: Estado inconsistente y falta de coordinación
+     */
+    initializeCentralizedSyncSystem() {
+        console.log('🔄 Inicializando sistema de sincronización centralizado...');
+        
+        // 1. SINCRONIZACIÓN INMEDIATA
+        this.syncGameStateWithServer();
+        
+        // 2. SINCRONIZACIÓN PERIÓDICA COORDINADA
+        setInterval(() => {
+            this.syncGameStateWithServer();
+        }, 30000); // Cada 30 segundos
+        
+        // 3. SINCRONIZACIÓN DE COUNTDOWNS
+        setInterval(() => {
+            this.syncCountdownsWithServer();
+        }, 5000); // Cada 5 segundos
+        
+        console.log('✅ Sistema de sincronización centralizado inicializado');
+    }
+    
+    /**
+     * ✨ NUEVO: ACTUALIZACIÓN COORDINADA DE COUNTDOWNS
+     * SOLUCIONA: Cronómetros no coordinados
+     */
+    async updateAllModeCountdownsCoordinated() {
+        try {
+            // 1. VERIFICAR SI EL SISTEMA ESTÁ ACTIVO
+            if (this.countdownSystem.isActive) {
+                return; // Ya hay un countdown activo
+            }
+            
+            // 2. OBTENER DATOS DEL SERVIDOR
+            let serverData = null;
+            try {
+                const response = await fetch('/api/bingo/global-stats');
+                if (response.ok) {
+                    serverData = await response.json();
+                }
+            } catch (error) {
+                console.log('⚠️ Servidor no disponible, usando cálculo local coordinado');
+            }
+            
+            // 3. ACTUALIZAR COUNTDOWNS DE FORMA COORDINADA
+            const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+            let updatedCount = 0;
+            
+            for (const mode of modes) {
+                const countdownInfo = this.calculateCoordinatedCountdown(mode, serverData);
+                const updated = this.updateSingleModeCountdown(mode, countdownInfo);
+                if (updated) updatedCount++;
+            }
+            
+            // 4. ACTUALIZAR ESTADO DE BOTONES DE COMPRA
+            this.updatePurchaseButtonsStateFromCountdowns();
+            
+            console.log(`✅ Countdowns coordinados actualizados: ${updatedCount}/${modes.length}`);
+            
+        } catch (error) {
+            console.error('❌ Error en countdowns coordinados:', error);
+            this.updateCountdownsFallback();
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: CÁLCULO COORDINADO DE COUNTDOWN
+     * SOLUCIONA: Lógica fragmentada de countdowns
+     */
+    calculateCoordinatedCountdown(modeId, serverData = null) {
+        const modeConfig = this.gameModes[modeId];
+        if (!modeConfig) return { isActive: false, nextGameIn: null, timeRemaining: 0 };
+        
+        // 1. VERIFICAR SI HAY PARTIDA ACTIVA
+        if (this.isGlobalGameActive(modeId)) {
+            return { 
+                isActive: true, 
+                nextGameIn: null, 
+                timeRemaining: 0,
+                status: 'playing'
+            };
+        }
+        
+        // 2. CALCULAR TIEMPO HASTA PRÓXIMA PARTIDA
+        const totalCycleTime = modeConfig.duration + modeConfig.breakTime;
+        const now = Date.now();
+        
+        // 3. SIMULAR CICLO DE PARTIDAS (en producción esto vendría del servidor)
+        const lastGameEnd = this.getLastGameEndTime(modeId);
+        const nextGameStart = lastGameEnd + totalCycleTime;
+        const timeUntilNextGame = nextGameStart - now;
+        
+        if (timeUntilNextGame > 0) {
+            // ⏰ TIEMPO RESTANTE VÁLIDO
+            const minutes = Math.floor(timeUntilNextGame / 60000);
+            const seconds = Math.floor((timeUntilNextGame % 60000) / 1000);
+            
+            return { 
+                isActive: false, 
+                nextGameIn: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+                timeRemaining: timeUntilNextGame,
+                status: 'waiting'
+            };
+        } else {
+            // 🎮 PARTIDA DEBERÍA ESTAR ACTIVA
+            return { 
+                isActive: true, 
+                nextGameIn: null,
+                timeRemaining: 0,
+                status: 'should_start'
+            };
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: ACTUALIZACIÓN DE COUNTDOWN INDIVIDUAL
+     * SOLUCIONA: Estados visuales inconsistentes
+     */
+    updateSingleModeCountdown(modeId, countdownInfo) {
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) {
+            console.log(`⚠️ Elemento countdown-${modeId} no encontrado`);
+            return false;
+        }
+        
+        try {
+            if (countdownInfo.isActive) {
+                // 🎮 PARTIDA ACTIVA
+                countdownElement.textContent = 'En curso';
+                countdownElement.className = 'countdown active-game';
+                countdownElement.setAttribute('data-status', 'active');
+                
+                // 🔒 BLOQUEAR COMPRAS
+                this.blockPurchasesForMode(modeId, 'Partida en curso');
+                
+                console.log(`🎮 Countdown ${modeId}: En curso`);
+                
+            } else if (countdownInfo.nextGameIn) {
+                // ⏰ PRÓXIMA PARTIDA
+                countdownElement.textContent = countdownInfo.nextGameIn;
+                countdownElement.className = 'countdown next-game';
+                countdownElement.setAttribute('data-status', 'waiting');
+                
+                // ✅ PERMITIR COMPRAS
+                this.allowPurchasesForMode(modeId);
+                
+                console.log(`⏰ Countdown ${modeId}: Próxima en ${countdownInfo.nextGameIn}`);
+                
+            } else {
+                // ❓ ESTADO DESCONOCIDO
+                countdownElement.textContent = '--:--';
+                countdownElement.className = 'countdown unknown';
+                countdownElement.setAttribute('data-status', 'unknown');
+                
+                console.log(`❓ Countdown ${modeId}: Estado desconocido`);
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error(`❌ Error actualizando countdown ${modeId}:`, error);
+            return false;
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: SINCRONIZACIÓN DE COUNTDOWNS CON SERVIDOR
+     * SOLUCIONA: Falta de coordinación con backend
+     */
+    async syncCountdownsWithServer() {
+        try {
+            const response = await fetch('/api/bingo/global-stats');
+            if (response.ok) {
+                const serverData = await response.json();
+                
+                // ACTUALIZAR ESTADO LOCAL CON DATOS DEL SERVIDOR
+                this.updateLocalGameState(serverData);
+                
+                // SINCRONIZAR COUNTDOWNS
+                this.updateAllModeCountdownsCoordinated();
+                
+                console.log('✅ Countdowns sincronizados con servidor');
+            }
+        } catch (error) {
+            console.log('⚠️ No se pudo sincronizar countdowns con servidor');
+        }
     }
 
     /**
@@ -1061,16 +1279,30 @@ class BingoPro {
      * 🔒 Verificar si hay una partida global activa en un modo específico
      * ✨ NUEVO: Sistema mejorado de detección de partidas activas
      */
+    /**
+     * 🎯 VERIFICACIÓN ROBUSTA DE PARTIDAS ACTIVAS
+     * SOLUCIONA: Detección inconsistente de partidas activas
+     */
     isGlobalGameActive(modeId) {
-        // 🎯 SOLUCIÓN: Verificación múltiple para detectar partidas activas
+        console.log(`🔍 Verificando estado de partida para modo: ${modeId}`);
         
-        // 1. Verificar estado local del juego
+        // 1. ✨ NUEVO: VERIFICACIÓN POR ATRIBUTO DATA-STATUS
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (countdownElement) {
+            const status = countdownElement.getAttribute('data-status');
+            if (status === 'active') {
+                console.log(`🎮 Partida activa detectada por data-status en ${modeId}`);
+                return true;
+            }
+        }
+        
+        // 2. VERIFICACIÓN POR ESTADO LOCAL DEL JUEGO
         if (this.gameState === 'playing' && this.currentGameMode === modeId) {
             console.log(`🎮 Partida local activa detectada en ${modeId}`);
             return true;
         }
 
-        // 2. Verificar estado del servidor si está disponible
+        // 3. VERIFICACIÓN POR ESTADO DEL SERVIDOR
         if (this.serverGameState && this.serverGameState[modeId]) {
             const serverState = this.serverGameState[modeId];
             if (serverState.gameState === 'playing') {
@@ -1079,27 +1311,25 @@ class BingoPro {
             }
         }
 
-        // 3. ✨ NUEVO: Verificar countdown activo (si está en 0:00, partida activa)
-        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        // 4. ✨ NUEVO: VERIFICACIÓN POR CONTENIDO DEL COUNTDOWN
         if (countdownElement && countdownElement.textContent === 'En curso') {
             console.log(`⏰ Countdown indica partida activa en ${modeId}`);
             return true;
         }
 
-        // 4. ✨ NUEVO: Verificar si hay una partida activa en el modo actual
-        const currentMode = this.getCurrentGameMode();
-        if (currentMode && currentMode.id === modeId && this.gameState === 'playing') {
-            console.log(`🎯 Partida activa en modo actual ${modeId}`);
-            return true;
-        }
-
-        // 5. ✨ NUEVO: Verificar estado de compra bloqueada (indicador de partida activa)
+        // 5. ✨ NUEVO: VERIFICACIÓN POR ESTADO DE BOTONES DE COMPRA
         const buyButtons = document.querySelectorAll(`[data-mode="${modeId}"] .btn-buy, [data-mode="${modeId}"] .btn-buy-cards`);
         for (const button of buyButtons) {
             if (button.disabled && button.classList.contains('game-blocked')) {
                 console.log(`🔒 Botón de compra bloqueado indica partida activa en ${modeId}`);
                 return true;
             }
+        }
+
+        // 6. ✨ NUEVO: VERIFICACIÓN POR SISTEMA DE COUNTDOWN COORDINADO
+        if (this.countdownSystem && this.countdownSystem.isActive && this.countdownSystem.currentMode === modeId) {
+            console.log(`🎯 Sistema de countdown indica partida activa en ${modeId}`);
+            return true;
         }
 
         console.log(`✅ No hay partida activa en ${modeId}`);
@@ -2960,52 +3190,116 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: Countdown en tiempo real para próxima partida
+     * ✨ NUEVO: Countdown en tiempo real PROFESIONAL para próxima partida
+     * SOLUCIONA: Countdowns no coordinados y estados inconsistentes
      */
     startRealTimeCountdown(modeId, totalTime) {
-        // Limpiar countdown anterior si existe
+        console.log(`⏰ Iniciando countdown PROFESIONAL para ${modeId}: ${totalTime}ms`);
+        
+        // 1. LIMPIAR COUNTDOWN ANTERIOR
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
         }
         
+        // 2. VERIFICAR ELEMENTO DEL DOM
         const countdownElement = document.getElementById(`countdown-${modeId}`);
-        if (!countdownElement) return;
+        if (!countdownElement) {
+            console.error(`❌ Elemento countdown-${modeId} no encontrado`);
+            return;
+        }
         
+        // 3. CONFIGURAR SISTEMA DE COUNTDOWN COORDINADO
+        this.countdownSystem.isActive = true;
+        this.countdownSystem.currentMode = modeId;
+        this.countdownSystem.startTime = Date.now();
+        this.countdownSystem.endTime = Date.now() + totalTime;
+        this.countdownSystem.breakTime = totalTime;
+        
+        // 4. INICIAR COUNTDOWN EN TIEMPO REAL
         let timeLeft = totalTime;
         
         this.countdownInterval = setInterval(() => {
             timeLeft -= 1000; // Reducir 1 segundo
             
             if (timeLeft <= 0) {
-                // ⏰ Tiempo agotado - Próxima partida debe comenzar
-                clearInterval(this.countdownInterval);
-                countdownElement.textContent = 'En curso';
-                countdownElement.className = 'countdown active-game';
-                
-                // 🎮 Cambiar estado a partida activa
-                this.gameState = 'playing';
-                
-                // 🔒 Bloquear compras durante partida activa
-                this.blockPurchasesForMode(modeId, 'Partida en curso');
-                
-                console.log(`🎮 ${modeId}: Tiempo agotado - Partida activa`);
+                // ⏰ TIEMPO AGOTADO - PRÓXIMA PARTIDA DEBE COMENZAR
+                this.handleCountdownComplete(modeId);
                 return;
             }
             
-            // ⏰ Mostrar tiempo restante
+            // ⏰ MOSTRAR TIEMPO RESTANTE
+            this.updateCountdownDisplay(modeId, timeLeft);
+            
+        }, 1000); // Actualizar cada segundo
+        
+        // 5. ACTUALIZAR INTERFAZ INMEDIATAMENTE
+        this.updateCountdownDisplay(modeId, timeLeft);
+        
+        console.log(`✅ Countdown PROFESIONAL iniciado para ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Manejo profesional del fin de countdown
+     */
+    handleCountdownComplete(modeId) {
+        console.log(`🎮 Countdown completado para ${modeId} - Iniciando partida`);
+        
+        // 1. LIMPIAR INTERVALO
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+        }
+        
+        // 2. ACTUALIZAR INTERFAZ
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (countdownElement) {
+            countdownElement.textContent = 'En curso';
+            countdownElement.className = 'countdown active-game';
+            countdownElement.setAttribute('data-status', 'active');
+        }
+        
+        // 3. ACTUALIZAR ESTADO DEL JUEGO
+        this.gameState = 'playing';
+        
+        // 4. ACTUALIZAR SISTEMA DE COUNTDOWN
+        this.countdownSystem.isActive = false;
+        this.countdownSystem.currentMode = null;
+        
+        // 5. 🔒 BLOQUEAR COMPRAS DURANTE PARTIDA ACTIVA
+        this.blockPurchasesForMode(modeId, 'Partida en curso');
+        
+        // 6. NOTIFICAR AL USUARIO
+        this.showNotification(`🎮 ¡Partida iniciada en ${this.gameModes[modeId]?.name || modeId}!`, 'success');
+        
+        console.log(`✅ Partida iniciada profesionalmente en ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Actualización profesional del display de countdown
+     */
+    updateCountdownDisplay(modeId, timeLeft) {
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) return;
+        
+        try {
+            // 1. CALCULAR TIEMPO RESTANTE
             const minutes = Math.floor(timeLeft / 60000);
             const seconds = Math.floor((timeLeft % 60000) / 1000);
             const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
             
+            // 2. ACTUALIZAR INTERFAZ
             countdownElement.textContent = countdownText;
             countdownElement.className = 'countdown next-game';
+            countdownElement.setAttribute('data-status', 'waiting');
             
-            // ✅ Permitir compras durante descanso
+            // 3. ✅ PERMITIR COMPRAS DURANTE DESCANSO
             this.allowPurchasesForMode(modeId);
             
-        }, 1000); // Actualizar cada segundo
-        
-        console.log(`⏰ Countdown en tiempo real iniciado para ${modeId}`);
+            // 4. ACTUALIZAR SISTEMA DE COUNTDOWN
+            this.countdownSystem.lastUpdate = Date.now();
+            
+        } catch (error) {
+            console.error(`❌ Error actualizando display de countdown ${modeId}:`, error);
+        }
     }
     
     /**
