@@ -1357,8 +1357,12 @@ class BingoPro {
     /**
      * Cambiar modo de juego
      */
+    /**
+     * ⚡ CAMBIO DE MODO DE JUEGO PROFESIONAL
+     * SOLUCIONA: Reset automático de cartones y limpieza de números llamados
+     */
     changeGameMode(modeId) {
-        console.log(`⚡ Cambiando modo de juego a: ${modeId} (optimizado)`);
+        console.log(`⚡ Cambiando modo de juego a: ${modeId} (PROFESIONAL)`);
         
         const check = this.checkGameModeRequirements(modeId);
         
@@ -1368,57 +1372,389 @@ class BingoPro {
         }
 
         const mode = this.gameModes[modeId];
+        const previousMode = this.currentGameMode;
         this.currentGameMode = modeId;
         
-        // Actualizar configuración del juego
+        // 1. ✨ NUEVO: RESETEAR COMPLETAMENTE EL ESTADO DEL JUEGO ANTERIOR
+        this.resetGameStateForModeChange(previousMode);
+        
+        // 2. ✨ NUEVO: LIMPIAR COMPLETAMENTE LOS CARTONES ANTERIORES
+        this.clearAllPreviousModeCards(previousMode);
+        
+        // 3. ✨ NUEVO: LIMPIAR COMPLETAMENTE LOS NÚMEROS LLAMADOS
+        this.clearAllCalledNumbers();
+        
+        // 4. ✨ NUEVO: RESETEAR ESTADO DEL JUGADOR
+        this.resetPlayerStateForModeChange();
+        
+        // 5. Actualizar configuración del juego
         this.cardPrice = mode.cardPrice;
         this.winConditions = {
             LINE: { name: 'línea', required: 5, prize: mode.prizes.line, probability: 0.15 },
             BINGO: { name: 'bingo', required: 15, prize: mode.prizes.bingo, probability: 0.02 }
         };
 
-        // Guardar el nuevo modo en localStorage de forma asíncrona
+        // 6. Guardar el nuevo modo en localStorage
         requestIdleCallback(() => {
             this.saveGameMode(modeId);
         });
         
-        // Limpiar cartones actuales y cargar los del nuevo modo
-        this.userCards = [];
-        this.loadUserCards();
+        // 7. ✨ NUEVO: CARGAR CARTONES DEL NUEVO MODO (si existen)
+        this.loadUserCardsForNewMode(modeId);
         
-        // NO limpiar completamente el estado - mantener números llamados del servidor
-        // this.calledNumbers = new Set();
-        // this.lastNumberCalled = null;
-        // this.gameState = 'waiting';
+        // 8. ✨ NUEVO: LIMPIAR COMPLETAMENTE LA INTERFAZ
+        this.clearInterfaceForNewMode();
         
-        // Actualizar UI de forma optimizada
+        // 9. Actualizar UI del nuevo modo
         this.updateGameModeDisplay();
         this.updateCardPriceDisplay();
         this.updateCardInfo();
-        this.renderCards(); // Renderizar cartones del nuevo modo
+        this.renderCards();
         
-        // Cambiar visibilidad de contenedores de números llamados por modo
-        this.switchCalledNumbersContainer(modeId);
+        // 10. ✨ NUEVO: CAMBIAR CONTENEDORES DE NÚMEROS LLAMADOS (LIMPIEZA COMPLETA)
+        this.switchCalledNumbersContainerProfessional(modeId);
         
-        // Renderizar números llamados del nuevo modo
-        this.renderCalledNumbers();
-        this.updateLastNumber(); // Limpiar último número
+        // 11. ✨ NUEVO: INICIALIZAR NUEVO MODO DESDE CERO
+        this.initializeNewModeFromScratch(modeId);
         
-        // Reconectar al bingo global del nuevo modo de forma asíncrona
+        // 12. Reconectar al bingo global del nuevo modo
         requestIdleCallback(() => {
             this.connectToGlobalBingo();
         });
         
-        // Actualizar countdown inmediatamente para el nuevo modo
+        // 13. Actualizar countdown para el nuevo modo
         this.updateCountdownFromServer();
         
-        // Mostrar confirmación de forma asíncrona
+        // 14. Mostrar confirmación
         requestIdleCallback(() => {
             this.showGameModeChanged(mode);
         });
         
-        console.log(`✅ Modo de juego cambiado a: ${mode.name} (optimizado)`);
+        console.log(`✅ Modo de juego cambiado PROFESIONALMENTE a: ${mode.name}`);
         return true;
+    }
+    
+    /**
+     * ✨ NUEVO: Resetear estado del juego para cambio de modo
+     */
+    resetGameStateForModeChange(previousMode) {
+        console.log(`🔄 Reseteando estado del juego para cambio de modo: ${previousMode} → ${this.currentGameMode}`);
+        
+        // Resetear estado del juego
+        this.gameState = 'waiting';
+        this.isPlayerJoined = false;
+        
+        // Limpiar números llamados
+        this.calledNumbers.clear();
+        this.callHistory = [];
+        
+        // Resetear último número
+        this.lastNumberCalled = null;
+        this.lastCallTime = null;
+        
+        // Resetear estadísticas
+        this.gameStartTime = null;
+        this.currentGameId = null;
+        
+        // Limpiar estado de victoria
+        this.hasWon = false;
+        this.winType = null;
+        
+        console.log(`✅ Estado del juego reseteado para nuevo modo`);
+    }
+    
+    /**
+     * ✨ NUEVO: Limpiar completamente cartones del modo anterior
+     */
+    clearAllPreviousModeCards(previousMode) {
+        if (!previousMode) return;
+        
+        console.log(`🗑️ Limpiando cartones del modo anterior: ${previousMode}`);
+        
+        // Limpiar cartones seleccionados
+        this.selectedCards = [];
+        
+        // Resetear estado de todos los cartones del modo anterior
+        this.userCards.forEach(card => {
+            if (card.gameMode === previousMode) {
+                card.linesCompleted = 0;
+                card.markedNumbers.clear();
+                card.isSelected = false;
+                card.gameId = null;
+                card.lastModified = new Date();
+            }
+        });
+        
+        // Filtrar solo cartones del nuevo modo
+        this.userCards = this.userCards.filter(card => card.gameMode === this.currentGameMode);
+        
+        console.log(`✅ Cartones del modo anterior limpiados. Cartones restantes: ${this.userCards.length}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Limpiar completamente todos los números llamados
+     */
+    clearAllCalledNumbers() {
+        console.log(`🗑️ Limpiando completamente todos los números llamados`);
+        
+        // Limpiar Set de números llamados
+        this.calledNumbers.clear();
+        
+        // Limpiar historial de llamadas
+        this.callHistory = [];
+        
+        // Resetear último número
+        this.lastNumberCalled = null;
+        this.lastCallTime = null;
+        
+        console.log(`✅ Todos los números llamados limpiados`);
+    }
+    
+    /**
+     * ✨ NUEVO: Resetear estado del jugador para cambio de modo
+     */
+    resetPlayerStateForModeChange() {
+        console.log(`🔄 Reseteando estado del jugador para cambio de modo`);
+        
+        // Resetear participación
+        this.isPlayerJoined = false;
+        
+        // Resetear cartones seleccionados
+        this.selectedCards = [];
+        
+        // Resetear estado de victoria
+        this.hasWon = false;
+        this.winType = null;
+        
+        // Parar autoplay si está activo
+        this.stopAutoPlay();
+        
+        console.log(`✅ Estado del jugador reseteado para nuevo modo`);
+    }
+    
+    /**
+     * ✨ NUEVO: Cargar cartones del nuevo modo (si existen)
+     */
+    loadUserCardsForNewMode(modeId) {
+        console.log(`📂 Cargando cartones para nuevo modo: ${modeId}`);
+        
+        try {
+            const storageKey = `bingoroyal_user_cards_${modeId}`;
+            const savedCards = localStorage.getItem(storageKey);
+            
+            if (savedCards) {
+                const cardsData = JSON.parse(savedCards);
+                // Filtrar solo cartones del nuevo modo
+                this.userCards = cardsData
+                    .filter(cardData => cardData.gameMode === modeId)
+                    .map(cardData => ({
+                        ...cardData,
+                        markedNumbers: new Set(cardData.markedNumbers || []),
+                        purchaseTime: new Date(cardData.purchaseTime)
+                    }));
+                console.log(`✅ ${this.userCards.length} cartones cargados para modo ${modeId}`);
+            } else {
+                // No hay cartones para este modo
+                this.userCards = [];
+                console.log(`ℹ️ No hay cartones guardados para modo ${modeId}`);
+            }
+        } catch (error) {
+            console.error('❌ Error cargando cartones del nuevo modo:', error);
+            this.userCards = [];
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Limpiar completamente la interfaz para nuevo modo
+     */
+    clearInterfaceForNewMode() {
+        console.log(`🎨 Limpiando completamente la interfaz para nuevo modo`);
+        
+        // Limpiar display de números llamados
+        this.clearCalledNumbersDisplay();
+        
+        // Limpiar último número llamado
+        this.updateLastNumber();
+        
+        // Limpiar estadísticas
+        this.updateStats();
+        
+        console.log(`✅ Interfaz limpiada para nuevo modo`);
+    }
+    
+    /**
+     * ✨ NUEVO: Cambiar contenedores de números llamados (LIMPIEZA COMPLETA)
+     */
+    switchCalledNumbersContainerProfessional(modeId) {
+        console.log(`🔄 Cambiando contenedores de números llamados PROFESIONALMENTE para: ${modeId}`);
+        
+        try {
+            // 1. LIMPIAR COMPLETAMENTE TODOS LOS CONTENEDORES
+            const allContainers = document.querySelectorAll('.mode-numbers');
+            allContainers.forEach(container => {
+                // Ocultar contenedor
+                container.style.display = 'none';
+                
+                // Limpiar contenido HTML
+                const numbersGrid = container.querySelector('.numbers-grid');
+                if (numbersGrid) {
+                    numbersGrid.innerHTML = '';
+                }
+                
+                // Limpiar último número
+                const lastNumber = container.querySelector('.last-number');
+                if (lastNumber) {
+                    lastNumber.textContent = '-';
+                }
+                
+                console.log(`🗑️ Contenedor ${container.id} limpiado completamente`);
+            });
+            
+            // 2. MOSTRAR SOLO EL CONTENEDOR DEL NUEVO MODO
+            const targetContainer = document.getElementById(`calledNumbers-${modeId}`);
+            if (targetContainer) {
+                targetContainer.style.display = 'block';
+                console.log(`✅ Contenedor de números llamados activado para modo: ${modeId}`);
+            } else {
+                console.log(`⚠️ Contenedor para modo ${modeId} no encontrado`);
+                // Fallback: mostrar CLASSIC
+                const fallbackContainer = document.getElementById('calledNumbers-CLASSIC');
+                if (fallbackContainer) {
+                    fallbackContainer.style.display = 'block';
+                    console.log('✅ Usando contenedor CLASSIC como fallback');
+                }
+            }
+            
+            // 3. INICIALIZAR CONTENEDOR DESDE CERO
+            this.initializeCalledNumbersContainer(modeId);
+            
+        } catch (error) {
+            console.error('❌ Error cambiando contenedor de números llamados:', error);
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Inicializar contenedor de números llamados desde cero
+     */
+    initializeCalledNumbersContainer(modeId) {
+        console.log(`🎯 Inicializando contenedor de números llamados para modo: ${modeId}`);
+        
+        const container = document.getElementById(`calledNumbers-${modeId}`);
+        if (!container) return;
+        
+        // Limpiar completamente el contenedor
+        container.innerHTML = '';
+        
+        // Crear estructura básica
+        const numbersGrid = document.createElement('div');
+        numbersGrid.className = 'numbers-grid';
+        numbersGrid.id = `numbers-grid-${modeId}`;
+        
+        // Crear grid de números del 1 al 90
+        for (let i = 1; i <= 90; i++) {
+            const numberCell = document.createElement('div');
+            numberCell.className = 'number-cell';
+            numberCell.id = `number-${i}-${modeId}`;
+            numberCell.textContent = i;
+            numbersGrid.appendChild(numberCell);
+        }
+        
+        container.appendChild(numbersGrid);
+        
+        console.log(`✅ Contenedor de números llamados inicializado para modo: ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Inicializar nuevo modo desde cero
+     */
+    initializeNewModeFromScratch(modeId) {
+        console.log(`🎯 Inicializando nuevo modo desde cero: ${modeId}`);
+        
+        // Renderizar números llamados del nuevo modo
+        this.renderCalledNumbers();
+        
+        // Actualizar último número
+        this.updateLastNumber();
+        
+        // Actualizar estadísticas
+        this.updateStats();
+        
+        // Actualizar estado de botones de compra
+        this.updatePurchaseButtonsStateFromCountdowns();
+        
+        console.log(`✅ Nuevo modo inicializado desde cero: ${modeId}`);
+    }
+    
+    /**
+     * ✨ NUEVO: Limpiar completamente cartones de un modo específico
+     * SOLUCIONA: Eliminación completa de cartones de partidas anteriores
+     */
+    clearModeCardsCompletely(modeId) {
+        console.log(`🗑️ Limpiando COMPLETAMENTE cartones del modo: ${modeId}`);
+        
+        try {
+            // 1. Limpiar del localStorage
+            const storageKey = `bingoroyal_user_cards_${modeId}`;
+            localStorage.removeItem(storageKey);
+            
+            // 2. Limpiar del array en memoria
+            this.userCards = this.userCards.filter(card => card.gameMode !== modeId);
+            
+            // 3. Limpiar cartones seleccionados
+            this.selectedCards = this.selectedCards.filter(card => card.gameMode !== modeId);
+            
+            // 4. Limpiar interfaz
+            this.renderCards();
+            this.updateCardInfo();
+            
+            console.log(`✅ Cartones del modo ${modeId} eliminados COMPLETAMENTE`);
+            
+            // 5. Notificar al usuario
+            this.showNotification(`🗑️ Cartones de ${this.gameModes[modeId]?.name || modeId} eliminados`, 'info');
+            
+        } catch (error) {
+            console.error('❌ Error limpiando cartones del modo:', error);
+        }
+    }
+    
+    /**
+     * ✨ NUEVO: Forzar reset completo de todos los modos
+     * SOLUCIONA: Limpieza masiva para resolver problemas de persistencia
+     */
+    forceCompleteReset() {
+        console.log('🚨 FORZANDO RESET COMPLETO DE TODOS LOS MODOS...');
+        
+        try {
+            // 1. Limpiar cartones de todos los modos
+            Object.keys(this.gameModes).forEach(modeId => {
+                this.clearModeCardsCompletely(modeId);
+            });
+            
+            // 2. Limpiar estado del juego
+            this.gameState = 'waiting';
+            this.isPlayerJoined = false;
+            this.selectedCards = [];
+            
+            // 3. Limpiar números llamados
+            this.calledNumbers.clear();
+            this.callHistory = [];
+            this.lastNumberCalled = null;
+            this.lastCallTime = null;
+            
+            // 4. Limpiar interfaz
+            this.clearCalledNumbersDisplay();
+            this.renderCards();
+            this.updateCardInfo();
+            this.updateStats();
+            
+            // 5. Notificar al usuario
+            this.showNotification('🚨 Reset completo realizado - Todos los modos limpiados', 'warning');
+            
+            console.log('✅ RESET COMPLETO FORZADO - Todos los modos limpiados');
+            
+        } catch (error) {
+            console.error('❌ Error en reset completo forzado:', error);
+        }
     }
 
     /**
@@ -2567,6 +2903,7 @@ class BingoPro {
     
     /**
      * ✨ NUEVO: Resetear cartones del usuario para próxima partida
+     * SOLUCIONA: Reset automático al cambiar de modo y al terminar partida
      */
     resetUserCardsForNextGame() {
         console.log('🔄 Reseteando cartones del usuario para próxima partida...');
@@ -2590,6 +2927,12 @@ class BingoPro {
         // Resetear último número
         this.lastNumberCalled = null;
         this.lastCallTime = null;
+        
+        // ✨ NUEVO: Guardar cartones reseteados en localStorage
+        this.saveUserCards();
+        
+        // ✨ NUEVO: Limpiar interfaz de números llamados
+        this.clearCalledNumbersDisplay();
         
         console.log(`✅ ${this.userCards.length} cartones reseteados para próxima partida`);
     }
