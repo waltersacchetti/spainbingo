@@ -576,9 +576,11 @@
     opacity: 0 !important;
     visibility: hidden !important;
     transition: all 0.3s ease !important;
+    pointer-events: none !important;
 }
 
 .mobile-menu-overlay.active {
     opacity: 1 !important;
     visibility: visible !important;
+    pointer-events: auto !important;
 } 
