@@ -83,19 +83,6 @@ body {
     font-size: 14px;
     overflow-x: hidden;
     min-height: 100vh;
-    opacity: 0;
-    animation: fadeInBody 0.5s ease-out 0.1s forwards;
-}
-
-@keyframes fadeInBody {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* Contenedor principal */
@@ -104,19 +91,6 @@ body {
     display: flex;
     flex-direction: column;
     background: var(--bg-gradient);
-    opacity: 0;
-    animation: fadeInContainer 0.6s ease-out 0.2s forwards;
-}
-
-@keyframes fadeInContainer {
-    from {
-        opacity: 0;
-        transform: scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 /* Header moderno tipo casino */
@@ -126,20 +100,9 @@ body {
     box-shadow: var(--shadow-lg);
     position: relative;
     z-index: 100;
-    opacity: 0;
-    animation: slideInDown 0.8s ease-out 0.3s forwards;
 }
 
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+
 
 .main-header::before {
     content: '';
@@ -415,19 +378,6 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    opacity: 0;
-    animation: fadeInUp 0.8s ease-out 0.5s forwards;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .tab-content {
@@ -5245,54 +5195,10 @@ body {
     }
 }
 
-/* ===== PRELOADER Y TRANSICIONES SUAVES ===== */
+/* ===== PRELOADER SIMPLE ===== */
 /* Prevenir flash de pantalla negra */
 html {
     background: #0f0f23;
-}
-
-body {
-    font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg-gradient);
-    color: var(--text-primary);
-    line-height: 1.6;
-    font-size: 14px;
-    overflow-x: hidden;
-    min-height: 100vh;
-    opacity: 0;
-    animation: fadeInBody 0.5s ease-out 0.1s forwards;
-}
-
-@keyframes fadeInBody {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Contenedor principal */
-.app-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-gradient);
-    opacity: 0;
-    animation: fadeInContainer 0.6s ease-out 0.2s forwards;
-}
-
-@keyframes fadeInContainer {
-    from {
-        opacity: 0;
-        transform: scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 /* Preloader para evitar pantalla negra */
@@ -5341,44 +5247,5 @@ body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Mejorar transiciones de elementos principales */
-.main-header,
-.main-content,
-.chat-section-fixed {
-    opacity: 0;
-    animation: slideInDown 0.8s ease-out 0.3s forwards;
-}
-
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Transiciones suaves para elementos del contenido */
-.tab-content,
-.game-layout,
-.modes-grid,
-.cards-container {
-    opacity: 0;
-    animation: fadeInUp 0.8s ease-out 0.5s forwards;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 

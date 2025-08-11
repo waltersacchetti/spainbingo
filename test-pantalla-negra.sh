@@ -58,9 +58,9 @@ fi
 # Verificar que el overlay móvil esté correctamente configurado
 echo ""
 echo "5️⃣ Verificando configuración del overlay móvil..."
-OVERLAY_CONFIG=$(curl -s "$PRODUCTION_URL/styles-codere.css" | grep -o "\.mobile-menu-overlay.*opacity: 0.*visibility: hidden" | head -1)
+OVERLAY_CHECK=$(curl -s "$PRODUCTION_URL/mobile-optimizations.css" | grep -A 10 "\.mobile-menu-overlay" | grep -E "(opacity: 0|visibility: hidden)" | wc -l)
 
-if [ -n "$OVERLAY_CONFIG" ]; then
+if [ "$OVERLAY_CHECK" -ge 2 ]; then
     echo "   ✅ Overlay móvil configurado correctamente (oculto por defecto)"
 else
     echo "   ❌ Overlay móvil NO configurado correctamente"
@@ -77,7 +77,7 @@ if [ "$PRELOADER_HTML" = "page-preloader" ]; then SUCCESS_COUNT=$((SUCCESS_COUNT
 if [ "$PRELOADER_CSS" = ".page-preloader" ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
 if [ "$ANIMATIONS" -ge 4 ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
 if [ "$PRELOADER_JS" -ge 2 ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
-if [ -n "$OVERLAY_CONFIG" ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
+if [ "$OVERLAY_CHECK" -ge 2 ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
 
 if [ "$SUCCESS_COUNT" -eq 5 ]; then
     echo "🎉 ¡TODAS las verificaciones fueron exitosas! ($SUCCESS_COUNT/5)"
