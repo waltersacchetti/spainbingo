@@ -1599,6 +1599,38 @@ app.post('/api/bingo/update-cards', rateLimitMiddleware(bingoApiLimiter), (req, 
     }
 });
 
+// API para resetear cartones del jugador por modo
+app.post('/api/bingo/reset-cards', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
+    try {
+        const { userId, mode = 'CLASSIC' } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'userId es requerido'
+            });
+        }
+        
+        // 🗑️ RESETEAR CARTONES EN EL BACKEND
+        globalBingoManager.updatePlayerCards(mode, userId, []);
+        
+        console.log(`🗑️ Cartones reseteados para usuario ${userId} en modo ${mode}`);
+        
+        res.json({
+            success: true,
+            message: `Cartones reseteados a 0 para modo ${mode}`,
+            mode: mode,
+            cardsCount: 0
+        });
+    } catch (error) {
+        console.error('Error reseteando cartones:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error reseteando cartones'
+        });
+    }
+});
+
 // API para salir del juego global por modo
 app.post('/api/bingo/leave', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
@@ -1738,6 +1770,44 @@ app.post('/api/bingo/force-start', rateLimitMiddleware(apiLimiter), (req, res) =
         res.status(500).json({
             success: false,
             error: 'Error forzando inicio'
+        });
+    }
+});
+
+// API para reset completo de todos los cartones del usuario
+app.post('/api/bingo/reset-all-cards', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
+    try {
+        const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'userId es requerido'
+            });
+        }
+        
+        // 🗑️ RESETEAR CARTONES EN TODOS LOS MODOS
+        const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+        let totalReset = 0;
+        
+        modes.forEach(mode => {
+            globalBingoManager.updatePlayerCards(mode, userId, []);
+            totalReset++;
+        });
+        
+        console.log(`🗑️ RESET COMPLETO: Cartones reseteados para usuario ${userId} en ${totalReset} modos`);
+        
+        res.json({
+            success: true,
+            message: `Reset completo: Cartones reseteados a 0 en todos los modos`,
+            totalModesReset: totalReset,
+            cardsCount: 0
+        });
+    } catch (error) {
+        console.error('Error en reset completo de cartones:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error en reset completo de cartones'
         });
     }
 });

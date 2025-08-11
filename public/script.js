@@ -3224,34 +3224,115 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: Forzar reset de cartones para un modo específico
+     * 🗑️ RESET COMPLETO DE CARTONES (FRONTEND + BACKEND)
      * SOLUCIONA: Cartones que persisten sin comprar
      */
-    forceResetCardsForMode(modeId) {
+    async forceResetCardsForMode(modeId) {
         console.log(`🚨 Forzando reset de cartones para modo: ${modeId}`);
         
         try {
-            // 1. LIMPIAR CARTONES DEL MODO EN MEMORIA
+            // 1. 🗑️ RESETEAR EN EL BACKEND PRIMERO
+            const userId = this.getOrCreateUserId();
+            const response = await fetch('/api/bingo/reset-cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    mode: modeId
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Backend reset completado:`, result);
+            } else {
+                console.error(`❌ Error en backend reset:`, response.status);
+            }
+            
+            // 2. 🗑️ LIMPIAR CARTONES DEL MODO EN MEMORIA
             this.userCards = this.userCards.filter(card => card.gameMode !== modeId);
             
-            // 2. LIMPIAR CARTONES SELECCIONADOS DEL MODO
+            // 3. 🗑️ LIMPIAR CARTONES SELECCIONADOS DEL MODO
             this.selectedCards = this.selectedCards.filter(card => card.gameMode !== modeId);
             
-            // 3. LIMPIAR CARTONES DEL MODO EN LOCALSTORAGE
+            // 4. 🗑️ LIMPIAR CARTONES DEL MODO EN LOCALSTORAGE
             const storageKey = `bingoroyal_user_cards_${modeId}`;
             localStorage.removeItem(storageKey);
             
-            // 4. ACTUALIZAR INTERFAZ
+            // 5. 🎨 ACTUALIZAR INTERFAZ
             this.renderCards();
             this.updateCardInfo();
             
-            // 5. NOTIFICAR AL USUARIO
+            // 6. 📢 NOTIFICAR AL USUARIO
             this.showNotification(`🗑️ Cartones de ${this.gameModes[modeId]?.name || modeId} reseteados a 0`, 'success');
             
             console.log(`✅ Reset forzado completado para modo: ${modeId}`);
             
         } catch (error) {
             console.error(`❌ Error en reset forzado para modo ${modeId}:`, error);
+            // Fallback: solo reset local
+            this.userCards = this.userCards.filter(card => card.gameMode !== modeId);
+            this.selectedCards = this.selectedCards.filter(card => card.gameMode !== modeId);
+            this.renderCards();
+            this.updateCardInfo();
+        }
+    }
+    
+    /**
+     * 🗑️ RESET COMPLETO DE TODOS LOS CARTONES (FRONTEND + BACKEND)
+     * SOLUCIONA: Cartones persistentes en todos los modos
+     */
+    async forceCompleteReset() {
+        console.log('🚨 RESET COMPLETO: Forzando reset de todos los cartones...');
+        
+        try {
+            // 1. 🗑️ RESETEAR EN EL BACKEND PRIMERO
+            const userId = this.getOrCreateUserId();
+            const response = await fetch('/api/bingo/reset-all-cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Backend reset completo:`, result);
+            } else {
+                console.error(`❌ Error en backend reset completo:`, response.status);
+            }
+            
+            // 2. 🗑️ LIMPIAR TODOS LOS CARTONES EN MEMORIA
+            this.userCards = [];
+            this.selectedCards = [];
+            
+            // 3. 🗑️ LIMPIAR TODOS LOS CARTONES EN LOCALSTORAGE
+            Object.keys(this.gameModes).forEach(modeId => {
+                const storageKey = `bingoroyal_user_cards_${modeId}`;
+                localStorage.removeItem(storageKey);
+            });
+            
+            // 4. 🎨 ACTUALIZAR INTERFAZ
+            this.renderCards();
+            this.updateCardInfo();
+            
+            // 5. 📢 NOTIFICAR AL USUARIO
+            this.showNotification('🗑️ RESET COMPLETO: Todos los cartones reseteados a 0', 'success');
+            
+            console.log('✅ Reset completo de todos los cartones finalizado');
+            
+        } catch (error) {
+            console.error('❌ Error en reset completo:', error);
+            // Fallback: solo reset local
+            this.userCards = [];
+            this.selectedCards = [];
+            this.renderCards();
+            this.updateCardInfo();
         }
     }
     
