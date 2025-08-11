@@ -527,6 +527,28 @@ class BingoPro {
         }, 5000); // Cada 5 segundos
         
         console.log('✅ Sistema de sincronización centralizado inicializado');
+        
+        // 4. ✨ NUEVO: INICIALIZAR CICLOS INDEPENDIENTES PARA TODOS LOS MODOS
+        this.initializeAllModeCycles();
+    }
+    
+    /**
+     * ✨ NUEVO: Inicializar ciclos independientes para todos los modos
+     * SOLUCIONA: Secciones "Próxima" que no funcionan
+     */
+    initializeAllModeCycles() {
+        console.log('🎯 Inicializando ciclos independientes para todos los modos...');
+        
+        // 1. INICIALIZAR CICLOS PARA CADA MODO
+        Object.keys(this.gameModes).forEach(modeId => {
+            this.initializeModeCycle(modeId);
+        });
+        
+        // 2. VERIFICAR QUE SE INICIALIZARON CORRECTAMENTE
+        console.log('✅ Ciclos inicializados:', Object.keys(this.modeCycles || {}));
+        
+        // 3. ACTUALIZAR COUNTDOWNS INMEDIATAMENTE
+        this.updateAllModeCountdownsCoordinated();
     }
     
     /**
@@ -573,8 +595,8 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: CÁLCULO COORDINADO DE COUNTDOWN CON CICLOS INDEPENDIENTES
-     * SOLUCIONA: Lógica fragmentada y countdowns que "saltan"
+     * 🎯 LÓGICA CORRECTA DE ESTADOS DE JUEGO
+     * SOLUCIONA: Secciones "Próxima" que no funcionan y cartones que no se resetean
      */
     calculateCoordinatedCountdown(modeId, serverData = null) {
         const modeConfig = this.gameModes[modeId];
@@ -586,11 +608,13 @@ class BingoPro {
         // 2. ✨ NUEVO: VERIFICAR SI HAY PARTIDA ACTIVA POR CICLO
         const cycle = this.modeCycles[modeId];
         if (cycle && cycle.isActive) {
+            // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
             return { 
                 isActive: true, 
-                nextGameIn: null, 
+                nextGameIn: 'PARTIDA EN CURSO',
                 timeRemaining: 0,
-                status: 'playing'
+                status: 'playing',
+                displayText: 'PARTIDA EN CURSO'
             };
         }
         
@@ -600,15 +624,17 @@ class BingoPro {
             const timeUntilNextGame = cycle.nextGameStart - now;
             
             if (timeUntilNextGame > 0) {
-                // ⏰ TIEMPO RESTANTE VÁLIDO
+                // ⏰ TIEMPO RESTANTE VÁLIDO - MOSTRAR COUNTDOWN
                 const minutes = Math.floor(timeUntilNextGame / 60000);
                 const seconds = Math.floor((timeUntilNextGame % 60000) / 1000);
+                const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                 
                 return { 
                     isActive: false, 
-                    nextGameIn: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+                    nextGameIn: countdownText,
                     timeRemaining: timeUntilNextGame,
-                    status: 'waiting'
+                    status: 'waiting',
+                    displayText: `Próxima en ${countdownText}`
                 };
             }
         }
@@ -618,13 +644,14 @@ class BingoPro {
             isActive: true, 
             nextGameIn: null,
             timeRemaining: 0,
-            status: 'should_start'
+            status: 'should_start',
+            displayText: 'PARTIDA EN CURSO'
         };
     }
     
     /**
-     * ✨ NUEVO: ACTUALIZACIÓN DE COUNTDOWN INDIVIDUAL
-     * SOLUCIONA: Estados visuales inconsistentes
+     * 🎨 INTERFAZ CORRECTA DE COUNTDOWN
+     * SOLUCIONA: Secciones "Próxima" que no muestran estados correctos
      */
     updateSingleModeCountdown(modeId, countdownInfo) {
         const countdownElement = document.getElementById(`countdown-${modeId}`);
@@ -635,21 +662,25 @@ class BingoPro {
         
         try {
             if (countdownInfo.isActive) {
-                // 🎮 PARTIDA ACTIVA
-                countdownElement.textContent = 'En curso';
+                // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
+                countdownElement.textContent = 'PARTIDA EN CURSO';
                 countdownElement.className = 'countdown active-game';
                 countdownElement.setAttribute('data-status', 'active');
+                countdownElement.style.color = '#ff4444'; // Rojo para partida activa
+                countdownElement.style.fontWeight = 'bold';
                 
                 // 🔒 BLOQUEAR COMPRAS
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
-                console.log(`🎮 Countdown ${modeId}: En curso`);
+                console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO`);
                 
-            } else if (countdownInfo.nextGameIn) {
-                // ⏰ PRÓXIMA PARTIDA
+            } else if (countdownInfo.nextGameIn && countdownInfo.nextGameIn !== 'PARTIDA EN CURSO') {
+                // ⏰ PRÓXIMA PARTIDA - COUNTDOWN
                 countdownElement.textContent = countdownInfo.nextGameIn;
                 countdownElement.className = 'countdown next-game';
                 countdownElement.setAttribute('data-status', 'waiting');
+                countdownElement.style.color = '#44ff44'; // Verde para countdown
+                countdownElement.style.fontWeight = 'normal';
                 
                 // ✅ PERMITIR COMPRAS
                 this.allowPurchasesForMode(modeId);
@@ -661,6 +692,8 @@ class BingoPro {
                 countdownElement.textContent = '--:--';
                 countdownElement.className = 'countdown unknown';
                 countdownElement.setAttribute('data-status', 'unknown');
+                countdownElement.style.color = '#888888'; // Gris para desconocido
+                countdownElement.style.fontWeight = 'normal';
                 
                 console.log(`❓ Countdown ${modeId}: Estado desconocido`);
             }
@@ -1636,13 +1669,21 @@ class BingoPro {
             this.saveGameMode(modeId);
         });
         
-        // 7. ✨ NUEVO: CARGAR CARTONES DEL NUEVO MODO (si existen)
+        // 7. ✨ NUEVO: FORZAR RESET DE CARTONES DEL MODO ANTERIOR
+        if (previousMode) {
+            this.forceResetCardsForMode(previousMode.id || previousMode);
+        }
+        
+        // 8. ✨ NUEVO: CARGAR CARTONES DEL NUEVO MODO (debería estar vacío)
         this.loadUserCardsForNewMode(modeId);
         
-        // 8. ✨ NUEVO: LIMPIAR COMPLETAMENTE LA INTERFAZ
+        // 9. ✨ NUEVO: LIMPIAR COMPLETAMENTE LA INTERFAZ
         this.clearInterfaceForNewMode();
         
-        // 9. Actualizar UI del nuevo modo
+        // 10. ✨ NUEVO: VERIFICAR Y CORREGIR CARTONES INCORRECTOS
+        this.verifyAndCorrectCards();
+        
+        // 11. Actualizar UI del nuevo modo
         this.updateGameModeDisplay();
         this.updateCardPriceDisplay();
         this.updateCardInfo();
@@ -6043,15 +6084,26 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: Inicializar ciclo independiente para un modo
+     * 🎯 INICIALIZACIÓN AUTOMÁTICA DE CICLOS INDEPENDIENTES
+     * SOLUCIONA: Secciones "Próxima" que no funcionan
      */
     initializeModeCycle(modeId) {
         const modeConfig = this.gameModes[modeId];
         if (!modeConfig) return;
         
-        // 1. CONFIGURAR CICLO INDEPENDIENTE
+        // 1. ✨ NUEVO: CONFIGURAR CICLO INDEPENDIENTE CON OFFSET DIFERENTE POR MODO
+        const modeOffset = {
+            'CLASSIC': 0,      // Empieza inmediatamente
+            'RAPID': 30,       // Empieza en 30 segundos
+            'VIP': 60,         // Empieza en 1 minuto
+            'NIGHT': 90        // Empieza en 1.5 minutos
+        };
+        
+        const offset = modeOffset[modeId] || 0;
+        const startTime = Date.now() + (offset * 1000);
+        
         this.modeCycles[modeId] = {
-            startTime: Date.now(),
+            startTime: startTime,
             duration: modeConfig.duration,
             breakTime: modeConfig.breakTime,
             totalCycleTime: modeConfig.duration + modeConfig.breakTime,
@@ -6060,10 +6112,10 @@ class BingoPro {
             isActive: false
         };
         
-        // 2. CALCULAR PRIMERA PARTIDA
+        // 2. ✨ NUEVO: CALCULAR PRIMERA PARTIDA
         this.updateModeCycle(modeId);
         
-        console.log(`✅ Ciclo independiente inicializado para modo: ${modeId}`);
+        console.log(`✅ Ciclo independiente inicializado para modo: ${modeId} con offset de ${offset}s`);
     }
     
     /**
