@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <title>Mi Perfil - BingoRoyal</title>
+    
+    <!-- Estilos base y responsivos -->
+    <link rel="stylesheet" href="styles-codere.css">
+    <link rel="stylesheet" href="mobile-optimizations.css">
+    <link rel="stylesheet" href="adaptive-styles.css">
+    
+    <!-- Fuentes premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PREMIUM THEME v3.0 - Sistema visual avanzado -->
+    <link rel="stylesheet" href="premium-theme.css">
+    
+    <!-- Corrección específica para user-info -->
+    <link rel="stylesheet" href="user-fix.css">
+    <link rel="stylesheet" href="game-improvements.css">
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .profile-name {
+            font-size: 2.5em;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .profile-status {
+            display: inline-block;
+            padding: 8px 20px;
+            background: linear-gradient(45deg, #00d4aa, #0099cc);
+            color: white;
+            border-radius: 25px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .profile-info {
+            display: grid;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-label {
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            color: #4ecdc4;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 0.9em;
+        }
+
+        .edit-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .edit-button:hover {
+            transform: scale(1.05);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-name {
+                font-size: 2em;
+            }
+            
+            .profile-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Preloader para evitar pantalla negra -->
+    <div class="page-preloader" id="pagePreloader">
+        <div class="preloader-content">
+            <div class="preloader-spinner"></div>
+            <div class="preloader-text">Cargando Perfil...</div>
+        </div>
+    </div>
+    
+    <div class="app-container">
+        <!-- Botón de volver al juego -->
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Juego
+        </a>
+
+    <div class="profile-container">
+        <!-- HEADER DEL PERFIL -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <h1 class="profile-name" id="profileName">Cargando...</h1>
+            <div class="profile-status" id="profileStatus">Cargando...</div>
+        </div>
+
+        <!-- GRID DE INFORMACIÓN -->
+        <div class="profile-grid">
+            <!-- INFORMACIÓN PERSONAL -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h2 class="card-title">Información Personal</h2>
+                </div>
+                <div class="profile-info">
+                    <div class="info-item">
+                        <span class="info-label">Usuario ID:</span>
+                        <span class="info-value" id="userId">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Nivel:</span>
+                        <span class="info-value" id="userLevel">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Experiencia:</span>
+                        <span class="info-value" id="userExp">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Estado VIP:</span>
+                        <span class="info-value" id="userVip">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Registro:</span>
+                        <span class="info-value" id="userRegDate">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTADÍSTICAS DEL JUEGO -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h2 class="card-title">Estadísticas del Juego</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalGames">0</div>
+                        <div class="stat-label">Partidas Jugadas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalWins">0</div>
+                        <div class="stat-label">Victorias</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="winRate">0%</div>
+                        <div class="stat-label">Tasa de Victoria</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCards">0</div>
+                        <div class="stat-label">Cartones Comprados</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INFORMACIÓN FINANCIERA -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h2 class="card-title">Información Financiera</h2>
+                </div>
+                <div class="profile-info">
+                    <div class="info-item">
+                        <span class="info-label">Saldo Actual:</span>
+                        <span class="info-value" id="userBalance">€0.00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Gastado:</span>
+                        <span class="info-value" id="totalSpent">€0.00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Ganado:</span>
+                        <span class="info-value" id="totalWon">€0.00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Beneficio Neto:</span>
+                        <span class="info-value" id="netProfit">€0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARTONES POR MODO -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h2 class="card-title">Cartones por Modo</h2>
+                </div>
+                <div class="profile-info" id="cardsByMode">
+                    <div class="info-item">
+                        <span class="info-label">Clásico:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Rápido:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">VIP:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Nocturno:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGROS Y PREMIOS -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h2 class="card-title">Logros y Premios</h2>
+                </div>
+                <div class="profile-info" id="achievements">
+                    <div class="info-item">
+                        <span class="info-label">Logros Desbloqueados:</span>
+                        <span class="info-value" id="achievementsUnlocked">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Premio Más Alto:</span>
+                        <span class="info-value" id="highestPrize">€0.00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Racha Actual:</span>
+                        <span class="info-value" id="currentStreak">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Mejor Racha:</span>
+                        <span class="info-value" id="bestStreak">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFIGURACIÓN -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h2 class="card-title">Configuración</h2>
+                </div>
+                <div class="profile-info">
+                    <div class="info-item">
+                        <span class="info-label">Notificaciones:</span>
+                        <span class="info-value">
+                            <label class="switch">
+                                <input type="checkbox" id="notificationsToggle" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sonidos:</span>
+                        <span class="info-value">
+                            <label class="switch">
+                                <input type="checkbox" id="soundsToggle" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </span>
+                    </div>
+                    <button class="edit-button" onclick="saveSettings()">
+                        <i class="fas fa-save"></i>
+                        Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- Cierre de app-container -->
+
+    <script src="security.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Inicializar perfil cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProfile();
+            
+            // Ocultar preloader
+            const preloader = document.getElementById('pagePreloader');
+            if (preloader) {
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }
+        });
+
+        function initializeProfile() {
+            // Obtener instancia del juego
+            if (typeof bingoGame !== 'undefined') {
+                updateProfileData();
+            } else {
+                // Si no hay instancia, crear una temporal
+                setTimeout(updateProfileData, 1000);
+            }
+        }
+
+        function updateProfileData() {
+            const game = window.bingoGame || window.gameInstance;
+            if (!game) {
+                console.log('⚠️ Instancia del juego no encontrada');
+                return;
+            }
+
+            // Información personal
+            document.getElementById('profileName').textContent = game.getUserName() || 'Usuario Bingo';
+            document.getElementById('userId').textContent = game.getUserId() || 'N/A';
+            document.getElementById('userLevel').textContent = game.getUserLevel() || '0';
+            document.getElementById('userExp').textContent = game.getUserExperience() || '0 XP';
+            document.getElementById('userVip').textContent = game.isUserVip() ? 'VIP' : 'Estándar';
+            document.getElementById('userRegDate').textContent = game.getUserRegistrationDate() || 'N/A';
+
+            // Estado del perfil
+            const statusElement = document.getElementById('profileStatus');
+            if (game.isUserVip()) {
+                statusElement.textContent = 'VIP';
+                statusElement.style.background = 'linear-gradient(45deg, #ffd700, #ffb347)';
+            } else {
+                statusElement.textContent = 'Estándar';
+                statusElement.style.background = 'linear-gradient(45deg, #00d4aa, #0099cc)';
+            }
+
+            // Estadísticas del juego
+            document.getElementById('totalGames').textContent = game.getTotalGames() || '0';
+            document.getElementById('totalWins').textContent = game.getTotalWins() || '0';
+            document.getElementById('winRate').textContent = game.getWinRate() || '0%';
+            document.getElementById('totalCards').textContent = game.getTotalCards() || '0';
+
+            // Información financiera
+            document.getElementById('userBalance').textContent = `€${(game.userBalance || 0).toFixed(2)}`;
+            document.getElementById('totalSpent').textContent = `€${(game.getTotalSpent() || 0).toFixed(2)}`;
+            document.getElementById('totalWon').textContent = `€${(game.getTotalWon() || 0).toFixed(2)}`;
+            
+            const totalSpent = game.getTotalSpent() || 0;
+            const totalWon = game.getTotalWon() || 0;
+            const netProfit = totalWon - totalSpent;
+            document.getElementById('netProfit').textContent = `€${netProfit.toFixed(2)}`;
+            document.getElementById('netProfit').style.color = netProfit >= 0 ? '#4ecdc4' : '#ff6b6b';
+
+            // Cartones por modo
+            updateCardsByMode(game);
+
+            // Logros
+            document.getElementById('achievementsUnlocked').textContent = game.getAchievementsUnlocked() || '0';
+            document.getElementById('highestPrize').textContent = `€${(game.getHighestPrize() || 0).toFixed(2)}`;
+            document.getElementById('currentStreak').textContent = game.getCurrentStreak() || '0';
+            document.getElementById('bestStreak').textContent = game.getBestStreak() || '0';
+
+            // Configuración
+            document.getElementById('notificationsToggle').checked = game.getNotificationSetting() !== false;
+            document.getElementById('soundsToggle').checked = game.getSoundSetting() !== false;
+        }
+
+        function updateCardsByMode(game) {
+            const cardsByMode = game.getCardsByMode() || {};
+            const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+            
+            modes.forEach(mode => {
+                const count = cardsByMode[mode] || 0;
+                const element = document.querySelector(`#cardsByMode .info-item:nth-child(${modes.indexOf(mode) + 1}) .info-value`);
+                if (element) {
+                    element.textContent = count;
+                }
+            });
+        }
+
+        function saveSettings() {
+            const game = window.bingoGame || window.gameInstance;
+            if (!game) {
+                console.log('⚠️ Instancia del juego no encontrada');
+                return;
+            }
+
+            const notifications = document.getElementById('notificationsToggle').checked;
+            const sounds = document.getElementById('soundsToggle').checked;
+
+            game.setNotificationSetting(notifications);
+            game.setSoundSetting(sounds);
+
+            // Mostrar confirmación
+            showNotification('✅ Configuración guardada correctamente', 'success');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#4ecdc4' : '#ff6b6b'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Estilos para switches
+        const style = document.createElement('style');
+        style.textContent = `
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+            
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 34px;
+            }
+            
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+            
+            input:checked + .slider {
+                background-color: #4ecdc4;
+            }
+            
+            input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+            
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

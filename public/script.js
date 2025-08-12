@@ -204,8 +204,8 @@ class BingoPro {
                 minPlayers: 3,
                 maxCards: 20,
                 requirements: {
-                    level: 2,           // Aumentado de 5 a 2 (más accesible)
-                    balance: 5,         // Reducido de 10 a 5€
+                    level: 0,           // ✅ MODO BÁSICO - ACCESIBLE PARA TODOS
+                    balance: 0,         // ✅ SIN RESTRICCIÓN DE SALDO
                     timeOfDay: 'any'
                 },
                 prizes: {
@@ -228,10 +228,10 @@ class BingoPro {
                 minPlayers: 5,
                 maxCards: 50,
                 requirements: {
-                    level: 7,           // Nivel Diamante para acceso VIP
-                    balance: 25,        // Reducido de 50 a 25€
+                    level: 5,           // 🔒 MODO PREMIUM - Nivel Plata requerido
+                    balance: 15,        // 🔒 Saldo mínimo €15
                     timeOfDay: 'any',
-                    vipStatus: true
+                    vipStatus: true     // 🔒 Estado VIP requerido
                 },
                 prizes: {
                     line: 50,           // Aumentado de 25 a 50€
@@ -253,9 +253,9 @@ class BingoPro {
                 minPlayers: 2,
                 maxCards: 25,
                 requirements: {
-                    level: 3,           // Nivel Bronce
-                    balance: 10,        // Reducido de 20 a 10€
-                    timeOfDay: 'night'
+                    level: 3,           // 🔒 MODO PREMIUM - Nivel Bronce requerido
+                    balance: 8,         // 🔒 Saldo mínimo €8
+                    timeOfDay: 'night'  // 🔒 Solo disponible de noche (22h-6h)
                 },
                 prizes: {
                     line: 30,           // Aumentado de 20 a 30€
@@ -268,7 +268,7 @@ class BingoPro {
             }
         };
 
-        // Modo de juego actual (con persistencia)
+        // Modo de juego actual (con persistencia) - INICIALIZADO DESPUÉS DE gameModes
         this.currentGameMode = this.loadGameMode() || 'CLASSIC';
         
         // Condiciones de victoria por modo
@@ -364,6 +364,26 @@ class BingoPro {
             uiUpdateTime: 0,
             memoryUsage: 0
         };
+
+        // ✨ NUEVO: Sistema de perfil de usuario
+        this.userProfile = {
+            registrationDate: new Date(),
+            level: 1,
+            experience: 0,
+            vipStatus: false,
+            totalGames: 0,
+            totalWins: 0,
+            totalSpent: 0,
+            totalWon: 0,
+            achievements: [],
+            currentStreak: 0,
+            bestStreak: 0,
+            highestPrize: 0,
+            settings: {
+                notifications: true,
+                sounds: true
+            }
+        };
         
         this.initializeGame();
         this.setupEventListeners();
@@ -457,6 +477,9 @@ class BingoPro {
         console.log('🚀 Inicializando chat en vivo...');
         this.initializeLiveChat();
         
+        // ✨ NUEVO: Actualizar información del usuario en el header
+        updateHeaderUserInfo();
+        
         // ✨ NUEVO: Configurar sincronización automática de userId
         this.setupUserIdSyncListener();
         
@@ -475,6 +498,199 @@ class BingoPro {
         }, 5000);
         
         console.log('✅ Inicialización optimizada completada');
+        
+        // ✨ NUEVO: Cargar perfil de usuario
+        this.loadUserProfile();
+    }
+
+    /**
+     * ✨ NUEVO: FUNCIONES DE PERFIL DE USUARIO
+     */
+    
+    // Cargar perfil desde localStorage
+    loadUserProfile() {
+        try {
+            const savedProfile = localStorage.getItem('bingoroyal_user_profile');
+            if (savedProfile) {
+                const profileData = JSON.parse(savedProfile);
+                this.userProfile = { ...this.userProfile, ...profileData };
+                // Convertir fecha de registro
+                if (profileData.registrationDate) {
+                    this.userProfile.registrationDate = new Date(profileData.registrationDate);
+                }
+                console.log('📂 Perfil de usuario cargado:', this.userProfile);
+            }
+        } catch (error) {
+            console.log('⚠️ Error cargando perfil de usuario:', error);
+        }
+    }
+
+    // Guardar perfil en localStorage
+    saveUserProfile() {
+        try {
+            localStorage.setItem('bingoroyal_user_profile', JSON.stringify(this.userProfile));
+            console.log('💾 Perfil de usuario guardado');
+        } catch (error) {
+            console.error('❌ Error guardando perfil de usuario:', error);
+        }
+    }
+
+    // Obtener nombre de usuario
+    getUserName() {
+        return `Usuario ${this.userProfile.level}`;
+    }
+
+    // Obtener ID de usuario
+    getUserId() {
+        return this.userId || 'N/A';
+    }
+
+    // Obtener nivel de usuario
+    getUserLevel() {
+        return this.userProfile.level;
+    }
+
+    // Obtener experiencia de usuario
+    getUserExperience() {
+        return `${this.userProfile.experience} XP`;
+    }
+
+    // Verificar si es usuario VIP
+    isUserVip() {
+        return this.userProfile.vipStatus;
+    }
+
+    // Obtener fecha de registro
+    getUserRegistrationDate() {
+        return this.userProfile.registrationDate.toLocaleDateString('es-ES');
+    }
+
+    // Obtener total de partidas
+    getTotalGames() {
+        return this.userProfile.totalGames;
+    }
+
+    // Obtener total de victorias
+    getTotalWins() {
+        return this.userProfile.totalWins;
+    }
+
+    // Obtener tasa de victoria
+    getWinRate() {
+        if (this.userProfile.totalGames === 0) return '0%';
+        return `${Math.round((this.userProfile.totalWins / this.userProfile.totalGames) * 100)}%`;
+    }
+
+    // Obtener total de cartones
+    getTotalCards() {
+        return this.userCards.length;
+    }
+
+    // Obtener total gastado
+    getTotalSpent() {
+        return this.userProfile.totalSpent;
+    }
+
+    // Obtener total ganado
+    getTotalWon() {
+        return this.userProfile.totalWon;
+    }
+
+    // Obtener cartones por modo
+    getCardsByMode() {
+        const cardsByMode = {};
+        this.userCards.forEach(card => {
+            const mode = card.gameMode || 'CLASSIC';
+            cardsByMode[mode] = (cardsByMode[mode] || 0) + 1;
+        });
+        return cardsByMode;
+    }
+
+    // Obtener logros desbloqueados
+    getAchievementsUnlocked() {
+        return this.userProfile.achievements.length;
+    }
+
+    // Obtener premio más alto
+    getHighestPrize() {
+        return this.userProfile.highestPrize;
+    }
+
+    // Obtener racha actual
+    getCurrentStreak() {
+        return this.userProfile.currentStreak;
+    }
+
+    // Obtener mejor racha
+    getBestStreak() {
+        return this.userProfile.bestStreak;
+    }
+
+    // Obtener configuración de notificaciones
+    getNotificationSetting() {
+        return this.userProfile.settings.notifications;
+    }
+
+    // Obtener configuración de sonidos
+    getSoundSetting() {
+        return this.userProfile.settings.sounds;
+    }
+
+    // Establecer configuración de notificaciones
+    setNotificationSetting(enabled) {
+        this.userProfile.settings.notifications = enabled;
+        this.saveUserProfile();
+    }
+
+    // Establecer configuración de sonidos
+    setSoundSetting(enabled) {
+        this.userProfile.settings.sounds = enabled;
+        this.saveUserProfile();
+    }
+
+    // Agregar experiencia al usuario
+    addUserExperience(amount, reason = '') {
+        this.userProfile.experience += amount;
+        
+        // Calcular nuevo nivel (cada 100 XP = 1 nivel)
+        const newLevel = Math.floor(this.userProfile.experience / 100) + 1;
+        if (newLevel > this.userProfile.level) {
+            this.userProfile.level = newLevel;
+            this.showNotification(`🎉 ¡Subiste al nivel ${newLevel}!`, 'success');
+        }
+        
+        this.saveUserProfile();
+        console.log(`✨ +${amount} XP (${reason}). Nivel: ${this.userProfile.level}`);
+    }
+
+    // Registrar partida jugada
+    recordGamePlayed(won = false, prize = 0) {
+        this.userProfile.totalGames++;
+        if (won) {
+            this.userProfile.totalWins++;
+            this.userProfile.totalWon += prize;
+            this.userProfile.currentStreak++;
+            
+            // Actualizar mejor racha
+            if (this.userProfile.currentStreak > this.userProfile.bestStreak) {
+                this.userProfile.bestStreak = this.userProfile.currentStreak;
+            }
+            
+            // Actualizar premio más alto
+            if (prize > this.userProfile.highestPrize) {
+                this.userProfile.highestPrize = prize;
+            }
+        } else {
+            this.userProfile.currentStreak = 0;
+        }
+        
+        this.saveUserProfile();
+    }
+
+    // Registrar compra de cartones
+    recordCardPurchase(cost) {
+        this.userProfile.totalSpent += cost;
+        this.saveUserProfile();
     }
     
     /**
@@ -6958,12 +7174,20 @@ class BingoPro {
     buyCards(quantity = 1) {
         console.log(`🛒 Comprando ${quantity} cartón(es)...`);
         
-        // 🔒 BLOQUEO PRINCIPAL: Verificar estado del juego
-        const currentMode = this.getCurrentGameMode();
-        if (!currentMode) {
-            this.showNotification('❌ Error: Modo de juego no válido', 'error');
-            return false;
-        }
+        try {
+            // 🔒 BLOQUEO PRINCIPAL: Verificar estado del juego
+            console.log('🔍 Verificando modo de juego actual...');
+            console.log('🔍 this.currentGameMode:', this.currentGameMode);
+            console.log('🔍 this.gameModes:', this.gameModes);
+            
+            const currentMode = this.getCurrentGameMode();
+            console.log('🔍 currentMode obtenido:', currentMode);
+            
+            if (!currentMode) {
+                console.error('❌ Error: Modo de juego no válido');
+                this.showNotification('❌ Error: Modo de juego no válido', 'error');
+                return false;
+            }
         
         // 🔒 BLOQUEO: No permitir compra durante partidas activas
         if (this.gameState === 'playing') {
@@ -6986,6 +7210,13 @@ class BingoPro {
         
         // ✅ TODAS LAS VALIDACIONES PASARON - PROCEDER CON LA COMPRA
         return this.processCardPurchase(quantity, currentMode);
+        
+        } catch (error) {
+            console.error('❌ Error en buyCards:', error);
+            console.error('❌ Stack trace:', error.stack);
+            this.showNotification('Error al procesar la compra', 'error');
+            return false;
+        }
     }
     
     // 🎯 MÉTODO PRIVADO PARA PROCESAR COMPRA
@@ -7512,6 +7743,9 @@ class BingoPro {
     }
 }
 
+// Exportar la clase BingoPro al objeto window para reinicialización
+window.BingoPro = BingoPro;
+
 // Hacer funciones críticas disponibles globalmente para el sistema de seguridad
 window.callNumber = function() {
     return bingoGame.callNumber();
@@ -7551,6 +7785,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Inicializar el juego
             window.bingoGame = new BingoPro();
             window.bingoGame.initializeGame();
+            
+            // ✨ NUEVO: Inicializar modo de tarjetas después del juego
+            setTimeout(() => {
+                initializeModeCards();
+            }, 500);
             
             // ✨ NUEVO: Asegurar que el chat se inicialice
             setTimeout(() => {
@@ -7598,6 +7837,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.bingoGame = new BingoPro();
         window.bingoGame.initializeGame();
         
+        // ✨ NUEVO: Inicializar modo de tarjetas después del juego
+        setTimeout(() => {
+            initializeModeCards();
+        }, 500);
+        
         // ✨ NUEVO: Asegurar que el chat se inicialice
         setTimeout(() => {
             if (window.bingoGame && !window.bingoGame.chatInitialized) {
@@ -7636,6 +7880,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.bingoGame = new BingoPro();
         window.bingoGame.initializeGame();
         
+        // ✨ NUEVO: Inicializar modo de tarjetas después del juego
+        setTimeout(() => {
+            initializeModeCards();
+        }, 500);
+        
         // ✨ NUEVO: Asegurar que el chat se inicialice
         setTimeout(() => {
             if (window.bingoGame && !window.bingoGame.chatInitialized) {
@@ -7644,27 +7893,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.bingoGame.chatInitialized = true;
             }
         }, 1000);
+    }
+    
+    // ✨ NUEVO: INICIALIZACIÓN DE RESERVA - Asegurar que bingoGame siempre esté disponible
+    if (!window.bingoGame) {
+        console.log('🔄 Inicialización de reserva: creando BingoGame...');
+        window.bingoGame = new BingoPro();
+        window.bingoGame.initializeGame();
         
-        // Configuración adicional del chat después de la inicialización
         setTimeout(() => {
-            console.log('🔧 Configuración adicional del chat...');
-            const chatInput = document.getElementById('chatInput');
-            const sendButton = document.querySelector('.btn-send');
-            
-            if (chatInput) {
-                console.log('✅ Chat input encontrado y configurado');
-                chatInput.readOnly = false;
-                chatInput.disabled = false;
-                chatInput.style.pointerEvents = 'auto';
-                chatInput.style.userSelect = 'text';
-                chatInput.style.webkitUserSelect = 'text';
-            }
-            
-            if (sendButton) {
-                console.log('✅ Botón enviar encontrado y configurado');
-                sendButton.style.pointerEvents = 'auto';
-                sendButton.style.cursor = 'pointer';
-            }
+            initializeModeCards();
         }, 500);
     }
 });
@@ -7673,6 +7911,50 @@ document.addEventListener('DOMContentLoaded', function() {
 function closeBingoCardsModal() {
     if (window.bingoGame) {
         window.bingoGame.closeBingoCardsModal();
+    }
+}
+
+// ✨ NUEVO: Función para actualizar información del usuario en el header
+function updateHeaderUserInfo() {
+    const usernameElement = document.getElementById('headerUsername');
+    const levelElement = document.getElementById('headerUserLevel');
+    
+    if (usernameElement && levelElement) {
+        // Obtener datos del usuario desde localStorage o perfil
+        const sessionData = localStorage.getItem('bingoroyal_session');
+        if (sessionData) {
+            try {
+                const session = JSON.parse(sessionData);
+                const user = session.user;
+                
+                // Actualizar nombre de usuario
+                if (user.firstName && user.lastName) {
+                    usernameElement.textContent = `${user.firstName} ${user.lastName}`;
+                } else if (user.name) {
+                    usernameElement.textContent = user.name;
+                } else {
+                    usernameElement.textContent = 'Usuario Bingo';
+                }
+                
+                // Actualizar nivel
+                if (user.level) {
+                    levelElement.textContent = `Nivel ${user.level}`;
+                } else {
+                    levelElement.textContent = 'Nivel 1';
+                }
+                
+                console.log('✅ Header actualizado con información real del usuario');
+            } catch (error) {
+                console.warn('⚠️ Error al actualizar header:', error);
+                // Valores por defecto
+                usernameElement.textContent = 'Usuario Bingo';
+                levelElement.textContent = 'Nivel 1';
+            }
+        } else {
+            // Si no hay sesión, usar valores por defecto
+            usernameElement.textContent = 'Usuario Bingo';
+            levelElement.textContent = 'Nivel 1';
+        }
     }
 }
 
@@ -7694,6 +7976,9 @@ function updateUserInfo(user) {
     if (levelElement) {
         levelElement.textContent = `Nivel ${user.level}`;
     }
+    
+    // ✨ NUEVO: Actualizar también el header
+    updateHeaderUserInfo();
 }
 
 // Función para actualizar información del usuario en modo simple (sin authManager)
@@ -7722,6 +8007,9 @@ function updateUserInfoSimple(user) {
     }
     
     console.log('✅ UI actualizada con datos de sesión simple');
+    
+    // ✨ NUEVO: Actualizar también el header
+    updateHeaderUserInfo();
 }
 
 // Función de logout
@@ -7748,10 +8036,95 @@ function changeQuantity(delta) {
 }
 
 function buySelectedCards() {
+    console.log('🛒 Intentando comprar cartones...');
+    console.log('🔍 Verificando elementos necesarios...');
+    
+    // 🔍 VERIFICACIÓN COMPLETA DEL ESTADO DEL JUEGO
+    console.log('🔍 === ESTADO COMPLETO DEL JUEGO ===');
+    console.log('🔍 window.bingoGame:', window.bingoGame);
+    console.log('🔍 typeof window.bingoGame:', typeof window.bingoGame);
+    console.log('🔍 window.bingoGame === null:', window.bingoGame === null);
+    console.log('🔍 window.bingoGame === undefined:', window.bingoGame === undefined);
+    console.log('🔍 "bingoGame" in window:', 'bingoGame' in window);
+    console.log('🔍 window.hasOwnProperty("bingoGame"):', window.hasOwnProperty('bingoGame'));
+    
+    // 🔍 VERIFICACIÓN DE LA CLASE BINGOPRO
+    if (window.bingoGame) {
+        console.log('🔍 window.bingoGame.constructor.name:', window.bingoGame.constructor.name);
+        console.log('🔍 window.bingoGame instanceof BingoPro:', window.bingoGame instanceof BingoPro);
+        console.log('🔍 Métodos disponibles:', Object.getOwnPropertyNames(window.bingoGame));
+    }
+    
     const quantityInput = document.getElementById('cardQuantity');
+    console.log('🔍 quantityInput encontrado:', quantityInput);
+    console.log('🔍 window.bingoGame disponible:', !!window.bingoGame);
+    
     if (quantityInput && window.bingoGame) {
-        const quantity = parseInt(quantityInput.value);
-        window.bingoGame.buyCards(quantity);
+        try {
+            const quantity = parseInt(quantityInput.value);
+            console.log(`✅ Comprando ${quantity} cartones...`);
+            
+            // Verificar que la cantidad sea válida
+            if (isNaN(quantity) || quantity < 1) {
+                console.error('❌ Cantidad inválida:', quantity);
+                return;
+            }
+            
+            // Verificar que bingoGame.buyCards existe
+            if (typeof window.bingoGame.buyCards === 'function') {
+                const result = window.bingoGame.buyCards(quantity);
+                console.log('✅ Resultado de la compra:', result);
+            } else {
+                console.error('❌ buyCards no es una función:', typeof window.bingoGame.buyCards);
+            }
+        } catch (error) {
+            console.error('❌ Error al ejecutar buyCards:', error);
+            console.error('❌ Stack trace:', error.stack);
+        }
+    } else {
+        console.error('❌ Error al comprar cartones:');
+        console.log('🔍 quantityInput:', quantityInput);
+        console.log('🔍 window.bingoGame:', window.bingoGame);
+        console.log('🔍 typeof window.bingoGame:', typeof window.bingoGame);
+        console.log('🔍 window.bingoGame === null:', window.bingoGame === null);
+        console.log('🔍 window.bingoGame === undefined:', window.bingoGame === undefined);
+        
+        if (window.bingoGame) {
+            console.log('🔍 Métodos disponibles en bingoGame:', Object.getOwnPropertyNames(window.bingoGame));
+        } else {
+            console.log('🔍 window.bingoGame NO está disponible');
+            console.log('🔍 Verificando si existe en window:', 'bingoGame' in window);
+            console.log('🔍 Verificando si existe en window con hasOwnProperty:', window.hasOwnProperty('bingoGame'));
+            console.log('🔍 window.BingoPro disponible:', typeof window.BingoPro);
+            console.log('🔍 Intentando reinicializar para compra...');
+            
+            // Intentar reinicializar si es posible
+            try {
+                if (typeof window.BingoPro === 'function') {
+                    console.log('🔧 Reinicializando BingoGame para compra...');
+                    window.bingoGame = new window.BingoPro();
+                    window.bingoGame.initializeGame();
+                    console.log('✅ BingoGame reinicializado exitosamente para compra');
+                    
+                    // Reintentar la compra
+                    if (window.bingoGame && quantityInput) {
+                        const quantity = parseInt(quantityInput.value);
+                        if (!isNaN(quantity) && quantity > 0) {
+                            console.log('🔄 Reintentando compra después de reinicialización...');
+                            const result = window.bingoGame.buyCards(quantity);
+                            if (result) {
+                                console.log('✅ Compra exitosa después de reinicialización');
+                                return;
+                            }
+                        }
+                    }
+                } else {
+                    console.error('❌ Clase BingoPro no disponible para reinicialización');
+                }
+            } catch (error) {
+                console.error('❌ Error al reinicializar BingoGame para compra:', error);
+            }
+        }
     }
 }
 
@@ -8012,14 +8385,50 @@ window.addEventListener('load', function() {
  * Función global para seleccionar modo de juego
  */
 function selectGameMode(modeId) {
-    if (typeof bingoGame !== 'undefined' && bingoGame) {
-        const success = bingoGame.changeGameMode(modeId);
+    console.log(`🎮 Intentando cambiar modo de juego a: ${modeId}`);
+    
+    if (typeof window.bingoGame !== 'undefined' && window.bingoGame) {
+        console.log('✅ BingoGame encontrado, ejecutando changeGameMode...');
+        const success = window.bingoGame.changeGameMode(modeId);
         if (success) {
+            console.log('✅ Modo de juego cambiado exitosamente');
             // Actualizar estado visual de las tarjetas
             updateModeCardsVisualState();
+        } else {
+            console.error('❌ Error al cambiar modo de juego');
         }
     } else {
         console.error('❌ BingoGame no está inicializado');
+        console.log('🔍 Estado de window.bingoGame:', typeof window.bingoGame, window.bingoGame);
+        console.log('🔍 Verificando inicialización...');
+        console.log('🔍 "bingoGame" in window:', 'bingoGame' in window);
+        console.log('🔍 window.hasOwnProperty("bingoGame"):', window.hasOwnProperty('bingoGame'));
+        console.log('🔍 window.BingoPro disponible:', typeof window.BingoPro);
+        console.log('🔍 Intentando reinicializar...');
+        
+        // Intentar reinicializar si es posible
+        try {
+            if (typeof window.BingoPro === 'function') {
+                console.log('🔧 Reinicializando BingoGame...');
+                window.bingoGame = new window.BingoPro();
+                window.bingoGame.initializeGame();
+                console.log('✅ BingoGame reinicializado exitosamente');
+                
+                // Reintentar la operación
+                if (window.bingoGame) {
+                    const success = window.bingoGame.changeGameMode(modeId);
+                    if (success) {
+                        console.log('✅ Modo de juego cambiado exitosamente después de reinicialización');
+                        updateModeCardsVisualState();
+                        return;
+                    }
+                }
+            } else {
+                console.error('❌ Clase BingoPro no disponible');
+            }
+        } catch (error) {
+            console.error('❌ Error al reinicializar BingoGame:', error);
+        }
     }
 }
 
@@ -8028,11 +8437,11 @@ function selectGameMode(modeId) {
  */
 function updateModeCardsVisualState() {
     const modeCards = document.querySelectorAll('.mode-card');
-    const currentMode = bingoGame ? bingoGame.getCurrentGameMode() : null;
+    const currentMode = window.bingoGame ? window.bingoGame.getCurrentGameMode() : null;
     
     modeCards.forEach(card => {
         const modeId = card.dataset.mode;
-        const availableModes = bingoGame ? bingoGame.getAvailableGameModes() : [];
+        const availableModes = window.bingoGame ? window.bingoGame.getAvailableGameModes() : [];
         const modeInfo = availableModes.find(mode => mode.id === modeId);
         
         if (modeInfo) {
@@ -8056,14 +8465,39 @@ function updateModeCardsVisualState() {
  * Inicializar estado de las tarjetas de modo al cargar la página
  */
 function initializeModeCards() {
-    setTimeout(() => {
+    // Verificar si bingoGame está disponible
+    if (window.bingoGame) {
         updateModeCardsVisualState();
-    }, 1000); // Esperar a que BingoGame se inicialice
+    } else {
+        // Si no está disponible, esperar y reintentar
+        setTimeout(() => {
+            if (window.bingoGame) {
+                updateModeCardsVisualState();
+            } else {
+                console.warn('⚠️ bingoGame no disponible para inicializar modo de tarjetas');
+            }
+        }, 2000);
+    }
 }
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    initializeModeCards();
+    console.log('🚀 DOM cargado, verificando inicialización de BingoGame...');
+    
+    // ✨ NUEVO: Verificar y esperar a que bingoGame esté disponible
+    const checkBingoGame = () => {
+        if (window.bingoGame) {
+            console.log('✅ BingoGame disponible, inicializando modo de tarjetas...');
+            initializeModeCards();
+            updateModeCardsVisualState();
+        } else {
+            console.log('⏳ BingoGame no disponible aún, reintentando en 1 segundo...');
+            setTimeout(checkBingoGame, 1000);
+        }
+    };
+    
+    // Iniciar verificación
+    checkBingoGame();
     
     // ✨ NUEVO: Configurar event listeners del chat
     console.log('🔧 Configurando event listeners del chat...');
@@ -8092,7 +8526,21 @@ document.addEventListener('DOMContentLoaded', function() {
             sendChatMessage();
         });
     } else {
-        console.error('❌ Botón enviar del chat no encontrado');
+        console.warn('⚠️ Botón enviar del chat no encontrado, reintentando en 1 segundo...');
+        // Reintentar después de un delay
+        setTimeout(() => {
+            const retryBtn = document.querySelector('.btn-send');
+            if (retryBtn) {
+                console.log('✅ Botón enviar del chat encontrado en reintento, configurando...');
+                retryBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sendChatMessage();
+                });
+            } else {
+                console.error('❌ Botón enviar del chat no encontrado después del reintento');
+            }
+        }, 1000);
     }
     
     // Event listener para el botón cerrar del chat
@@ -8106,7 +8554,21 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleChat();
         });
     } else {
-        console.error('❌ Botón cerrar del chat no encontrado');
+        console.warn('⚠️ Botón cerrar del chat no encontrado, reintentando en 1 segundo...');
+        // Reintentar después de un delay
+        setTimeout(() => {
+            const retryBtn = document.getElementById('chatCloseBtn');
+            if (retryBtn) {
+                console.log('✅ Botón cerrar del chat encontrado en reintento, configurando...');
+                retryBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleChat();
+                });
+            } else {
+                console.error('❌ Botón cerrar del chat no encontrado después del reintento');
+            }
+        }, 1000);
     }
     
     // Event listener para el input del chat (Enter key)
@@ -8128,7 +8590,28 @@ document.addEventListener('DOMContentLoaded', function() {
             this.select();
         });
     } else {
-        console.error('❌ Input del chat no encontrado');
+        console.warn('⚠️ Input del chat no encontrado, reintentando en 1 segundo...');
+        // Reintentar después de un delay
+        setTimeout(() => {
+            const retryInput = document.getElementById('chatInput');
+            if (retryInput) {
+                console.log('✅ Input del chat encontrado en reintento, configurando...');
+                retryInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        sendChatMessage();
+                    }
+                });
+                
+                retryInput.addEventListener('click', function() {
+                    this.focus();
+                    this.select();
+                });
+            } else {
+                console.error('❌ Input del chat no encontrado después del reintento');
+            }
+        }, 1000);
     }
     
     console.log('✅ Event listeners del chat configurados correctamente');

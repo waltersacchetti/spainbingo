@@ -100,6 +100,10 @@ body {
     box-shadow: var(--shadow-lg);
     position: relative;
     z-index: 100;
+    margin-bottom: var(--spacing-md); /* Espacio entre header y menú */
+    min-height: 120px; /* Altura mínima para cubrir todo el contenido */
+    display: flex; /* Para que el contenido se expanda correctamente */
+    align-items: stretch; /* Estirar para cubrir toda la altura */
 }
 
 
@@ -119,9 +123,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-xl); /* Más padding vertical */
     max-width: 1400px;
     margin: 0 auto;
+    min-height: 100px; /* Altura mínima aumentada para cubrir todo */
+    position: relative; /* Para asegurar que los elementos estén contenidos */
+    overflow: hidden; /* Evitar que elementos se salgan del header */
 }
 
 /* Logo section */
@@ -129,6 +136,8 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    height: 100%; /* Ocupar toda la altura disponible */
+    padding: var(--spacing-sm) 0; /* Padding vertical para centrar */
 }
 
 .logo {
@@ -158,6 +167,8 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-lg);
+    height: 100%; /* Ocupar toda la altura disponible */
+    padding: var(--spacing-sm) 0; /* Padding vertical para centrar */
 }
 
 .user-info {
@@ -168,6 +179,8 @@ body {
     background: var(--bg-tertiary);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
+    height: 48px; /* Altura fija consistente */
+    min-width: 160px; /* Ancho mínimo consistente */
 }
 
 .user-avatar {
@@ -195,6 +208,28 @@ body {
     font-size: 0.9rem;
 }
 
+/* Botón de logout con tamaño consistente */
+.btn-logout {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+}
+
+.btn-logout:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
 .user-level {
     font-size: 0.8rem;
     color: var(--text-accent);
@@ -219,6 +254,8 @@ body {
     color: var(--primary-dark);
     font-size: 1rem;
     box-shadow: var(--shadow-md);
+    height: 48px; /* Altura fija consistente */
+    min-width: 120px; /* Ancho mínimo consistente */
 }
 
 .btn-deposit {
@@ -235,6 +272,8 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
+    height: 48px; /* Altura fija consistente */
+    min-width: 120px; /* Ancho mínimo consistente */
 }
 
 .btn-deposit:hover {
@@ -243,10 +282,51 @@ body {
     background: linear-gradient(135deg, #ff6b6b 0%, #e94560 50%, #ff6b6b 100%);
 }
 
+/* ✨ NUEVO: Botón de Perfil */
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    font-size: 0.9rem;
+    height: 48px; /* Altura fija consistente */
+    min-width: 120px; /* Ancho mínimo consistente */
+}
+
+.profile-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.profile-button i {
+    font-size: 1.2rem;
+}
+
+.profile-button span {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .profile-button span {
+        display: inline;
+    }
+}
+
 /* Navigation */
 .main-nav {
     background: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-color);
+    margin-top: var(--spacing-md); /* Espacio superior para separar del header */
 }
 
 .nav-content {
@@ -261,7 +341,7 @@ body {
 .nav-tabs {
     display: flex;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) 0;
+    padding: var(--spacing-md) 0; /* Más padding vertical para mejor separación */
 }
 
 .nav-tab {

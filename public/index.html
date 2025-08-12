@@ -108,8 +108,8 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="user-details">
-                            <div class="username">Jugador</div>
-                            <div class="user-level">Nivel 1</div>
+                            <div class="username" id="headerUsername">Jugador</div>
+                            <div class="user-level" id="headerUserLevel">Nivel 1</div>
                         </div>
                         <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
                             <i class="fas fa-sign-out-alt"></i>
@@ -126,6 +126,12 @@
                             Depositar
                         </button>
                     </div>
+                    
+                    <!-- ✨ NUEVO: Botón de Perfil -->
+                    <a href="profile.html" class="profile-button" title="Mi Perfil">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Mi Perfil</span>
+                    </a>
                 </div>
                 
                 <!-- Botón discreto para resetear experiencia (solo para desarrollo) -->
