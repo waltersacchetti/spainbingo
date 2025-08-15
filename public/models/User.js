@@ -113,12 +113,12 @@ module.exports = (sequelize) => {
         updatedAt: 'updated_at',
         hooks: {
             beforeCreate: async (user) => {
-                if (user.password_hash) {
+                if (user.password_hash && !user.password_hash.startsWith('$2b$')) {
                     user.password_hash = await bcrypt.hash(user.password_hash, 12);
                 }
             },
             beforeUpdate: async (user) => {
-                if (user.changed('password_hash')) {
+                if (user.changed('password_hash') && !user.password_hash.startsWith('$2b$')) {
                     user.password_hash = await bcrypt.hash(user.password_hash, 12);
                 }
             }
@@ -164,6 +164,56 @@ module.exports = (sequelize) => {
             total_won: this.total_won,
             last_login: this.last_login,
             created_at: this.created_at
+        };
+    };
+
+    // Método para calcular el nivel del usuario
+    User.prototype.getLevel = function() {
+        // Por defecto, si no hay experiencia, el usuario es nivel 1 (Novato)
+        const experience = this.experience || 0;
+        
+        // Sistema de niveles basado en experiencia (XP)
+        if (experience >= 1000) return 'Campeón';      // Nivel 10
+        if (experience >= 900) return 'Maestro';       // Nivel 9
+        if (experience >= 800) return 'Experto';       // Nivel 8
+        if (experience >= 700) return 'Diamante';      // Nivel 7 (VIP)
+        if (experience >= 600) return 'Oro';           // Nivel 6
+        if (experience >= 500) return 'Plata';         // Nivel 5
+        if (experience >= 400) return 'Bronce';        // Nivel 4
+        if (experience >= 300) return 'Principiante';  // Nivel 3
+        if (experience >= 200) return 'Aprendiz';      // Nivel 2
+        return 'Novato';                               // Nivel 1
+    };
+
+    // Método para obtener información del nivel actual
+    User.prototype.getLevelInfo = function() {
+        const level = this.getLevel();
+        const experience = this.experience || 0;
+        
+        // Calcular XP para el siguiente nivel
+        const levelThresholds = {
+            'Novato': 200,
+            'Aprendiz': 300,
+            'Principiante': 400,
+            'Bronce': 500,
+            'Plata': 600,
+            'Oro': 700,
+            'Diamante': 800,
+            'Experto': 900,
+            'Maestro': 1000,
+            'Campeón': null
+        };
+        
+        const currentThreshold = levelThresholds[level];
+        const nextThreshold = currentThreshold;
+        const xpToNext = nextThreshold ? Math.max(0, nextThreshold - experience) : 0;
+        
+        return {
+            level: level,
+            experience: experience,
+            xpToNext: xpToNext,
+            isMaxLevel: level === 'Campeón',
+            isVIP: level === 'Diamante' || level === 'Experto' || level === 'Maestro' || level === 'Campeón'
         };
     };
 

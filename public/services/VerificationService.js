@@ -4,15 +4,23 @@
  */
 
 const crypto = require('crypto');
-const EmailService = require('./EmailService');
+const SendGridService = require('./SendGridService');
 
 class VerificationService {
     constructor() {
-        this.emailService = new EmailService();
+        // Singleton pattern - solo crear una instancia
+        if (VerificationService.instance) {
+            return VerificationService.instance;
+        }
+        
+        this.emailService = new SendGridService();
         this.verificationCodes = new Map(); // Almacenar códigos temporalmente
         this.codeExpiration = 10 * 60 * 1000; // 10 minutos
         
-        console.log('🔐 Servicio de verificación inicializado con SendGrid');
+        // Guardar la instancia
+        VerificationService.instance = this;
+        
+        console.log('🔐 Servicio de verificación inicializado con SendGrid (Singleton)');
     }
 
     /**
@@ -29,13 +37,16 @@ class VerificationService {
         const codeHash = crypto.createHash('sha256').update(code).digest('hex');
         
         // Almacenar código con timestamp de expiración
-        this.verificationCodes.set(`${userId}-${email}`, {
+        const key = `${userId}-${email}`;
+        this.verificationCodes.set(key, {
             hash: codeHash,
             timestamp: Date.now(),
             attempts: 0
         });
         
         console.log(`🔐 Código de verificación generado para ${email}: ${code}`);
+        console.log(`🔑 Clave de almacenamiento: ${key}`);
+        console.log(`📊 Total de códigos almacenados: ${this.verificationCodes.size}`);
         return code;
     }
 
@@ -48,6 +59,10 @@ class VerificationService {
      */
     verifyCode(userId, email, code) {
         const key = `${userId}-${email}`;
+        console.log(`🔍 Buscando código con clave: ${key}`);
+        console.log(`📊 Total de códigos almacenados: ${this.verificationCodes.size}`);
+        console.log(`🔑 Claves disponibles:`, Array.from(this.verificationCodes.keys()));
+        
         const stored = this.verificationCodes.get(key);
         
         if (!stored) {
@@ -96,7 +111,7 @@ class VerificationService {
             console.log(`📧 Enviando código de verificación real a ${email} usando SendGrid`);
             
             // Usar SendGrid para enviar el email
-            const result = await this.emailService.sendVerificationEmail(email, username, code);
+            const result = await this.emailService.sendVerificationEmail(email, username, code, userId);
             
             if (result.success) {
                 console.log(`✅ Código de verificación enviado exitosamente a ${email}`);

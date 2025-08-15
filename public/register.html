@@ -491,6 +491,40 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="firstName" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nombre
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                id="firstName" 
+                                class="form-input" 
+                                placeholder="Tu nombre" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Apellidos
+                        </label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                id="lastName" 
+                                class="form-input" 
+                                placeholder="Tus apellidos" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="email" class="form-label">
                             <i class="fas fa-envelope"></i>
                             Correo Electrónico
@@ -909,12 +943,14 @@
                 const email = document.getElementById('email').value.trim();
                 const password = passwordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
                 const dateOfBirth = dateOfBirthInput.value;
                 const phone = phoneInput.value.trim();
                 const verificationMethod = document.querySelector('input[name="verificationMethod"]:checked').value;
                 
                 // Validaciones
-                if (!username || !email || !password || !confirmPassword || !dateOfBirth || !phone) {
+                if (!username || !email || !password || !confirmPassword || !firstName || !lastName || !dateOfBirth || !phone) {
                     showMessage('Por favor, completa todos los campos obligatorios', 'error');
                     return;
                 }
@@ -959,11 +995,16 @@
                         username,
                         email,
                         password,
+                        firstName,
+                        lastName,
                         dateOfBirth,
                         phone,
                         verificationMethod,
                         marketingConsent: document.getElementById('marketingConsent').checked
                     };
+                    
+                    console.log('📊 Registration data:', registrationData);
+                    console.log('🌐 Sending to URL:', '/api/register');
                     
                     const response = await fetch('/api/register', {
                         method: 'POST',
@@ -974,14 +1015,17 @@
                     });
                     
                     console.log(`📊 Response status: ${response.status}`);
+                    console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
                     
                     if (!response.ok) {
                         // Intentar obtener el mensaje de error del servidor
                         try {
                             const errorData = await response.json();
+                            console.log('❌ Error response data:', errorData);
                             const errorMessage = errorData.error || `HTTP Error: ${response.status}`;
                             throw new Error(errorMessage);
                         } catch (parseError) {
+                            console.log('❌ Could not parse error response:', parseError);
                             // Si no se puede parsear la respuesta, usar error genérico
                             throw new Error(`HTTP Error: ${response.status}`);
                         }

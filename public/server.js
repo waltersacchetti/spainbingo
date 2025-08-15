@@ -2,8 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 
-// Cargar variables de entorno
-require('dotenv').config();
+// Las variables de entorno se cargan automáticamente por PM2
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,9 +11,17 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', true);
 app.enable('trust proxy');
 
-// Importar EmailService
-const EmailService = require('./services/EmailService');
-const emailService = new EmailService();
+// Importar SendGridService (inicialización lazy)
+const SendGridService = require('./services/SendGridService');
+let emailService = null;
+
+// Función para obtener EmailService de forma lazy
+function getEmailService() {
+    if (!emailService) {
+        emailService = new SendGridService();
+    }
+    return emailService;
+}
 
 // Configuración de AWS Lambda
 const AWS = require('aws-sdk');
@@ -839,11 +846,11 @@ app.use('/api/users/', rateLimitMiddleware(apiLimiter));
 app.use('/api/verification/', rateLimitMiddleware(loginLimiter));
 
 // API endpoints para autenticación
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        // Validación básica para login (más permisiva)
+        // Validación básica para login
         if (!email || !password) {
             console.warn('⚠️ Intento de login con datos faltantes');
             return res.status(400).json({
@@ -862,7 +869,7 @@ app.post('/api/login', (req, res) => {
             });
         }
 
-        // Validación de contraseña básica (mínimo 1 carácter)
+        // Validación de contraseña básica
         if (password.length < 1) {
             console.warn('⚠️ Intento de login con contraseña vacía');
             return res.status(400).json({
@@ -873,27 +880,95 @@ app.post('/api/login', (req, res) => {
         
         console.log('🔐 Login attempt:', { email, password: password ? '***' : 'missing' });
         
-        // Simular autenticación exitosa (en producción esto verificaría contra la base de datos)
-        const user = {
-            id: 'user_' + Date.now(),
-            username: email.split('@')[0],
-            email: email,
-            firstName: 'Usuario',
-            lastName: 'Demo',
-            balance: 1000,
-            level: 'Bronce',
-            avatar: 'default'
-        };
-        
-        const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        console.log('✅ Login successful for:', email);
-        
-        res.json({
-            success: true,
-            user: user,
-            token: token
-        });
+        // 🔒 AUTENTICACIÓN REAL CON BASE DE DATOS RDS
+        try {
+            // Buscar usuario por email
+            const user = await User.findOne({
+                where: { email: email.toLowerCase() },
+                attributes: ['id', 'username', 'email', 'password_hash', 'first_name', 'last_name', 'is_verified', 'is_active', 'balance', 'date_of_birth']
+            });
+
+            if (!user) {
+                console.warn('❌ Usuario no encontrado:', email);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Credenciales inválidas'
+                });
+            }
+
+            // Verificar si el usuario está activo
+            if (!user.is_active) {
+                console.warn('❌ Usuario inactivo:', email);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Cuenta desactivada. Contacta con soporte.'
+                });
+            }
+
+            // Verificar contraseña usando bcrypt
+            const isPasswordValid = await user.verifyPassword(password);
+            if (!isPasswordValid) {
+                console.warn('❌ Contraseña incorrecta para usuario:', email);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Credenciales inválidas'
+                });
+            }
+
+            // Verificar edad mínima (18 años)
+            if (!user.isAdult()) {
+                console.warn('❌ Usuario menor de edad:', email);
+                return res.status(403).json({
+                    success: false,
+                    error: 'Debes ser mayor de 18 años para acceder'
+                });
+            }
+
+            // Verificar auto-exclusión
+            if (user.isSelfExcluded()) {
+                console.warn('❌ Usuario con auto-exclusión activa:', email);
+                return res.status(403).json({
+                    success: false,
+                    error: 'Tu cuenta tiene restricciones activas. Contacta con soporte.'
+                });
+            }
+
+            // Actualizar último login
+            await user.update({ last_login: new Date() });
+
+            // Generar token JWT (en producción usar jsonwebtoken)
+            const token = 'auth_token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            // Preparar respuesta del usuario (sin datos sensibles)
+            const userResponse = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                firstName: user.first_name || 'Usuario',
+                lastName: user.last_name || 'BingoRoyal',
+                balance: parseFloat(user.balance || 0),
+                level: user.getLevel ? user.getLevel() : 'Bronce',
+                avatar: 'default',
+                isVerified: user.is_verified,
+                lastLogin: user.last_login
+            };
+            
+            console.log('✅ Login exitoso para usuario:', email, 'ID:', user.id);
+            
+            res.json({
+                success: true,
+                user: userResponse,
+                token: token
+            });
+
+        } catch (dbError) {
+            console.error('❌ Error de base de datos durante login:', dbError);
+            return res.status(500).json({
+                success: false,
+                error: 'Error interno del servidor. Intenta más tarde.'
+            });
+        }
+
     } catch (error) {
         console.error('❌ Login error:', error);
         res.status(500).json({
@@ -967,7 +1042,73 @@ app.get('/api/game/numbers', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+// Test endpoint para verificar SendGrid
+app.post('/api/test-sendgrid', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email es requerido'
+            });
+        }
+
+        console.log('🧪 Probando envío de email con SendGrid a:', email);
+        
+        // Enviar email de prueba
+                    const result = await getEmailService().sendVerificationEmail(email, '123456', 'UsuarioTest');
+        
+        res.json({
+            success: true,
+            message: 'Email de prueba enviado exitosamente',
+            result: result
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en test de SendGrid:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al enviar email de prueba: ' + error.message
+        });
+    }
+});
+
+// Test endpoint para verificar UserManager
+app.post('/api/test-usermanager', async (req, res) => {
+    try {
+        console.log('🧪 Probando UserManager...');
+        
+        // Crear instancia de UserManager
+        const UserManager = require('./models/UserManager');
+        const userManager = new UserManager();
+        
+        console.log('✅ UserManager creado exitosamente');
+        
+        // Probar servicio de verificación
+        const verificationService = userManager.getVerificationService();
+        console.log('✅ VerificationService obtenido:', !!verificationService);
+        
+        res.json({
+            success: true,
+            message: 'UserManager funcionando correctamente',
+            verificationService: !!verificationService
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en test de UserManager:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error en UserManager: ' + error.message
+        });
+    }
 });
 
 // API health check
@@ -1204,7 +1345,8 @@ app.get('/api/admin/users', rateLimitMiddleware(apiLimiter), async (req, res) =>
 app.get('/api/admin/users/:id', rateLimitMiddleware(apiLimiter), async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
-        const user = await UserManager.getUserById(userId);
+        const userManager = new UserManager();
+        const user = await userManager.getUserById(userId);
         
         if (!user) {
             return res.status(404).json({
@@ -1242,10 +1384,14 @@ app.post('/api/register', async (req, res) => {
         const userData = req.body;
         const clientIP = req.ip || req.connection.remoteAddress;
         
-        console.log('🔍 DEBUG - Datos recibidos en /api/register:', JSON.stringify(userData, null, 2));
-        console.log('🔍 DEBUG - Headers:', JSON.stringify(req.headers, null, 2));
+        console.log('🔍 Registro de usuario:', { email: userData.email, username: userData.username, ip: clientIP });
         
-        const result = await UserManager.registerUser(userData, clientIP);
+        // Verificar que UserManager esté disponible
+        const UserManager = require('./models/UserManager');
+        const userManager = new UserManager();
+        
+        // Llamar al método de registro
+        const result = await userManager.registerUser(userData, clientIP);
         
         if (result.success) {
             res.json({
@@ -1260,7 +1406,7 @@ app.post('/api/register', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Error en registro:', error);
+        console.error('❌ Error en registro:', error);
         res.status(500).json({
             success: false,
             error: 'Error interno del servidor'
@@ -1386,7 +1532,8 @@ app.post('/api/verification/send', async (req, res) => {
             });
         }
 
-        const result = await UserManager.sendVerificationCode(userId, method);
+        const userManager = new UserManager();
+        const result = await userManager.sendVerificationCode(userId, method);
         
         if (result.success) {
             res.json({
@@ -1429,7 +1576,8 @@ app.post('/api/verification/verify', rateLimitMiddleware(loginLimiter), async (r
             });
         }
 
-        const result = await UserManager.verifyCode(userId, code);
+        const userManager = new UserManager();
+        const result = await userManager.verifyCode(userId, code);
         
         if (result.success) {
             // Limpiar caché del usuario
@@ -1486,7 +1634,7 @@ app.get('/api/verification/verify-token', async (req, res) => {
 // API para test de conexión SendGrid
 app.get('/api/admin/sendgrid-test', async (req, res) => {
     try {
-        const result = await emailService.healthCheck();
+        const result = await getEmailService().healthCheck();
         
         res.json({
             success: result.success,
@@ -1849,6 +1997,23 @@ app.post('/api/audit-log', rateLimitMiddleware(apiLimiter), (req, res) => {
             success: false,
             error: 'Error procesando log de auditoría'
         });
+    }
+});
+
+// Ruta para la página de verificación
+app.get('/verify', (req, res) => {
+    try {
+        // Obtener parámetros de la URL
+        const { code, email } = req.query;
+        
+        console.log(`🔍 Página de verificación solicitada - Código: ${code}, Email: ${email}`);
+        
+        // Servir la página de verificación
+        res.sendFile(path.join(__dirname, 'verification.html'));
+        
+    } catch (error) {
+        console.error('❌ Error sirviendo página de verificación:', error);
+        res.status(500).send('Error cargando página de verificación');
     }
 });
 

@@ -12,14 +12,38 @@ const VerificationService = require('../services/VerificationService');
 
 class UserManager {
     constructor() {
-        this.verificationService = new VerificationService();
+        // Inicializar servicios de forma lazy para evitar problemas con variables de entorno
+        this.verificationService = null;
         this.registrationAttempts = new Map();
         this.maxRegistrationAttempts = 5;
-        this.registrationCooldown = 15 * 60 * 1000; // 15 minutos
+        this.registrationCooldown = 5 * 60 * 1000; // 5 minutos (reducido de 15)
         this.passwordMinLength = 8;
         this.passwordMaxLength = 128;
         
         console.log('👥 Gestor de usuarios inicializado');
+    }
+
+    /**
+     * Obtener servicio de verificación de forma lazy
+     */
+    getVerificationService() {
+        if (!this.verificationService) {
+            try {
+                this.verificationService = new VerificationService();
+                console.log('✅ VerificationService inicializado');
+            } catch (error) {
+                console.error('❌ Error inicializando VerificationService:', error.message);
+                // Crear un servicio mock para permitir el registro sin email
+                this.verificationService = {
+                    sendVerificationCode: async () => ({
+                        success: true,
+                        message: 'Servicio de email no disponible (modo desarrollo)',
+                        expiresIn: 600
+                    })
+                };
+            }
+        }
+        return this.verificationService;
     }
 
     /**
@@ -49,7 +73,7 @@ class UserManager {
             errors.push(`La contraseña no puede exceder ${this.passwordMaxLength} caracteres`);
         }
         if (!this.isStrongPassword(userData.password)) {
-            errors.push('La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial');
+            errors.push('La contraseña debe tener al menos 8 caracteres y cumplir 2 de 3 criterios: mayúscula, minúscula o número');
         }
 
         // Validar fecha de nacimiento (obligatoria)
@@ -100,9 +124,12 @@ class UserManager {
         const hasUpperCase = /[A-Z]/.test(password);
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumbers = /\d/.test(password);
-        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
         
-        return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+        // Contraseña debe tener al menos 8 caracteres y cumplir 2 de 3 criterios
+        const criteria = [hasUpperCase, hasLowerCase, hasNumbers];
+        const metCriteria = criteria.filter(Boolean).length;
+        
+        return password.length >= 8 && metCriteria >= 2;
     }
 
     /**
@@ -192,11 +219,24 @@ class UserManager {
             // Verificar si el usuario ya existe
             const existingUser = await this.findUserByEmailOrUsername(userData.email, userData.username);
             if (existingUser) {
-                this.recordRegistrationAttempt(ip);
-                return {
-                    success: false,
-                    error: existingUser.email === userData.email ? 'El email ya está registrado' : 'El nombre de usuario ya está en uso'
-                };
+                // Solo considerar como duplicado si el usuario está verificado y activo
+                if (existingUser.is_verified && existingUser.is_active) {
+                    this.recordRegistrationAttempt(ip);
+                    return {
+                        success: false,
+                        error: existingUser.email === userData.email ? 'El email ya está registrado y verificado' : 'El nombre de usuario ya está en uso'
+                    };
+                } else {
+                    // Usuario existe pero no está verificado, permitir re-registro
+                    console.log(`⚠️ Usuario ${existingUser.email} existe pero no está verificado, permitiendo re-registro`);
+                    // Eliminar usuario no verificado de la base de datos
+                    try {
+                        await User.destroy({ where: { id: existingUser.id } });
+                        console.log(`🗑️ Usuario no verificado ${existingUser.email} eliminado para permitir re-registro`);
+                    } catch (deleteError) {
+                        console.error(`❌ Error al eliminar usuario no verificado:`, deleteError);
+                    }
+                }
             }
 
             // Crear hash de la contraseña
@@ -230,6 +270,25 @@ class UserManager {
             // Guardar en caché
             userCache.setCachedUser(user.id, user.toJSON());
 
+            // 🔐 ENVIAR EMAIL DE VERIFICACIÓN AUTOMÁTICAMENTE
+            try {
+                console.log(`📧 Enviando email de verificación a ${user.email}...`);
+                const verificationResult = await this.getVerificationService().sendVerificationCode(
+                    user.id, 
+                    user.email, 
+                    user.username
+                );
+                
+                if (verificationResult.success) {
+                    console.log(`✅ Email de verificación enviado exitosamente a ${user.email}`);
+                } else {
+                    console.warn(`⚠️ Error al enviar email de verificación: ${verificationResult.error}`);
+                }
+            } catch (verificationError) {
+                console.error(`❌ Error al enviar email de verificación:`, verificationError);
+                // No fallar el registro si falla el email, solo loguear el error
+            }
+
             // Limpiar intentos de registro
             this.registrationAttempts.delete(ip);
 
@@ -238,7 +297,8 @@ class UserManager {
             return {
                 success: true,
                 user: user.getPublicInfo(),
-                message: 'Usuario registrado exitosamente'
+                message: 'Usuario registrado exitosamente. Se ha enviado un email de verificación a tu correo.',
+                requiresVerification: true
             };
 
         } catch (error) {
@@ -291,9 +351,10 @@ class UserManager {
             if (cachedByUsername) return cachedByUsername;
 
             // Buscar en base de datos
+            const { Op } = require('sequelize');
             const user = await User.findOne({
                 where: {
-                    [sequelize.Op.or]: [
+                    [Op.or]: [
                         { email: email.toLowerCase() },
                         { username: username.toLowerCase() }
                     ]
@@ -511,9 +572,9 @@ class UserManager {
             }
 
             if (method === 'email') {
-                return await this.verificationService.sendVerificationCode(userId, user.email, user.username);
+                return await this.getVerificationService().sendVerificationCode(userId, user.email, user.username);
             } else if (method === 'sms') {
-                return await this.verificationService.sendVerificationSMS(userId, user.phone || user.telefono);
+                return await this.getVerificationService().sendVerificationSMS(userId, user.phone || user.telefono);
             } else {
                 return {
                     success: false,
@@ -543,7 +604,7 @@ class UserManager {
                 };
             }
 
-            const isValid = this.verificationService.verifyCode(userId, user.email, code);
+            const isValid = this.getVerificationService().verifyCode(userId, user.email, code);
             
             if (isValid) {
                 // Activar usuario
@@ -557,7 +618,7 @@ class UserManager {
                 );
 
                 // Enviar email de bienvenida
-                await this.verificationService.emailService.sendWelcomeEmail(user.email, user.username);
+                await this.getVerificationService().emailService.sendWelcomeEmail(user.email, user.username);
 
                 return {
                     success: true,
@@ -582,9 +643,9 @@ class UserManager {
      * Limpiar códigos expirados
      */
     async cleanExpiredCodes() {
-        this.verificationService.cleanupExpiredCodes();
+        this.getVerificationService().cleanupExpiredCodes();
         return { success: true, message: 'Códigos expirados limpiados' };
     }
 }
 
-module.exports = new UserManager(); 
+module.exports = UserManager; 

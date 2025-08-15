@@ -14,7 +14,7 @@ class SendGridService {
         }
     }
 
-    async sendVerificationEmail(toEmail, username, verificationCode) {
+    async sendVerificationEmail(toEmail, username, verificationCode, userId) {
         if (!this.apiKey) {
             throw new Error('SendGrid no está configurado');
         }
@@ -26,12 +26,6 @@ class SendGridService {
                 name: this.fromName
             },
             subject: 'Verifica tu cuenta de BingoRoyal',
-            templateId: 'd-verification-template-id', // Template ID de SendGrid (opcional)
-            dynamicTemplateData: {
-                username: username,
-                verificationCode: verificationCode,
-                verificationUrl: `https://game.bingoroyal.es/verify?code=${verificationCode}&email=${encodeURIComponent(toEmail)}`
-            },
             // Fallback HTML si no hay template
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -47,7 +41,7 @@ class SendGridService {
                     </div>
                     
                     <p>O puedes hacer clic en el siguiente enlace:</p>
-                    <a href="https://game.bingoroyal.es/verify?code=${verificationCode}&email=${encodeURIComponent(toEmail)}" 
+                    <a href="https://game.bingoroyal.es/verify?code=${verificationCode}&email=${encodeURIComponent(toEmail)}&userId=${userId}" 
                        style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
                         Verificar Mi Cuenta
                     </a>
@@ -70,7 +64,7 @@ class SendGridService {
                 
                 ${verificationCode}
                 
-                O visita: https://game.bingoroyal.es/verify?code=${verificationCode}&email=${encodeURIComponent(toEmail)}
+                O visita: https://game.bingoroyal.es/verify?code=${verificationCode}&email=${encodeURIComponent(toEmail)}&userId=${userId}
                 
                 Este código expirará en 10 minutos.
                 

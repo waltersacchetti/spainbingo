@@ -203,7 +203,10 @@ class UserCache {
     findUserByEmail(email) {
         for (const [key, value] of this.cache.entries()) {
             if (key.startsWith('user:') && value.data.email === email) {
-                return value.data;
+                // Solo devolver usuarios verificados y activos
+                if (value.data.is_verified && value.data.is_active) {
+                    return value.data;
+                }
             }
         }
         return null;
@@ -215,7 +218,10 @@ class UserCache {
     findUserByUsername(username) {
         for (const [key, value] of this.cache.entries()) {
             if (key.startsWith('user:') && value.data.username === username) {
-                return value.data;
+                // Solo devolver usuarios verificados y activos
+                if (value.data.is_verified && value.data.is_active) {
+                    return value.data;
+                }
             }
         }
         return null;

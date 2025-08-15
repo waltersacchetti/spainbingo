@@ -452,7 +452,7 @@
                 this.clearErrors();
 
                 try {
-                    const response = await fetch('/api/verify-code', {
+                    const response = await fetch('/api/verification/verify', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -493,7 +493,7 @@
                 this.disableResendButton();
 
                 try {
-                    const response = await fetch('/api/resend-code', {
+                    const response = await fetch('/api/verification/send', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
