@@ -371,17 +371,17 @@ body {
     50% { text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 40px rgba(251, 191, 36, 0.3); }
 }
 
-/* Layout del juego */
-.game-layout {
+/* Layout del juego - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .game-layout {
     display: grid;
     grid-template-columns: 320px 1fr 320px;
     gap: var(--spacing-xl);
     margin-bottom: var(--spacing-2xl);
     min-height: 600px;
-}
+} */
 
-/* Paneles del juego */
-.left-panel, .center-panel, .right-panel {
+/* Paneles del juego - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .left-panel, .center-panel, .right-panel {
     background: var(--bg-card);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
@@ -391,9 +391,10 @@ body {
     flex-direction: column;
     min-height: 600px;
     height: 600px;
-}
+} */
 
-.panel-header {
+/* Panel headers - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .panel-header {
     background: var(--bg-tertiary);
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
@@ -414,10 +415,10 @@ body {
 .panel-header i {
     color: var(--primary-color);
     font-size: 1.25rem;
-}
+} */
 
-/* Controles del juego */
-.caller-controls, .card-controls {
+/* Controles del juego - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .caller-controls, .card-controls {
     display: flex;
     gap: var(--spacing-sm);
     margin-top: var(--spacing-sm);
@@ -456,58 +457,551 @@ body {
     background: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+} */
+
+/* 🎯 ESTILOS DE NUMBERS-GRID MOVIDOS A bingo-card-modern.css */
+
+/* 🎯 ESTILOS DE NUMBERS-CONTAINER MOVIDOS A bingo-card-modern.css */
+
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
+
+/* Último número */
+.last-number-section {
+    /* padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-tertiary); */
 }
 
-/* Grid de números */
-.numbers-grid {
+/* .last-number-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.last-number-display {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--danger-color);
+    text-align: center;
+    padding: var(--spacing-md);
+    background: white;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-color);
+} */
+
+/* Contenedor de cartones - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .cards-container {
     flex: 1;
     padding: var(--spacing-lg);
     background: var(--bg-tertiary);
-    border-radius: var(--radius-lg);
-    margin: var(--spacing-md);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+} */
+
+/* Vista previa de cartones */
+.cards-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
 }
 
-.numbers-container {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: var(--spacing-xs);
-    max-height: 400px;
-    overflow-y: auto;
+.cards-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-align: center;
+}
+
+.cards-count {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.cards-count i {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+}
+
+.cards-status {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.btn-view-cards {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-view-cards:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+.btn-view-cards i {
+    font-size: 1.2rem;
+}
+
+.cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    justify-content: flex-start;
+    align-items: center;
     padding: var(--spacing-md);
     background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    min-height: 300px;
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-sm);
+    overflow-y: auto;
+    min-height: 400px;
 }
 
-.called-number {
+/* Mensaje cuando no hay cartones */
+.cards-grid:empty::before {
+    content: "No tienes cartones. Compra algunos para comenzar a jugar!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+/* Cartones de bingo */
+.bingo-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.bingo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.bingo-card:hover::before {
+    transform: translateX(100%);
+}
+
+.bingo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* 🎨 Header del cartón */
+.bingo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+}
+
+.card-id {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card-mode {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+}
+
+/* 🎨 Contenedor del grid */
+.bingo-grid-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bingo-row {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.bingo-row:last-child {
+    margin-bottom: 0;
+}
+
+/* 🎨 Celdas del cartón mejoradas */
+.bingo-cell {
+    aspect-ratio: 1;
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    min-width: 28px;
+    min-height: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.bingo-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.bingo-cell:hover::before {
+    transform: translateX(100%);
+}
+
+.bingo-cell:hover {
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    color: white;
+    transform: scale(1.1) rotate(2deg);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    border-color: #667eea;
+    z-index: 2;
+}
+
+.bingo-cell.marked {
+    background: linear-gradient(145deg, #48bb78, #38a169);
+    border-color: #38a169;
+    color: white;
+    animation: cellMarkedEnhanced 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
+    transform: scale(1.05);
+    font-weight: 800;
+}
+
+@keyframes cellMarkedEnhanced {
+    0% { 
+        transform: scale(1) rotate(0deg); 
+        box-shadow: 0 0 0 rgba(72, 187, 120, 0);
+    }
+    50% { 
+        transform: scale(1.2) rotate(5deg); 
+        box-shadow: 0 0 30px rgba(72, 187, 120, 0.8);
+    }
+    100% { 
+        transform: scale(1.05) rotate(0deg); 
+        box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
+    }
+}
+
+.bingo-cell.empty {
+    background: linear-gradient(145deg, #f7fafc, #edf2f7);
+    border-color: #cbd5e0;
+    color: #a0aec0;
+    cursor: default;
+}
+
+.bingo-cell.empty:hover {
+    transform: none;
+    background: linear-gradient(145deg, #f7fafc, #edf2f7);
+    color: #a0aec0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 🎨 Contenido de las celdas */
+.cell-number {
+    font-size: 1rem;
+    font-weight: 800;
+    color: inherit;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.cell-logo {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+/* 🎨 Indicador de marca */
+.mark-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #48bb78;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    animation: indicatorPop 0.3s ease-out;
+}
+
+@keyframes indicatorPop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 🎨 Footer del cartón */
+.bingo-card-footer {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+}
+
+.card-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.stat-item i {
+    font-size: 0.9rem;
+    color: #fbbf24;
+}
+
+/* 🎨 Logotipos específicos */
+.logo-0 { animation-delay: 0s; }
+.logo-1 { animation-delay: 0.2s; }
+.logo-2 { animation-delay: 0.4s; }
+.logo-3 { animation-delay: 0.6s; }
+.logo-4 { animation-delay: 0.8s; }
+.logo-5 { animation-delay: 1s; }
+.logo-6 { animation-delay: 1.2s; }
+.logo-7 { animation-delay: 1.4s; }
+.logo-8 { animation-delay: 1.6s; }
+.logo-9 { animation-delay: 1.8s; }
+
+/* 🎨 Responsive design */
+@media (max-width: 768px) {
+    .bingo-card {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .bingo-cell {
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 0.8rem;
+    }
+    
+    .cell-logo {
+        font-size: 1rem;
+    }
+    
+    .bingo-card-header {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .card-stats {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* 🎨 Modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .bingo-grid-container {
+        background: rgba(26, 32, 44, 0.95);
+    }
+    
+    .bingo-cell {
+        background: linear-gradient(145deg, #2d3748, #4a5568);
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .bingo-cell.empty {
+        background: linear-gradient(145deg, #1a202c, #2d3748);
+        border-color: #4a5568;
+        color: #718096;
+    }
+}
+
+/* Estilos específicos para diferentes colores de cartones */
+.bingo-card.card-red {
+    border-color: #ef4444;
+}
+
+.bingo-card.card-blue {
+    border-color: #3b82f6;
+}
+
+.bingo-card.card-green {
+    border-color: #10b981;
+}
+
+.bingo-card.card-purple {
+    border-color: #8b5cf6;
+}
+
+.card-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin: 0 0 var(--spacing-md) 0;
+    text-align: center;
+}
+
+.card-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-status {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: var(--spacing-sm);
+}
+
+.card-status.active {
+    background: var(--success-color);
+    animation: statusGlow 2s ease-in-out infinite;
+}
+
+@keyframes statusGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.card-status.inactive {
+    background: var(--text-muted);
+}
+
+/* Información del cartón */
+.card-info {
+    margin-top: var(--spacing-sm);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+/* Grid del cartón */
+.bingo-card-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 3px;
+    margin-top: var(--spacing-md);
+    width: 100%;
+}
+
+.bingo-cell {
     aspect-ratio: 1;
     background: var(--bg-tertiary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     transition: var(--transition-fast);
     cursor: pointer;
     position: relative;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 2px;
 }
 
-.called-number:hover {
-    border-color: var(--primary-color);
+.bingo-cell:hover {
     background: var(--primary-color);
     color: white;
     transform: scale(1.05);
 }
 
-.called-number.called {
+.bingo-cell.marked {
     background: var(--success-color);
     border-color: var(--success-color);
     color: white;
-    animation: numberCalled 0.5s ease-in-out;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    animation: cellMarked 0.3s ease-in-out;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
     transform: scale(1.1);
     font-weight: 700;
 }
@@ -650,629 +1144,302 @@ body {
 
 /* Cartones de bingo */
 .bingo-card {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
-    box-shadow: var(--shadow-md);
-    transition: var(--transition-normal);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    width: 100%;
-    max-width: 350px;
-    min-width: 300px;
-    flex-shrink: 0;
-    margin: 0;
-    margin-bottom: var(--spacing-md);
+}
+
+.bingo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.bingo-card:hover::before {
+    transform: translateX(100%);
 }
 
 .bingo-card:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-xl);
-    border-color: var(--primary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilos específicos para diferentes colores de cartones */
-.bingo-card.card-red {
-    border-color: #ef4444;
+/* 🎨 Header del cartón */
+.bingo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
 }
 
-.bingo-card.card-blue {
-    border-color: #3b82f6;
+.card-id {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.bingo-card.card-green {
-    border-color: #10b981;
-}
-
-.bingo-card.card-purple {
-    border-color: #8b5cf6;
-}
-
-.card-header {
-    background: var(--gradient-primary);
-    color: white;
-    padding: var(--spacing-md);
-    border-radius: var(--radius-md);
-    margin: 0 0 var(--spacing-md) 0;
-    text-align: center;
-}
-
-.card-header h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.card-status {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-sm);
+.card-mode {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
-    margin-top: var(--spacing-sm);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
 }
 
-.card-status.active {
-    background: var(--success-color);
-    animation: statusGlow 2s ease-in-out infinite;
+/* 🎨 Contenedor del grid */
+.bingo-grid-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes statusGlow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-}
-
-.card-status.inactive {
-    background: var(--text-muted);
-}
-
-/* Información del cartón */
-.card-info {
-    margin-top: var(--spacing-sm);
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    padding: var(--spacing-xs);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
-}
-
-/* Grid del cartón */
-.bingo-card-grid {
+.bingo-row {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 3px;
-    margin-top: var(--spacing-md);
-    width: 100%;
+    gap: 4px;
+    margin-bottom: 4px;
 }
 
+.bingo-row:last-child {
+    margin-bottom: 0;
+}
+
+/* 🎨 Celdas del cartón mejoradas */
 .bingo-cell {
     aspect-ratio: 1;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    transition: var(--transition-fast);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
-    min-width: 24px;
-    min-height: 24px;
-    padding: 2px;
+    min-width: 28px;
+    min-height: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.bingo-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.bingo-cell:hover::before {
+    transform: translateX(100%);
 }
 
 .bingo-cell:hover {
-    background: var(--primary-color);
+    background: linear-gradient(145deg, #667eea, #764ba2);
     color: white;
-    transform: scale(1.05);
+    transform: scale(1.1) rotate(2deg);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    border-color: #667eea;
+    z-index: 2;
 }
 
 .bingo-cell.marked {
-    background: var(--success-color);
-    border-color: var(--success-color);
+    background: linear-gradient(145deg, #48bb78, #38a169);
+    border-color: #38a169;
     color: white;
-    animation: cellMarked 0.3s ease-in-out;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    animation: cellMarkedEnhanced 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
     transform: scale(1.05);
-    font-weight: 700;
+    font-weight: 800;
 }
 
-@keyframes cellMarked {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+@keyframes cellMarkedEnhanced {
+    0% { 
+        transform: scale(1) rotate(0deg); 
+        box-shadow: 0 0 0 rgba(72, 187, 120, 0);
+    }
+    50% { 
+        transform: scale(1.2) rotate(5deg); 
+        box-shadow: 0 0 30px rgba(72, 187, 120, 0.8);
+    }
+    100% { 
+        transform: scale(1.05) rotate(0deg); 
+        box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
+    }
 }
 
 .bingo-cell.empty {
-    background: var(--bg-secondary);
-    border-color: var(--border-light);
-    color: var(--text-muted);
+    background: linear-gradient(145deg, #f7fafc, #edf2f7);
+    border-color: #cbd5e0;
+    color: #a0aec0;
     cursor: default;
 }
 
-/* Sección de compra de cartones */
-.card-purchase-section {
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
-    margin: var(--spacing-md);
-    border-radius: var(--radius-lg);
-}
-
-.purchase-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.price-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.selected-cards {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.purchase-controls {
-    display: flex;
-    gap: var(--spacing-md);
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.quantity-selector {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    background: white;
-}
-
-.btn-quantity {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--bg-tertiary);
-    border: none;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.btn-quantity:hover {
-    background: var(--primary-color);
-    color: white;
-}
-
-#cardQuantity {
-    width: 60px;
-    text-align: center;
-    border: none;
-    padding: var(--spacing-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-    background: white;
-}
-
-#cardQuantity:focus {
-    outline: none;
-    background: var(--bg-secondary);
-}
-
-.btn-buy-cards, .btn-join-game {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border: none;
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.btn-buy-cards {
-    background: var(--success-color);
-    color: white;
-}
-
-.btn-buy-cards:hover {
-    background: #059669;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-join-game {
-    background: var(--primary-color);
-    color: white;
-}
-
-.btn-join-game:hover:not(:disabled) {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-join-game:disabled {
-    background: var(--text-muted);
-    cursor: not-allowed;
+.bingo-cell.empty:hover {
     transform: none;
-    box-shadow: none;
+    background: linear-gradient(145deg, #f7fafc, #edf2f7);
+    color: #a0aec0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Panel derecho - Premios y estadísticas */
-.side-prize-info {
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
+/* 🎨 Contenido de las celdas */
+.cell-number {
+    font-size: 1rem;
+    font-weight: 800;
+    color: inherit;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.prize-section {
-    background: var(--gradient-gold);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+.cell-logo {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+/* 🎨 Indicador de marca */
+.mark-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #48bb78;
     color: white;
-    text-align: center;
-    box-shadow: var(--shadow-lg);
-}
-
-.main-prize {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-}
-
-.main-prize i {
-    font-size: 2rem;
-    color: var(--gold-color);
-}
-
-.prize-label {
-    font-size: 0.875rem;
-    opacity: 0.9;
-    font-weight: 500;
-}
-
-/* Estadísticas */
-.stats-section {
-    flex: 1;
-    padding: var(--spacing-md);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-lg);
-    margin: var(--spacing-md);
-    overflow-y: auto;
-    max-height: 400px;
-}
-
-.stats-grid {
-    display: grid;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    min-height: 500px;
-}
-
-.stat-card {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    text-align: center;
-    transition: var(--transition-fast);
-    box-shadow: var(--shadow-sm);
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-    width: 3rem;
-    height: 3rem;
-    background: var(--gradient-primary);
     border-radius: 50%;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto var(--spacing-md);
-    color: white;
-    font-size: 1.25rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    animation: indicatorPop 0.3s ease-out;
 }
 
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
+@keyframes indicatorPop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
-.stat-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
+/* 🎨 Footer del cartón */
+.bingo-card-footer {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
 }
 
-/* Sección de noticias */
-.news-section-main {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    margin: var(--spacing-xl) 0;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg);
-    overflow: hidden;
+.card-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 }
 
-.news-section-main .section-header {
-    background: var(--bg-tertiary);
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.news-section-main .section-header h2 {
-    font-size: 1.25rem;
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.news-section-main .news-content {
-    padding: var(--spacing-lg);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-    max-height: 250px;
-    overflow-y: auto;
+.stat-item i {
+    font-size: 0.9rem;
+    color: #fbbf24;
 }
 
-/* Chat */
-.chat-toggle-section-fixed {
-    position: fixed;
-    top: 100px;
-    right: var(--spacing-lg);
-    z-index: 1000;
-}
+/* 🎨 Logotipos específicos */
+.logo-0 { animation-delay: 0s; }
+.logo-1 { animation-delay: 0.2s; }
+.logo-2 { animation-delay: 0.4s; }
+.logo-3 { animation-delay: 0.6s; }
+.logo-4 { animation-delay: 0.8s; }
+.logo-5 { animation-delay: 1s; }
+.logo-6 { animation-delay: 1.2s; }
+.logo-7 { animation-delay: 1.4s; }
+.logo-8 { animation-delay: 1.6s; }
+.logo-9 { animation-delay: 1.8s; }
 
-.chat-toggle-btn-fixed {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    box-shadow: var(--shadow-lg);
-}
-
-.chat-toggle-btn-fixed:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
-}
-
-.chat-section-fixed {
-    position: fixed;
-    top: 160px;
-    right: var(--spacing-lg);
-    width: 350px;
-    background: white;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
-    border: 1px solid var(--border-color);
-    z-index: 1000;
-    transform: translateY(-20px);
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition-normal);
-}
-
-.chat-section-fixed.expanded {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
-
-.chat-container {
-    height: 400px;
-    display: flex;
-    flex-direction: column;
-}
-
-.chat-header {
-    background: var(--bg-tertiary);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.chat-close-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
-    transition: var(--transition-fast);
-}
-
-.chat-close-btn:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.chat-messages {
-    flex: 1;
-    padding: var(--spacing-lg);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.chat-message {
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    max-width: 80%;
-    font-size: 0.875rem;
-    line-height: 1.4;
-}
-
-.chat-message.system {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    align-self: center;
-    font-style: italic;
-}
-
-.chat-message.bot {
-    background: var(--primary-color);
-    color: white;
-    align-self: flex-start;
-}
-
-.chat-input {
-    padding: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    gap: var(--spacing-sm);
-}
-
-.chat-input input {
-    flex: 1;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    transition: var(--transition-fast);
-}
-
-.chat-input input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.btn-send {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.btn-send:hover {
-    background: var(--primary-dark);
-}
-
-/* Modales */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-}
-
-.modal-content {
-    background: var(--bg-card);
-    margin: 5% auto;
-    padding: 0;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.9);
+/* 🎨 Responsive design */
+@media (max-width: 768px) {
+    .bingo-card {
+        padding: 15px;
+        margin: 10px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+    
+    .bingo-cell {
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 0.8rem;
+    }
+    
+    .cell-logo {
+        font-size: 1rem;
+    }
+    
+    .bingo-card-header {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .card-stats {
+        flex-direction: column;
+        gap: 8px;
     }
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.modal-body {
-    padding: var(--spacing-lg);
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+/* 🎨 Modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .bingo-grid-container {
+        background: rgba(26, 32, 44, 0.95);
+    }
+    
+    .bingo-cell {
+        background: linear-gradient(145deg, #2d3748, #4a5568);
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .bingo-cell.empty {
+        background: linear-gradient(145deg, #1a202c, #2d3748);
+        border-color: #4a5568;
+        color: #718096;
+    }
 }
 
 /* Estilos específicos para modal de depósito */
@@ -1429,12 +1596,7 @@ body {
     font-weight: 600;
 }
 
-.numbers-row {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
-}
+/* 🎯 ESTILOS DE NUMBERS-ROW MOVIDOS A bingo-card-modern.css */
 
 .modal-number {
     aspect-ratio: 1;
@@ -2550,8 +2712,8 @@ body {
     font-weight: 600;
 }
 
-/* Responsive design */
-@media (max-width: 1400px) {
+/* Responsive design - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* @media (max-width: 1400px) {
     .game-layout {
         grid-template-columns: 300px 1fr 300px;
         gap: var(--spacing-lg);
@@ -2570,253 +2732,9 @@ body {
     }
 }
 
-@media (max-width: 1200px) {
-    .game-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
-        gap: var(--spacing-lg);
-    }
-    
-    .left-panel, .right-panel {
-        height: 300px;
-        min-height: 300px;
-    }
-    
-    .hero-section {
-        padding: var(--spacing-xl);
-    }
-    
-    .hero-section h1 {
-        font-size: 1.75rem;
-    }
-    
-    .prize-amount {
-        font-size: 2.5rem;
-    }
-    
-    .hero-stats {
-        flex-direction: column;
-        gap: var(--spacing-lg);
-    }
-    
-    .news-section-main .news-content {
-        grid-template-columns: 1fr;
-        max-height: 200px;
-    }
-}
+/* Media query de 1200px eliminado para evitar conflictos */
 
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        text-align: center;
-    }
-    
-    .user-section {
-        flex-direction: column;
-        gap: var(--spacing-md);
-    }
-    
-    .nav-tabs {
-        overflow-x: auto;
-        padding: var(--spacing-sm) 0;
-    }
-    
-    .main-content {
-        padding: var(--spacing-lg) var(--spacing-md);
-    }
-    
-    .hero-section {
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .hero-section h1 {
-        font-size: 1.5rem;
-    }
-    
-    .prize-amount {
-        font-size: 2rem;
-    }
-    
-    .hero-stats .stat-number {
-        font-size: 1.25rem;
-    }
-    
-    /* Responsive para Mis Cartones */
-    .cards-hero-section {
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .hero-title h1 {
-        font-size: 1.75rem;
-    }
-    
-    .hero-subtitle {
-        font-size: 1rem;
-    }
-    
-    .cards-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-    }
-    
-    .stat-card-hero {
-        padding: var(--spacing-md);
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
-    }
-    
-    .controls-header {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        text-align: center;
-    }
-    
-    .controls-actions {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .actions-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Responsive para Comprar Cartones */
-    .shop-hero-section {
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .hero-title-shop h1 {
-        font-size: 1.75rem;
-    }
-    
-    .hero-subtitle-shop {
-        font-size: 1rem;
-    }
-    
-    .shop-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-    }
-    
-    .shop-stat {
-        padding: var(--spacing-md);
-    }
-    
-    .stat-number-shop {
-        font-size: 1.5rem;
-    }
-    
-    .packages-grid-modern {
-        grid-template-columns: 1fr;
-    }
-    
-    .package-card-modern {
-        padding: var(--spacing-lg);
-    }
-    
-    .amount {
-        font-size: 2.5rem;
-    }
-    
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Responsive para Historial */
-    .history-hero-section {
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .hero-title-history h1 {
-        font-size: 1.75rem;
-    }
-    
-    .hero-subtitle-history {
-        font-size: 1rem;
-    }
-    
-    .history-stats-overview {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-    }
-    
-    .history-stat {
-        padding: var(--spacing-md);
-    }
-    
-    .stat-number-history {
-        font-size: 1.5rem;
-    }
-    
-    .controls-header-history {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        text-align: center;
-    }
-    
-    .history-actions {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .history-filters-modern {
-        justify-content: center;
-    }
-    
-    .analytics-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .game-layout {
-        gap: var(--spacing-md);
-    }
-    
-    .left-panel, .right-panel {
-        height: 250px;
-        min-height: 250px;
-    }
-    
-    .chat-toggle-section-fixed {
-        top: 80px;
-        right: var(--spacing-md);
-    }
-    
-    .chat-section-fixed {
-        right: var(--spacing-md);
-        width: calc(100vw - 2rem);
-        max-width: 350px;
-    }
-    
-    /* Responsive para cartones de bingo */
-    .bingo-card {
-        max-width: 100%;
-        min-width: auto;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .cards-grid {
-        gap: var(--spacing-sm);
-        padding: var(--spacing-sm);
-    }
-    
-    .bingo-cell {
-        font-size: 0.7rem;
-        min-width: 20px;
-        min-height: 20px;
-    }
-    
-    .btn-view-cards {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: 1rem;
-    }
-}
+/* Media query de 768px eliminado para evitar conflictos */
 
 /* Modal de Cartones de Bingo */
 .bingo-cards-modal .modal-content {

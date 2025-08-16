@@ -328,72 +328,9 @@ body::before {
     box-shadow: var(--shadow-strong);
 }
 
-/* ===== NÚMEROS LLAMADOS PANEL ===== */
-.called-numbers-panel {
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-medium);
-    padding: var(--spacing-lg);
-    margin: var(--spacing-md) 0;
-}
+/* 🎯 ESTILOS DE CALLED-NUMBERS-PANEL Y CALLED-NUMBERS-GRID MOVIDOS A bingo-card-modern.css */
 
-.called-numbers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-    gap: var(--spacing-sm);
-    max-height: 200px;
-    overflow-y: auto;
-    padding: var(--spacing-sm);
-}
-
-.called-number {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--gradient-royal);
-    color: white;
-    border-radius: var(--radius-round);
-    font-weight: 600;
-    font-size: 0.9rem;
-    animation: numberCall 0.8s ease-out;
-    box-shadow: var(--shadow-subtle);
-}
-
-@keyframes numberCall {
-    0% { 
-        transform: scale(0) rotate(180deg);
-        opacity: 0;
-    }
-    50% { 
-        transform: scale(1.2) rotate(90deg);
-        opacity: 1;
-    }
-    100% { 
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-    }
-}
-
-.called-number.latest {
-    background: var(--gradient-gold);
-    color: var(--premium-royal-blue-dark);
-    animation: latestNumber 2s ease-in-out infinite;
-}
-
-@keyframes latestNumber {
-    0%, 100% { 
-        transform: scale(1);
-        box-shadow: var(--shadow-subtle);
-    }
-    50% { 
-        transform: scale(1.1);
-        box-shadow: var(--shadow-glow);
-    }
-}
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
 
 /* ===== HEADER PREMIUM ===== */
 .main-header {
@@ -738,7 +675,7 @@ body::before {
 /* ===== LAYOUT OPTIMIZADO CON PRIORIDAD ===== */
 .game-layout {
     display: grid !important;
-    grid-template-columns: 1fr 1.2fr 0.8fr !important;
+    grid-template-columns: 1fr 2fr !important;
     gap: var(--spacing-lg) !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
@@ -756,24 +693,15 @@ body::before {
     height: fit-content !important;
 }
 
-/* Panel izquierdo - Números llamados más ancho */
+/* Panel izquierdo - Números llamados */
 .left-panel {
     min-height: 600px !important;
 }
 
-/* Panel central - Mis cartones más ancho */
+/* Panel central - Mis cartones ampliado */
 .center-panel {
     min-height: 600px !important;
-}
-
-/* Panel derecho - Estadísticas optimizado */
-.right-panel {
-    width: 100% !important;
-    max-width: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: var(--spacing-md) !important;
-    margin-top: 0 !important; /* Eliminar margen superior */
+    min-width: 0 !important;
 }
 
 /* Estadísticas movidas arriba */
@@ -879,16 +807,17 @@ body::before {
     color: var(--premium-gold) !important;
 }
 
-/* ===== RESPONSIVE LAYOUT OPTIMIZADO ===== */
-@media (max-width: 1200px) {
+/* ===== RESPONSIVE LAYOUT OPTIMIZADO - DESHABILITADO PARA EVITAR CONFLICTOS ===== */
+/* @media (max-width: 1200px) {
     .game-layout {
         grid-template-columns: 1fr 1fr 0.8fr !important;
         gap: var(--spacing-md) !important;
         padding: var(--spacing-md) !important;
     }
-}
+} */
 
-@media (max-width: 768px) {
+/* Layout móvil - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* @media (max-width: 768px) {
     .game-layout {
         grid-template-columns: 1fr !important;
         gap: var(--spacing-sm) !important;
@@ -923,7 +852,7 @@ body::before {
     .stat-label {
         font-size: 0.7rem !important;
     }
-}
+} */
 
 @media (max-width: 480px) {
     .panel-header h3 {
@@ -964,16 +893,16 @@ body::before {
     100% { left: 100%; }
 } 
 
-/* ===== LAYOUT OPTIMIZADO V2 - ESTADÍSTICAS MOVIDAS ===== */
-.game-layout {
+/* ===== LAYOUT OPTIMIZADO V2 - ESTADÍSTICAS MOVIDAS - DESHABILITADO PARA EVITAR CONFLICTOS ===== */
+/* .game-layout {
     display: grid !important;
-    grid-template-columns: 1fr 1.5fr 1fr !important; /* Center panel más ancho */
+    grid-template-columns: 1fr 1.5fr 1fr !important;
     gap: var(--spacing-lg) !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
     padding: var(--spacing-lg) !important;
     min-height: 80vh !important;
-}
+} */
 
 .left-panel, .center-panel, .right-panel {
     background: var(--glass-bg) !important;
@@ -985,28 +914,27 @@ body::before {
     height: fit-content !important;
 }
 
-/* Panel izquierdo - Números llamados */
-.left-panel {
+/* Panel izquierdo - Números llamados - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .left-panel {
     min-height: 600px !important;
 }
 
 /* Panel central - Mis cartones + Estadísticas */
 .center-panel {
-    min-height: 800px !important; /* Más alto para incluir estadísticas */
+    min-height: 800px !important;
     display: flex !important;
     flex-direction: column !important;
     gap: var(--spacing-lg) !important;
 }
 
-/* Panel derecho - Solo chat */
-.right-panel {
-    width: 100% !important;
-    max-width: none !important;
+/* Panel central optimizado para cartones y estadísticas - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .center-panel {
+    min-height: 800px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: var(--spacing-md) !important;
-    margin-top: 0 !important;
-}
+    gap: var(--spacing-lg) !important;
+    min-width: 0 !important;
+} */
 
 /* Estadísticas movidas dentro del center-panel */
 .stats-moved {
@@ -1019,24 +947,36 @@ body::before {
     animation: slideInUp 0.8s ease-out 0.2s both !important;
 }
 
-/* Ocultar la stats-section original del right-panel si existe */
-.right-panel .stats-section:not(.stats-moved) {
-    display: none !important;
+/* Estadísticas integradas en el panel central */
+.stats-section.stats-expanded {
+    background: var(--glass-bg-strong) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--spacing-md) !important;
+    margin-top: var(--spacing-lg) !important;
+    backdrop-filter: blur(20px) !important;
+    animation: slideInUp 0.8s ease-out 0.2s both !important;
 }
 
-/* Contenedor de cartones ajustado */
+/* Contenedor de cartones optimizado */
 .cards-container {
     flex: 1 !important;
     min-height: 400px !important;
     max-height: 600px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    display: flex !important;
+    flex-direction: column !important;
     gap: var(--spacing-md) !important;
-    padding: var(--spacing-sm) !important;
+    padding: var(--spacing-md) !important;
     border-radius: var(--radius-md) !important;
     background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.cards-container.expanded {
+    min-height: 500px !important;
+    max-height: 700px !important;
+    padding: var(--spacing-lg) !important;
 }
 
 /* Estilo del scrollbar para el contenedor */
@@ -1073,6 +1013,7 @@ body::before {
     display: flex !important;
     flex-direction: column !important;
     animation: cardSlideIn 0.5s ease-out !important;
+    margin-bottom: var(--spacing-md) !important;
 }
 
 .bingo-card:hover {

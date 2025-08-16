@@ -1852,7 +1852,7 @@ app.get('/api/bingo/stats', rateLimitMiddleware(apiLimiter), (req, res) => {
 });
 
 // API para obtener estadísticas globales de todos los modos
-app.get('/api/bingo/global-stats', rateLimitMiddleware(apiLimiter), (req, res) => {
+app.get('/api/bingo/global-stats', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
         const globalStats = globalBingoManager.getGlobalStats();
         

@@ -593,8 +593,8 @@ body {
     line-height: 1.2;
 }
 
-/* Game layout */
-.game-layout {
+/* Game layout - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .game-layout {
     display: grid;
     grid-template-columns: 350px 1fr 300px;
     gap: var(--spacing-xl);
@@ -602,9 +602,10 @@ body {
     max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
-}
+} */
 
-.left-panel, .center-panel, .right-panel {
+/* Estilos de paneles - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .left-panel, .center-panel, .right-panel {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
@@ -612,10 +613,10 @@ body {
     box-shadow: var(--shadow-md);
     height: fit-content;
     min-height: 600px;
-}
+} */
 
-/* Panel headers */
-.panel-header {
+/* Panel headers - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -636,10 +637,10 @@ body {
 .panel-header i {
     color: var(--secondary-color);
     font-size: 1.1rem;
-}
+} */
 
-/* Buttons */
-.btn-auto, .btn-view-numbers {
+/* Buttons - DESHABILITADOS PARA EVITAR CONFLICTOS */
+/* .btn-auto, .btn-view-numbers {
     background: var(--gradient-button);
     color: white;
     border: none;
@@ -658,123 +659,16 @@ body {
 .btn-auto:hover, .btn-view-numbers:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-}
+} */
 
-/* Numbers grid */
-.numbers-grid {
-    margin-top: var(--spacing-md);
-    width: 100%;
-    min-height: 400px;
-}
+/* 🎯 ESTILOS DE NUMBERS-GRID MOVIDOS A bingo-card-modern.css */
 
-.numbers-container {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 4px;
-    height: 350px;
-    overflow-y: auto;
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-    width: 100%;
-    box-sizing: border-box;
-    border: 2px solid var(--border-color);
-    min-height: 350px;
-    margin-bottom: var(--spacing-md);
-}
+/* 🎯 ESTILOS DE NUMBERS-CONTAINER MOVIDOS A bingo-card-modern.css */
 
-.called-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    font-size: 12px;
-    width: 28px;
-    height: 28px;
-    box-sizing: border-box;
-    text-align: center;
-    margin: 1px;
-}
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
 
-.called-number:hover {
-    border-color: var(--border-accent);
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
-}
-
-.called-number.called {
-    background: var(--gradient-primary);
-    color: white;
-    border-color: var(--secondary-color);
-    box-shadow: var(--shadow-glow);
-    animation: numberCalled 0.5s ease-in-out;
-    font-weight: 700;
-}
-
-.called-number.called::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: var(--gradient-primary);
-    border-radius: var(--radius-md);
-    z-index: -1;
-    animation: numberGlow 2s ease-in-out infinite;
-}
-
-@keyframes numberCalled {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
-    100% { transform: scale(1); }
-}
-
-@keyframes numberGlow {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-}
-
-/* Números no llamados (placeholder) */
-.called-number:not(.called) {
-    background: var(--bg-tertiary);
-    color: var(--text-muted);
-    border-color: var(--border-color);
-    opacity: 0.7;
-}
-
-/* Números llamados recientemente */
-.called-number.called.recent {
-    animation: numberCalledRecent 1s ease-in-out;
-}
-
-@keyframes numberCalledRecent {
-    0% { 
-        transform: scale(1);
-        background: var(--gradient-primary);
-    }
-    25% { 
-        transform: scale(1.4);
-        background: var(--gradient-secondary);
-    }
-    50% { 
-        transform: scale(1.2);
-        background: var(--gradient-primary);
-    }
-    100% { 
-        transform: scale(1);
-        background: var(--gradient-primary);
-    }
-}
-
-/* Last number section */
-.last-number-section {
+/* Last number section - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .last-number-section {
     margin-top: var(--spacing-lg);
     text-align: center;
 }
@@ -812,10 +706,10 @@ body {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
-}
+} */
 
-/* Cards section */
-.cards-container {
+/* Cards section - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* .cards-container {
     text-align: center;
 }
 
@@ -847,15 +741,6 @@ body {
     color: var(--secondary-color);
 }
 
-.cards-status {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-}
-
 .btn-view-cards {
     background: var(--gradient-secondary);
     color: var(--primary-dark);
@@ -871,7 +756,7 @@ body {
     gap: var(--spacing-sm);
     font-size: 1rem;
     text-decoration: none;
-}
+} */
 
 .btn-view-cards:hover {
     transform: translateY(-3px);
@@ -1609,48 +1494,11 @@ body {
     color: var(--text-accent);
 }
 
-.called-numbers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-}
+/* 🎯 ESTILOS DE CALLED-NUMBERS-GRID Y NUMBERS-ROW MOVIDOS A bingo-card-modern.css */
 
-.numbers-section h4 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-md);
-    text-align: center;
-}
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
 
-.numbers-row {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 4px;
-    margin-bottom: var(--spacing-md);
-}
-
-.numbers-row .called-number {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    transition: var(--transition-normal);
-}
-
-.numbers-row .called-number.called {
-    background: var(--gradient-primary);
-    color: white;
-    border-color: var(--secondary-color);
-    box-shadow: var(--shadow-glow);
-}
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
 
 .called-numbers-list {
     background: var(--bg-tertiary);
@@ -1674,15 +1522,7 @@ body {
     gap: var(--spacing-sm);
 }
 
-.called-list .called-number {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
+/* 🎯 ESTILOS DE NÚMEROS LLAMADOS MOVIDOS A bingo-card-modern.css */
 
 /* Bingo Cards Modal */
 .bingo-cards-modal .modal-content {
@@ -1845,12 +1685,12 @@ body {
     font-size: 0.9rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Responsive adjustments - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* @media (max-width: 768px) {
     .game-layout {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
-    }
+    } */
     
     .nav-content {
         flex-direction: column;
@@ -3619,8 +3459,8 @@ body {
     font-weight: 600;
 }
 
-/* Responsive design */
-@media (max-width: 1200px) {
+/* Responsive design - DESHABILITADO PARA EVITAR CONFLICTOS */
+/* @media (max-width: 1200px) {
     .game-layout {
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
@@ -3633,7 +3473,7 @@ body {
     .center-panel {
         order: 1;
     }
-}
+} */
 
 @media (max-width: 768px) {
     .header-content {
@@ -4874,42 +4714,7 @@ body {
     font-size: 1.1em;
 }
 
-/* Asegurar que todos los contenedores de modo tengan el mismo layout */
-.mode-numbers {
-    display: grid !important;
-    grid-template-columns: repeat(10, 1fr) !important;
-    gap: 4px !important;
-    height: 350px !important;
-    overflow-y: auto !important;
-    padding: 12px !important;
-    background: var(--bg-tertiary) !important;
-    border-radius: var(--radius-md) !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    border: 2px solid var(--border-color) !important;
-    min-height: 350px !important;
-    margin-bottom: var(--spacing-md) !important;
-}
-
-/* Contenedores específicos por modo para asegurar consistencia */
-#calledNumbers-CLASSIC,
-#calledNumbers-RAPID,
-#calledNumbers-VIP,
-#calledNumbers-NIGHT {
-    display: grid !important;
-    grid-template-columns: repeat(10, 1fr) !important;
-    gap: 4px !important;
-    height: 350px !important;
-    overflow-y: auto !important;
-    padding: 12px !important;
-    background: var(--bg-tertiary) !important;
-    border-radius: var(--radius-md) !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    border: 2px solid var(--border-color) !important;
-    min-height: 350px !important;
-    margin-bottom: var(--spacing-md) !important;
-}
+/* 🎯 ESTILOS DE MODE-NUMBERS Y CONTENEDORES ESPECÍFICOS MOVIDOS A bingo-card-modern.css */
 
 /* ===== CORRECCIÓN URGENTE DESKTOP LAYOUT ===== */
 /* ESTAS REGLAS DEBEN IR AL FINAL PARA SOBRESCRIBIR TODO */

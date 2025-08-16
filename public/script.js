@@ -107,6 +107,23 @@ class BingoPro {
         
         // 🚨 NUEVO: INICIALIZAR modeCycles EN EL CONSTRUCTOR
         this.modeCycles = {};
+        
+        // 🎯 NUEVO: SISTEMA DE CACHE PARA EVITAR POLLING EXCESIVO
+        this.globalStatsCache = {
+            data: null,
+            lastUpdate: 0,
+            cacheDuration: 10 * 1000, // 10 segundos de cache
+            isUpdating: false
+        };
+        
+        // 🎯 NUEVO: CONTROL DE POLLING INTELIGENTE
+        this.pollingControl = {
+            lastGlobalStatsRequest: 0,
+            minIntervalBetweenRequests: 5 * 1000, // 5 segundos mínimo entre peticiones
+            maxRequestsPerMinute: 10, // Máximo 10 peticiones por minuto
+            requestCount: 0,
+            lastResetTime: Date.now()
+        };
         this.selectedCards = [];
         this.cardPrice = 1.00; // 1 euro por cartón
         
@@ -269,7 +286,15 @@ class BingoPro {
         };
 
         // Modo de juego actual (con persistencia) - INICIALIZADO DESPUÉS DE gameModes
-        this.currentGameMode = this.loadGameMode() || 'CLASSIC';
+        const savedMode = this.loadGameMode() || 'CLASSIC';
+        this.currentGameMode = this.gameModes[savedMode] || this.gameModes['CLASSIC'];
+        
+        // 🎯 NUEVO: VERIFICAR INICIALIZACIÓN DE gameModes
+        console.log('🔍 VERIFICACIÓN DE INICIALIZACIÓN:');
+        console.log('🔍 this.gameModes inicializado:', !!this.gameModes);
+        console.log('🔍 this.gameModes keys:', Object.keys(this.gameModes));
+        console.log('🔍 this.currentGameMode:', this.currentGameMode);
+        console.log('🔍 this.gameModes[this.currentGameMode]:', this.gameModes[this.currentGameMode]);
         
         // Condiciones de victoria por modo
         this.winConditions = {
@@ -392,7 +417,8 @@ class BingoPro {
         this.initializeLiveChat();
         
         // ===== CONEXIÓN AL BINGO GLOBAL =====
-        this.connectToGlobalBingo();
+        // 🎯 CORREGIDO: NO conectar automáticamente al bingo global
+        // this.connectToGlobalBingo();
         
         console.log('BingoPro inicializado correctamente');
     }
@@ -471,7 +497,8 @@ class BingoPro {
         this.initializeUserProgression();
         
         // Conectar al bingo global inmediatamente para mantener estado
-        this.connectToGlobalBingo();
+        // 🎯 CORREGIDO: NO conectar automáticamente al bingo global
+        // this.connectToGlobalBingo();
         
         // ✨ NUEVO: Inicializar chat en vivo
         console.log('🚀 Inicializando chat en vivo...');
@@ -501,6 +528,9 @@ class BingoPro {
         
         // ✨ NUEVO: Cargar perfil de usuario
         this.loadUserProfile();
+        
+        // 🎯 NUEVO: Agregar comandos de debug a la consola
+        this.setupDebugCommands();
     }
 
     /**
@@ -780,10 +810,20 @@ class BingoPro {
         // 3. ACTUALIZAR COUNTDOWNS INMEDIATAMENTE
         this.updateAllModeCountdownsCoordinated();
         
-        // 4. ✨ NUEVO: RESET INMEDIATO DE CARTONES AL INICIALIZAR
+        // 4. 🎯 CORREGIDO: SINCRONIZACIÓN INMEDIATA CON SERVIDOR EN LUGAR DE RESET
         setTimeout(() => {
-            this.forceCompleteReset();
+            this.syncGameStateWithServer();
         }, 1000); // Esperar 1 segundo para que todo esté listo
+        
+        // 5. 🎯 NUEVO: LIMPIAR NÚMEROS LLAMADOS ANTIGUOS AL INICIALIZAR
+        setTimeout(() => {
+            this.clearCalledNumbersIfNoActiveGame();
+        }, 2000); // Esperar 2 segundos para que la sincronización se complete
+        
+        // 6. 🎯 NUEVO: LIMPIAR PARTIDAS EXPIRADAS AL INICIALIZAR
+        setTimeout(() => {
+            this.cleanupExpiredGames();
+        }, 3000); // Esperar 3 segundos para que la sincronización se complete
         
         // 5. 🎯 NUEVO: SINCRONIZACIÓN AUTOMÁTICA CADA 5 SEGUNDOS
         setInterval(() => {
@@ -803,16 +843,8 @@ class BingoPro {
                 return; // Ya hay un countdown activo
             }
             
-            // 2. OBTENER DATOS DEL SERVIDOR
-            let serverData = null;
-            try {
-                const response = await fetch('/api/bingo/global-stats');
-                if (response.ok) {
-                    serverData = await response.json();
-                }
-            } catch (error) {
-                console.log('⚠️ Servidor no disponible, usando cálculo local coordinado');
-            }
+            // 2. OBTENER DATOS DEL SERVIDOR (INTELIGENTE)
+            const serverData = await this.getGlobalStatsIntelligent();
             
             // 3. ACTUALIZAR COUNTDOWNS DE FORMA COORDINADA
             const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
@@ -836,6 +868,83 @@ class BingoPro {
     }
     
     /**
+     * 🎯 NUEVO: MÉTODO INTELIGENTE PARA OBTENER GLOBAL-STATS CON CACHE
+     * SOLUCIONA: Rate limiting HTTP 429 por polling excesivo
+     */
+    async getGlobalStatsIntelligent() {
+        const now = Date.now();
+        
+        // 🔒 CONTROL DE RATE LIMITING
+        if (now - this.pollingControl.lastGlobalStatsRequest < this.pollingControl.minIntervalBetweenRequests) {
+            console.log('⏰ Rate limiting: esperando intervalo mínimo entre peticiones');
+            return this.globalStatsCache.data;
+        }
+        
+        // 🔒 CONTROL DE MÁXIMO DE PETICIONES POR MINUTO (SIN RESET AUTOMÁTICO)
+        if (now - this.pollingControl.lastResetTime >= 60000) {
+            this.pollingControl.requestCount = 0;
+            this.pollingControl.lastResetTime = now;
+            // 🎯 CORREGIDO: NO RESETEAR ESTADO, SOLO CONTADOR DE PETICIONES
+        }
+        
+        if (this.pollingControl.requestCount >= this.pollingControl.maxRequestsPerMinute) {
+            console.log('🚫 Rate limiting: máximo de peticiones por minuto alcanzado');
+            return this.globalStatsCache.data;
+        }
+        
+        // ✅ VERIFICAR CACHE
+        if (this.globalStatsCache.data && 
+            now - this.globalStatsCache.lastUpdate < this.globalStatsCache.cacheDuration) {
+            console.log('💾 Usando cache de global-stats (válido por', 
+                Math.floor((this.globalStatsCache.cacheDuration - (now - this.globalStatsCache.lastUpdate)) / 1000), 's)');
+            return this.globalStatsCache.data;
+        }
+        
+        // 🔄 ACTUALIZAR CACHE
+        if (!this.globalStatsCache.isUpdating) {
+            this.globalStatsCache.isUpdating = true;
+            this.pollingControl.lastGlobalStatsRequest = now;
+            this.pollingControl.requestCount++;
+            
+            try {
+                console.log('🌐 Obteniendo global-stats del servidor...');
+                const response = await fetch('/api/bingo/global-stats');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 getGlobalStatsIntelligent - Respuesta del servidor:', data);
+                    console.log('🔍 getGlobalStatsIntelligent - Estructura de data:', {
+                        success: data.success,
+                        hasStats: !!data.stats,
+                        statsKeys: data.stats ? Object.keys(data.stats) : 'NO STATS',
+                        hasModes: !!data.modes,
+                        modesKeys: data.modes ? Object.keys(data.modes) : 'NO MODES',
+                        dataKeys: Object.keys(data)
+                    });
+                    
+                    this.globalStatsCache.data = data;
+                    this.globalStatsCache.lastUpdate = now;
+                    console.log('✅ Global-stats actualizado y cacheado');
+                    return data;
+                } else if (response.status === 429) {
+                    console.log('🚫 Rate limit alcanzado, usando cache anterior');
+                    return this.globalStatsCache.data;
+                } else {
+                    console.log('⚠️ Error del servidor, usando cache anterior');
+                    return this.globalStatsCache.data;
+                }
+            } catch (error) {
+                console.log('❌ Error de red, usando cache anterior:', error.message);
+                return this.globalStatsCache.data;
+            } finally {
+                this.globalStatsCache.isUpdating = false;
+            }
+        }
+        
+        return this.globalStatsCache.data;
+    }
+    
+    /**
      * 🎯 LÓGICA CORRECTA DE ESTADOS DE JUEGO
      * SOLUCIONA: Secciones "Próxima" que no funcionan y cartones que no se resetean
      */
@@ -852,9 +961,23 @@ class BingoPro {
         // 1. 🎯 NUEVO: ACTUALIZAR CICLO DEL MODO
         this.updateModeCycle(modeId);
         
-        // 2. 🎯 NUEVO: VERIFICAR SI HAY PARTIDA ACTIVA POR CICLO
+        // 2. 🎯 NUEVO: VERIFICACIÓN ROBUSTA DE PARTIDAS ACTIVAS
         const cycle = this.modeCycles[modeId];
-        if (cycle && cycle.isActive) {
+        
+        // 🎯 VERIFICAR MÚLTIPLES INDICADORES DE PARTIDA ACTIVA
+        const isPartidaActiva = 
+            (cycle && cycle.isActive) || // Por ciclos
+            (this.gameState === 'playing' && this.currentGameMode === modeId) || // Por estado local
+            this.isGlobalGameActive(modeId); // Por verificación global
+        
+        console.log(`🔍 Verificación de partida activa para ${modeId}:`);
+        console.log('🔍 cycle.isActive:', cycle?.isActive);
+        console.log('🔍 this.gameState:', this.gameState);
+        console.log('🔍 this.currentGameMode:', this.currentGameMode);
+        console.log('🔍 isGlobalGameActive result:', this.isGlobalGameActive(modeId));
+        console.log('🔍 isPartidaActiva final:', isPartidaActiva);
+        
+        if (isPartidaActiva) {
             // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
             return { 
                 isActive: true, 
@@ -1079,7 +1202,13 @@ class BingoPro {
         }
         
         try {
-            if (countdownInfo.isActive) {
+            console.log(`🔍 Actualizando countdown para ${modeId}:`, countdownInfo);
+            
+            // 🎯 NUEVO: VERIFICACIÓN ROBUSTA ANTES DE PERMITIR COMPRAS
+            const isRealPartidaActiva = this.isGlobalGameActive(modeId);
+            console.log(`🔍 Verificación real de partida activa para ${modeId}:`, isRealPartidaActiva);
+            
+            if (countdownInfo.isActive || isRealPartidaActiva) {
                 // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
                 countdownElement.textContent = '🎮 PARTIDA EN CURSO';
                 countdownElement.className = 'countdown active-game';
@@ -1122,10 +1251,9 @@ class BingoPro {
      */
     async syncCountdownsWithServer() {
         try {
-            const response = await fetch('/api/bingo/global-stats');
-            if (response.ok) {
-                const serverData = await response.json();
+            const serverData = await this.getGlobalStatsIntelligent();
                 
+            if (serverData) {
                 // ACTUALIZAR ESTADO LOCAL CON DATOS DEL SERVIDOR
                 this.updateLocalGameState(serverData);
                 
@@ -1383,21 +1511,27 @@ class BingoPro {
     /**
      * Actualizar countdown desde el servidor
      */
+    /**
+     * 🎯 CORREGIDO: Actualizar countdown desde el servidor usando el endpoint correcto
+     */
     async updateCountdownFromServer() {
         try {
-            const currentMode = this.getCurrentGameMode();
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
+            // 🎯 CORREGIDO: Usar el endpoint correcto global-stats
+            const response = await fetch('/api/bingo/global-stats');
             const data = await response.json();
             
-            if (data.success && data.gameState) {
-                const serverState = data.gameState;
+            if (data.success && data.stats) {
+                // 🎯 CORREGIDO: Adaptar la respuesta del nuevo endpoint
+                const currentMode = this.getCurrentGameMode();
+                const modeStats = data.stats[currentMode.id];
                 
+                if (modeStats) {
                 // Sincronizar estado del juego
-                this.gameState = serverState.gameState;
+                    this.gameState = modeStats.isActive ? 'playing' : 'waiting';
                 
                 // Si el servidor está en 'waiting', calcular tiempo restante
-                if (serverState.gameState === 'waiting' && serverState.nextGameTime) {
-                    const nextGameTime = new Date(serverState.nextGameTime);
+                    if (!modeStats.isActive && modeStats.nextGameTime) {
+                        const nextGameTime = new Date(modeStats.nextGameTime);
                     const now = new Date();
                     const timeLeft = nextGameTime.getTime() - now.getTime();
                     
@@ -1409,18 +1543,19 @@ class BingoPro {
                         // El tiempo se agotó, el servidor debería iniciar el juego
                         this.updateCountdownDisplay(0, 0);
                     }
-                } else if (serverState.gameState === 'playing') {
+                    } else if (modeStats.isActive) {
                     // El juego está en curso, mostrar 0:00
                     this.updateCountdownDisplay(0, 0);
                 }
                 
                 // Sincronizar números llamados
-                if (serverState.calledNumbers && serverState.calledNumbers.length > this.calledNumbers.size) {
-                    this.calledNumbers = new Set(serverState.calledNumbers);
-                    this.lastNumberCalled = serverState.lastNumberCalled;
+                    if (modeStats.calledNumbers && modeStats.calledNumbers.length > this.calledNumbers.size) {
+                        this.calledNumbers = new Set(modeStats.calledNumbers);
+                        this.lastNumberCalled = modeStats.lastNumberCalled;
                     this.renderCalledNumbers();
                     this.updateLastNumber();
                     this.renderCards();
+                    }
                 }
             }
             
@@ -1643,12 +1778,18 @@ class BingoPro {
     getUserInfo() {
         let userInfo = null;
         
+        console.log('🔍 getUserInfo() - Debugging...');
+        
         // Verificar si hay sesión de usuario
         const sessionData = localStorage.getItem('bingoroyal_session');
+        console.log('🔍 sessionData from localStorage:', sessionData);
+        
         if (sessionData) {
             try {
                 const session = JSON.parse(sessionData);
+                console.log('🔍 session parsed:', session);
                 userInfo = session.user;
+                console.log('🔍 userInfo extracted:', userInfo);
             } catch (error) {
                 console.log('⚠️ Error parseando sesión:', error);
             }
@@ -1657,8 +1798,10 @@ class BingoPro {
         // Verificar si hay authManager disponible
         if (!userInfo && typeof authManager !== 'undefined' && authManager.isUserAuthenticated()) {
             userInfo = authManager.getCurrentUser();
+            console.log('🔍 userInfo from authManager:', userInfo);
         }
         
+        console.log('🔍 Final userInfo returned:', userInfo);
         return userInfo;
     }
 
@@ -1675,13 +1818,35 @@ class BingoPro {
      * Verificar si el usuario cumple los requisitos para un modo de juego
      */
     checkGameModeRequirements(modeId) {
+        console.log(`🔍 checkGameModeRequirements(${modeId}) - Debugging...`);
+        console.log('🔍 modeId recibido:', modeId);
+        console.log('🔍 typeof modeId:', typeof modeId);
+        console.log('🔍 this.gameModes keys:', Object.keys(this.gameModes));
+        console.log('🔍 this.gameModes completo:', this.gameModes);
+        
         const mode = this.gameModes[modeId];
-        if (!mode || !mode.isActive) {
+        console.log('🔍 mode encontrado:', mode);
+        console.log('🔍 mode.isActive:', mode?.isActive);
+        console.log('🔍 mode.id:', mode?.id);
+        console.log('🔍 mode.name:', mode?.name);
+        
+        if (!mode) {
+            console.log('❌ Modo no encontrado en gameModes');
+            console.log('❌ modeId buscado:', modeId);
+            console.log('❌ Claves disponibles:', Object.keys(this.gameModes));
+            return { canPlay: false, reason: 'Modo de juego no encontrado' };
+        }
+        
+        if (!mode.isActive) {
+            console.log('❌ Modo encontrado pero isActive = false');
             return { canPlay: false, reason: 'Modo de juego no disponible' };
         }
 
         const userInfo = this.getUserInfo();
+        console.log('🔍 userInfo obtained:', userInfo);
+        
         const requirements = mode.requirements;
+        console.log('🔍 requirements:', requirements);
 
         // Verificar nivel del usuario
         const userLevel = userInfo?.level || 0;
@@ -1693,7 +1858,13 @@ class BingoPro {
         }
 
         // Verificar saldo
+        console.log('🔍 Verificación de saldo:');
+        console.log('🔍 this.userBalance:', this.userBalance);
+        console.log('🔍 requirements.balance:', requirements.balance);
+        console.log('🔍 Comparación:', this.userBalance < requirements.balance);
+        
         if (this.userBalance < requirements.balance) {
+            console.log('❌ Saldo insuficiente para el modo');
             return { 
                 canPlay: false, 
                 reason: `Saldo requerido: €${requirements.balance}. Tu saldo: €${this.userBalance.toFixed(2)}` 
@@ -1736,70 +1907,435 @@ class BingoPro {
             this.modeCycles = {};
         }
         
-        // 1. ✨ NUEVO: VERIFICACIÓN POR ATRIBUTO DATA-STATUS
+        // 🎯 VERIFICACIÓN MÚLTIPLE Y ROBUSTA
+        const countdownStatusResult = this.getCountdownStatus(modeId);
+        console.log(`🔍 getCountdownStatus(${modeId}) retorna:`, countdownStatusResult, 'tipo:', typeof countdownStatusResult);
+        
+        const indicators = {
+            modeCycles: this.modeCycles[modeId]?.isActive || false,
+            gameState: this.gameState === 'playing' && this.currentGameMode === modeId,
+            countdownStatus: countdownStatusResult,
+            serverState: this.serverGameState?.modes?.[modeId]?.gameState === 'playing'
+        };
+        
+        console.log(`🔍 Indicadores de partida activa para ${modeId}:`, indicators);
+        console.log(`🔍 modeCycles[${modeId}]:`, this.modeCycles[modeId]);
+        console.log(`🔍 this.gameState:`, this.gameState);
+        console.log(`🔍 this.currentGameMode:`, this.currentGameMode);
+        console.log(`🔍 countdownStatus detallado:`, this.getCountdownStatusDetailed(modeId));
+        console.log(`🔍 serverGameState.modes[${modeId}]:`, this.serverGameState?.modes?.[modeId]);
+        console.log(`🔍 serverGameState completo:`, this.serverGameState);
+        console.log(`🔍 serverGameState.modes:`, this.serverGameState?.modes);
+        console.log(`🔍 serverGameState.globalStats:`, this.serverGameState?.globalStats || 'undefined');
+        console.log(`🔍 serverGameState.globalStats?.stats:`, this.serverGameState?.globalStats?.stats || 'undefined');
+        console.log(`🔍 serverGameState.globalStats?.stats?.[${modeId}]:`, this.serverGameState?.globalStats?.stats?.[modeId] || 'undefined');
+        
+        const isActive = Object.values(indicators).some(indicator => indicator === true);
+        console.log(`🔍 Resultado final isGlobalGameActive(${modeId}):`, isActive);
+        
+        // 🎯 CORREGIDO: DETECTAR DESINCRONIZACIÓN Y CORREGIRLA (MÁS PRECISO)
+        if (!isActive && this.hasServerActivity(modeId)) {
+            console.log(`⚠️ DESINCRONIZACIÓN DETECTADA en ${modeId} - Corrigiendo...`);
+            console.log(`🔍 Indicadores que indican NO activo:`, indicators);
+            console.log(`🔍 Pero hasServerActivity retorna:`, this.hasServerActivity(modeId));
+            this.forceStateSync(modeId);
+            return true; // Bloquear compras hasta que se sincronice
+        }
+        
+        // 🎯 NUEVO: DETECTAR DESINCRONIZACIÓN DEL DOM Y CORREGIRLA
         const countdownElement = document.getElementById(`countdown-${modeId}`);
         if (countdownElement) {
-            const status = countdownElement.getAttribute('data-status');
-            if (status === 'active') {
-                console.log(`🎮 Partida activa detectada por data-status en ${modeId}`);
-                return true;
+            const domStatus = countdownElement.getAttribute('data-status');
+            const domText = countdownElement.textContent;
+            const serverStatus = this.serverGameState?.modes?.[modeId]?.gameState;
+            
+            console.log(`🔍 Verificando desincronización del DOM para ${modeId}:`);
+            console.log(`🔍   - DOM status: ${domStatus}`);
+            console.log(`🔍   - DOM text: ${domText}`);
+            console.log(`🔍   - Server status: ${serverStatus}`);
+            
+            // 🎯 CORREGIR: Si el DOM muestra "active" pero el servidor dice "waiting"
+            if (domStatus === 'active' && serverStatus === 'waiting') {
+                console.log(`⚠️ DESINCRONIZACIÓN DEL DOM DETECTADA en ${modeId} - Corrigiendo...`);
+                this.correctCountdownDisplay(modeId);
+                return false; // No hay partida activa real
             }
         }
         
-        // 2. VERIFICACIÓN POR ESTADO LOCAL DEL JUEGO
-        if (this.gameState === 'playing' && this.currentGameMode === modeId) {
-            console.log(`🎮 Partida local activa detectada en ${modeId}`);
+        return isActive;
+    }
+    
+    /**
+     * 🎯 CORREGIDO: Verificar si hay actividad del servidor (MÁS PRECISO)
+     */
+    hasServerActivity(modeId) {
+        // Verificar si hay números llamados globalmente (indicador de partida activa)
+        if (this.calledNumbers && this.calledNumbers.size > 0) {
+            console.log(`🔍 hasServerActivity(${modeId}): Números llamados detectados:`, this.calledNumbers.size);
             return true;
         }
 
-        // 3. VERIFICACIÓN POR ESTADO DEL SERVIDOR
-        if (this.serverGameState && this.serverGameState[modeId]) {
-            const serverState = this.serverGameState[modeId];
-            if (serverState.gameState === 'playing') {
-                console.log(`🌐 Partida del servidor activa detectada en ${modeId}`);
+        // Verificar si hay partida activa confirmada en el servidor
+        if (this.serverGameState?.modes?.[modeId]?.gameState === 'playing') {
+            console.log(`🔍 hasServerActivity(${modeId}): Partida activa confirmada en servidor`);
                 return true;
             }
-        }
-
-        // 4. ✨ NUEVO: VERIFICACIÓN POR CONTENIDO DEL COUNTDOWN
-        if (countdownElement && countdownElement.textContent === 'En curso') {
-            console.log(`⏰ Countdown indica partida activa en ${modeId}`);
-            return true;
-        }
-
-        // 5. ✨ NUEVO: VERIFICACIÓN POR ESTADO DE BOTONES DE COMPRA
-        const buyButtons = document.querySelectorAll(`[data-mode="${modeId}"] .btn-buy, [data-mode="${modeId}"] .btn-buy-cards`);
-        for (const button of buyButtons) {
-            if (button.disabled && button.classList.contains('game-blocked')) {
-                console.log(`🔒 Botón de compra bloqueado indica partida activa en ${modeId}`);
-                return true;
-            }
-        }
-
-        // 6. ✨ NUEVO: VERIFICACIÓN POR SISTEMA DE COUNTDOWN COORDINADO
-        if (this.countdownSystem && this.countdownSystem.isActive && this.countdownSystem.currentMode === modeId) {
-            console.log(`🎯 Sistema de countdown indica partida activa en ${modeId}`);
+        
+        // Verificar si hay partida activa en globalStats
+        if (this.serverGameState?.globalStats?.stats?.[modeId]?.isActive === true) {
+            console.log(`🔍 hasServerActivity(${modeId}): Partida activa en globalStats`);
             return true;
         }
         
-        // 7. ✨ NUEVO: VERIFICACIÓN POR SISTEMA DE CICLOS INDEPENDIENTES
-        if (this.modeCycles && this.modeCycles[modeId] && this.modeCycles[modeId].isActive) {
-            console.log(`🎯 Sistema de ciclos indica partida activa en ${modeId}`);
-            return true;
-        }
-
-        console.log(`✅ No hay partida activa en ${modeId}`);
+        console.log(`🔍 hasServerActivity(${modeId}): No hay actividad del servidor`);
         return false;
+    }
+    
+    /**
+     * 🎯 NUEVO: Forzar sincronización del estado
+     */
+    forceStateSync(modeId) {
+        console.log(`🔄 Forzando sincronización del estado para ${modeId}...`);
+        
+        // Marcar como partida activa temporalmente
+        if (!this.modeCycles[modeId]) {
+            this.modeCycles[modeId] = {};
+        }
+        this.modeCycles[modeId].isActive = true;
+        
+        // Forzar sincronización con servidor
+        // 🎯 CORREGIDO: NO sincronizar automáticamente al forzar estado
+        // this.syncGameStateWithServer();
+        
+        // Programar verificación adicional
+        setTimeout(() => {
+            this.verifyAndCorrectState(modeId);
+        }, 1000);
+    }
+    
+    /**
+     * 🎯 NUEVO: Verificar y corregir estado
+     */
+    verifyAndCorrectState(modeId) {
+        console.log(`🔍 Verificando y corrigiendo estado para ${modeId}...`);
+        
+        // Obtener estado real del servidor
+        this.getGlobalStatsIntelligent().then(serverData => {
+            if (serverData && serverData.stats && serverData.stats[modeId]) {
+                const modeStats = serverData.stats[modeId];
+                console.log(`📡 Estado real del servidor para ${modeId}:`, modeStats);
+                
+                // Corregir estado local
+                if (modeStats.isActive) {
+                    this.modeCycles[modeId].isActive = true;
+                    console.log(`✅ Estado corregido: ${modeId} está activo`);
+                } else {
+                    this.modeCycles[modeId].isActive = false;
+                    console.log(`✅ Estado corregido: ${modeId} está inactivo`);
+                }
+                
+                // Actualizar display
+                this.updateDisplay();
+            }
+        });
+    }
+    
+    /**
+     * 🎯 CORREGIDO: Obtener estado del countdown para un modo específico
+     * 🎯 CORREGIDO: Priorizar datos del backend sobre el DOM
+     */
+    getCountdownStatus(modeId) {
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) return false;
+        
+        const status = countdownElement.getAttribute('data-status');
+        const text = countdownElement.textContent;
+        
+        // 🎯 PRIORIDAD 1: Verificar datos del backend (más confiables)
+        if (this.modeCycles[modeId] && this.modeCycles[modeId].isActive) {
+            console.log(`🔍 getCountdownStatus(${modeId}): Backend confirma partida activa`);
+            
+            // 🎯 VERIFICACIÓN ADICIONAL: Verificar si realmente hay una partida activa
+            const cycle = this.modeCycles[modeId];
+            const now = Date.now();
+            const gameStartTime = cycle.startTime;
+            const gameDuration = cycle.duration || 60000; // Default 1 minuto
+            const gameEndTime = gameStartTime + gameDuration;
+            
+            console.log(`🔍 getCountdownStatus(${modeId}): Verificación temporal:`);
+            console.log(`🔍   - Ahora: ${now}`);
+            console.log(`🔍   - Inicio partida: ${gameStartTime}`);
+            console.log(`🔍   - Duración: ${gameDuration}`);
+            console.log(`🔍   - Fin partida: ${gameEndTime}`);
+            console.log(`🔍   - ¿Partida terminó? ${now > gameEndTime}`);
+            
+            // 🎯 CORREGIDO: Si la partida ya terminó, limpiar el estado
+            if (now > gameEndTime) {
+                console.log(`🔍 getCountdownStatus(${modeId}): Partida ya terminó, limpiando estado...`);
+                this.modeCycles[modeId].isActive = false;
+                this.modeCycles[modeId].gameState = 'waiting';
+                console.log(`🔍 getCountdownStatus(${modeId}) RETORNANDO: false (partida terminada)`);
+                return false;
+            }
+            
+            console.log(`🔍 getCountdownStatus(${modeId}) RETORNANDO: true (backend válido)`);
+            return true;
+        }
+
+        // 🎯 PRIORIDAD 2: Verificar estado del servidor
+        console.log(`🔍 getCountdownStatus(${modeId}): Verificando estado del servidor...`);
+        console.log(`🔍   - this.serverGameState:`, this.serverGameState);
+        console.log(`🔍   - this.serverGameState?.modes:`, this.serverGameState?.modes);
+        console.log(`🔍   - this.serverGameState?.modes?.[${modeId}]:`, this.serverGameState?.modes?.[modeId]);
+        console.log(`🔍   - this.serverGameState?.modes?.[${modeId}]?.gameState:`, this.serverGameState?.modes?.[modeId]?.gameState);
+        
+        if (this.serverGameState?.modes?.[modeId]?.gameState === 'playing') {
+            console.log(`🔍 getCountdownStatus(${modeId}): Servidor confirma partida activa`);
+                return true;
+        }
+        
+        // 🎯 PRIORIDAD 3: Verificar números llamados (indicador de partida activa)
+        if (this.calledNumbers && this.calledNumbers.size > 0) {
+            console.log(`🔍 getCountdownStatus(${modeId}): Números llamados detectados:`, this.calledNumbers.size);
+            console.log(`🔍 getCountdownStatus(${modeId}): Números llamados:`, Array.from(this.calledNumbers));
+            console.log(`🔍 getCountdownStatus(${modeId}): ¿Hay partida activa real?`, this.modeCycles[modeId]?.isActive);
+            
+            // 🎯 CORREGIDO: Solo considerar números llamados si hay partida activa REAL
+            if (this.modeCycles[modeId]?.isActive) {
+                console.log(`🔍 getCountdownStatus(${modeId}): Números llamados + partida activa = VERDADERO`);
+                return true;
+            } else {
+                console.log(`🔍 getCountdownStatus(${modeId}): Números llamados pero NO hay partida activa = FALSO`);
+                // 🎯 LIMPIAR NÚMEROS LLAMADOS ANTIGUOS
+                this.calledNumbers.clear();
+                return false;
+            }
+        }
+        
+        // 🎯 PRIORIDAD 4: Solo si no hay datos del backend, confiar en el DOM
+        const domIndicatesActive = 
+            status === 'active' || 
+            text.includes('PARTIDA EN CURSO') || 
+            text.includes('En curso') ||
+            text.includes('🎮 PARTIDA EN CURSO') ||
+            (text.includes('⏰') && !text.includes('Esperando'));
+        
+        if (domIndicatesActive) {
+            console.log(`🔍 getCountdownStatus(${modeId}): DOM indica partida activa, pero verificando...`);
+            // 🎯 CORREGIR EL DOM SI ESTÁ DESINCRONIZADO
+            this.correctCountdownDisplay(modeId);
+            return false; // No confiar en DOM desactualizado
+        }
+        
+        console.log(`🔍 getCountdownStatus(${modeId}): No hay partida activa confirmada`);
+        console.log(`🔍 getCountdownStatus(${modeId}) RETORNANDO: false`);
+        return false;
+    }
+    
+    /**
+     * 🎯 CORREGIDO: Limpiar números llamados si no hay partida activa
+     */
+    clearCalledNumbersIfNoActiveGame() {
+        console.log('🔧 Verificando si hay números llamados sin partida activa...');
+        
+        let hasActiveGame = false;
+        Object.keys(this.modeCycles).forEach(modeId => {
+            if (this.modeCycles[modeId]?.isActive) {
+                hasActiveGame = true;
+                console.log(`🔍 Modo ${modeId} tiene partida activa`);
+            }
+        });
+        
+        if (!hasActiveGame && this.calledNumbers && this.calledNumbers.size > 0) {
+            console.log('🔧 Limpiando números llamados antiguos (no hay partida activa)');
+            this.calledNumbers.clear();
+            this.lastNumberCalled = null;
+            
+            // Limpiar display de números llamados
+            const calledNumbersContainer = document.getElementById('calledNumbers');
+            if (calledNumbersContainer) {
+                calledNumbersContainer.innerHTML = '';
+            }
+            
+            // Limpiar último número llamado
+            const lastNumberElement = document.getElementById('lastNumberCalled');
+            if (lastNumberElement) {
+                lastNumberElement.textContent = '';
+            }
+        }
+    }
+    
+    /**
+     * 🎯 NUEVO: Limpiar estados de partidas terminadas automáticamente
+     */
+    cleanupExpiredGames() {
+        console.log('🔧 Limpiando partidas expiradas...');
+        
+        Object.keys(this.modeCycles).forEach(modeId => {
+            const cycle = this.modeCycles[modeId];
+            if (cycle && cycle.isActive) {
+                const now = Date.now();
+                const gameStartTime = cycle.startTime;
+                const gameDuration = cycle.duration || 60000;
+                const gameEndTime = gameStartTime + gameDuration;
+                
+                if (now > gameEndTime) {
+                    console.log(`🔧 Limpiando partida expirada en ${modeId}:`);
+                    console.log(`🔧   - Inicio: ${new Date(gameStartTime).toLocaleTimeString()}`);
+                    console.log(`🔧   - Duración: ${gameDuration}ms`);
+                    console.log(`🔧   - Fin: ${new Date(gameEndTime).toLocaleTimeString()}`);
+                    console.log(`🔧   - Ahora: ${new Date(now).toLocaleTimeString()}`);
+                    
+                    // Limpiar estado
+                    cycle.isActive = false;
+                    cycle.gameState = 'waiting';
+                    cycle.players = [];
+                    cycle.calledNumbers = [];
+                    
+                    console.log(`🔧 Estado limpiado para ${modeId}`);
+                }
+            }
+        });
+    }
+    
+    /**
+     * 🎯 CORREGIDO: Corregir display del countdown si está desincronizado (MÁS AGRESIVO)
+     */
+    correctCountdownDisplay(modeId) {
+        console.log(`🔧 Corrigiendo display del countdown para ${modeId}...`);
+        
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) return;
+        
+        // 🎯 NUEVO: Obtener estado real del servidor (más confiable que modeCycles)
+        const serverModeState = this.serverGameState?.modes?.[modeId];
+        const isActuallyActive = serverModeState?.gameState === 'playing';
+        
+        console.log(`🔧 Estado real del servidor para ${modeId}:`, serverModeState);
+        console.log(`🔧 ¿Hay partida activa según servidor? ${isActuallyActive}`);
+        
+        if (!isActuallyActive) {
+            // 🎯 CORREGIR: Si no hay partida activa, mostrar tiempo restante
+            console.log(`🔧 Corrigiendo ${modeId}: No hay partida activa, mostrando tiempo restante`);
+            
+            // 🎯 NUEVO: Usar datos del servidor para calcular tiempo restante
+            if (serverModeState && serverModeState.nextGameTime) {
+                const nextGameTime = new Date(serverModeState.nextGameTime);
+                const now = new Date();
+                const timeLeft = nextGameTime.getTime() - now.getTime();
+                
+                if (timeLeft > 0) {
+                    const minutes = Math.floor(timeLeft / 60000);
+                    const seconds = Math.floor((timeLeft % 60000) / 1000);
+                    countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    console.log(`🔧 ${modeId} corregido: ${minutes}:${seconds} restantes`);
+                } else {
+                    countdownElement.textContent = '✅ COMPRAR CARTONES';
+                    console.log(`🔧 ${modeId} corregido: COMPRAR CARTONES`);
+                }
+            } else {
+                countdownElement.textContent = '✅ COMPRAR CARTONES';
+                console.log(`🔧 ${modeId} corregido: COMPRAR CARTONES (sin tiempo)`);
+            }
+            
+            // 🎯 CORREGIR: Actualizar atributos y clases
+            countdownElement.setAttribute('data-status', 'waiting');
+            countdownElement.classList.remove('active-game');
+            countdownElement.classList.add('waiting-game');
+            
+            console.log(`🔧 ${modeId} corregido completamente`);
+        } else {
+            console.log(`🔧 ${modeId} ya está correcto (partida activa)`);
+        }
+    }
+    
+    /**
+     * 🎯 CORREGIDO: Verificar partida activa por datos del servidor
+     */
+    isPartidaActivaByServerData(modeId) {
+        // Verificar si hay números llamados en el servidor
+        if (this.serverGameState?.modes?.[modeId]) {
+            const modeState = this.serverGameState.modes[modeId];
+            return modeState.gameState === 'playing' || modeState.isActive;
+        }
+        
+        // Verificar si hay números llamados globalmente
+        if (this.calledNumbers && this.calledNumbers.length > 0) {
+            return true;
+        }
+        
+        // Verificar si hay partida activa en el modo actual
+        if (this.currentGameMode === modeId && this.gameState === 'playing') {
+            return true;
+        }
+
+        return false;
+    }
+    
+    /**
+     * 🎯 NUEVO: Obtener estado detallado del countdown para diagnóstico
+     */
+    getCountdownStatusDetailed(modeId) {
+        const countdownElement = document.getElementById(`countdown-${modeId}`);
+        if (!countdownElement) {
+            return { 
+                elementFound: false, 
+                status: null, 
+                text: null, 
+                className: null 
+            };
+        }
+        
+        return {
+            elementFound: true,
+            status: countdownElement.getAttribute('data-status'),
+            text: countdownElement.textContent,
+            className: countdownElement.className,
+            isActive: countdownElement.getAttribute('data-status') === 'active',
+            containsPartidaEnCurso: countdownElement.textContent.includes('PARTIDA EN CURSO'),
+            containsEnCurso: countdownElement.textContent.includes('En curso')
+        };
     }
 
     /**
      * 🔒 Verificar si se puede comprar cartones en este momento
      */
     canPurchaseCards(modeId = null) {
-        const targetMode = modeId || this.currentGameMode;
+        console.log(`🔍 canPurchaseCards(${modeId}) - Debugging...`);
+        console.log('🔍 modeId recibido:', modeId);
+        console.log('🔍 this.currentGameMode:', this.currentGameMode);
+        
+        // 🎯 CORREGIDO: Manejar tanto objetos como strings para modeId
+        let targetMode;
+        if (modeId) {
+            // Si modeId es un string, obtener el objeto del modo
+            if (typeof modeId === 'string') {
+                targetMode = this.gameModes[modeId];
+                console.log('🔍 modeId es string, obteniendo objeto del modo:', modeId);
+            } else {
+                targetMode = modeId;
+                console.log('🔍 modeId es objeto, usando directamente');
+            }
+        } else {
+            targetMode = this.currentGameMode;
+            console.log('🔍 Usando this.currentGameMode como targetMode');
+        }
+        
+        console.log('🔍 targetMode final:', targetMode);
+        console.log('🔍 targetMode.id:', targetMode?.id);
+        console.log('🔍 targetMode.name:', targetMode?.name);
+        console.log('🔍 targetMode tipo:', typeof targetMode);
+        console.log('🔍 targetMode es null:', targetMode === null);
+        console.log('🔍 targetMode es undefined:', targetMode === undefined);
+        console.log('🔍 this.currentGameMode:', this.currentGameMode);
+        console.log('🔍 this.currentGameMode tipo:', typeof this.currentGameMode);
+        console.log('🔍 this.currentGameMode es null:', this.currentGameMode === null);
+        console.log('🔍 this.currentGameMode es undefined:', this.currentGameMode === undefined);
         
         // 🔒 BLOQUEO 1: No permitir compra durante partidas activas
+        console.log('🔍 this.gameState:', this.gameState);
         if (this.gameState === 'playing') {
+            console.log('❌ BLOQUEO 1: Partida local activa');
             return { 
                 canPurchase: false, 
                 reason: 'No puedes comprar cartones durante una partida activa',
@@ -1808,17 +2344,37 @@ class BingoPro {
         }
 
         // 🔒 BLOQUEO 2: Verificar partida global activa
-        if (this.isGlobalGameActive(targetMode.id)) {
+        console.log('🔍 🔒 BLOQUEO 2 - DIAGNÓSTICO COMPLETO:');
+        console.log('🔍 targetMode.id:', targetMode?.id);
+        console.log('🔍 targetMode.name:', targetMode?.name);
+        console.log('🔍 targetMode completo:', targetMode);
+        console.log('🔍 this.gameModes:', this.gameModes);
+        console.log('🔍 this.gameModes[targetMode.id]:', this.gameModes?.[targetMode?.id]);
+        
+        const isGlobalActive = this.isGlobalGameActive(targetMode.id);
+        console.log('🔍 isGlobalGameActive result:', isGlobalActive);
+        if (isGlobalActive) {
+            console.log('❌ BLOQUEO 2: Partida global activa');
+            
+            // 🎯 CORREGIDO: Obtener nombre del modo desde gameModes si targetMode.name es undefined
+            let modeName = targetMode?.name;
+            if (!modeName && targetMode?.id && this.gameModes?.[targetMode.id]) {
+                modeName = this.gameModes[targetMode.id].name;
+                console.log('🔍 Nombre del modo corregido desde gameModes:', modeName);
+            }
+            
             return { 
                 canPurchase: false, 
-                reason: `Hay una partida global activa en ${targetMode.name}`,
+                reason: `Hay una partida global activa en ${modeName || targetMode?.id || 'modo desconocido'}`,
                 code: 'GLOBAL_GAME_ACTIVE'
             };
         }
         
         // 🔒 BLOQUEO 3: Verificar estado del ciclo del modo
         const cycle = this.modeCycles[targetMode.id];
+        console.log('🔍 cycle:', cycle);
         if (cycle && cycle.isActive) {
+            console.log('❌ BLOQUEO 3: Ciclo del modo activo');
             return { 
                 canPurchase: false, 
                 reason: `${targetMode.name} está en curso`,
@@ -1827,8 +2383,46 @@ class BingoPro {
         }
 
         // Verificar requisitos del modo
+        console.log('🔍 Verificando requisitos del modo:', targetMode?.id);
+        console.log('🔍 targetMode completo para verificación:', targetMode);
+        
+        if (!targetMode || !targetMode.id) {
+            console.log('❌ targetMode no válido para verificación de requisitos');
+            console.log('🔍 targetMode recibido:', targetMode);
+            console.log('🔍 targetMode.id:', targetMode?.id);
+            console.log('🔍 this.currentGameMode:', this.currentGameMode);
+            console.log('🔍 this.gameModes disponibles:', Object.keys(this.gameModes || {}));
+            
+            // 🎯 CORREGIDO: Intentar obtener un modo válido como fallback
+            if (this.currentGameMode && this.currentGameMode.id) {
+                console.log('🔍 Usando this.currentGameMode como fallback');
+                const fallbackMode = this.currentGameMode;
+                console.log('🔍 fallbackMode:', fallbackMode);
+                
+                if (fallbackMode.id) {
+                    console.log('🔍 Fallback exitoso, continuando con:', fallbackMode.id);
+                    // Continuar con el fallback
+                } else {
+                    return { 
+                        canPurchase: false, 
+                        reason: 'Modo de juego no válido (fallback falló)',
+                        code: 'INVALID_MODE'
+                    };
+                }
+            } else {
+                return { 
+                    canPurchase: false, 
+                    reason: 'Modo de juego no válido',
+                    code: 'INVALID_MODE'
+                };
+            }
+        }
+        
         const requirements = this.checkGameModeRequirements(targetMode.id);
+        console.log('🔍 Resultado de checkGameModeRequirements:', requirements);
+        
         if (!requirements.canPlay) {
+            console.log('❌ Requisitos no cumplidos:', requirements.reason);
             return { 
                 canPurchase: false, 
                 reason: requirements.reason,
@@ -1851,6 +2445,66 @@ class BingoPro {
             reason: 'Puedes comprar cartones',
             code: 'CAN_PURCHASE'
         };
+    }
+    
+    /**
+     * 🎯 NUEVO: Forzar sincronización del estado del juego
+     */
+    forceGameStateSync() {
+        console.log('🔄 Forzando sincronización del estado del juego...');
+        
+        // Resetear estado local
+        this.gameState = 'waiting';
+        this.modeCycles = {};
+        
+        // Limpiar estado del servidor
+        this.serverGameState = {};
+        
+        // Forzar actualización de countdowns
+        this.updateAllModeCountdownsCoordinated();
+        
+        console.log('✅ Estado del juego reseteado y sincronizado');
+    }
+    
+    /**
+     * 🎯 NUEVO: Configurar comandos de debug en la consola
+     */
+    setupDebugCommands() {
+        // Agregar comandos de debug a window para acceso desde consola
+        window.bingoDebug = {
+            forceSync: () => this.forceGameStateSync(),
+            checkState: (modeId) => {
+                console.log('🔍 Estado del juego para modo:', modeId);
+                console.log('🔍 this.gameState:', this.gameState);
+                console.log('🔍 this.modeCycles:', this.modeCycles);
+                console.log('🔍 this.serverGameState:', this.serverGameState);
+                console.log('🔍 isGlobalGameActive result:', this.isGlobalGameActive(modeId));
+                console.log('🔍 canPurchaseCards result:', this.canPurchaseCards(modeId));
+            },
+            checkPurchaseLogic: (modeId) => {
+                console.log('🔍 DIAGNÓSTICO COMPLETO DE LÓGICA DE COMPRA para modo:', modeId);
+                console.log('🔍 1. Estado del juego:', this.gameState);
+                console.log('🔍 2. Modo actual:', this.currentGameMode);
+                console.log('🔍 3. ModeCycles:', this.modeCycles[modeId]);
+                console.log('🔍 4. Countdown status:', this.getCountdownStatus(modeId));
+                console.log('🔍 5. Server state:', this.serverGameState?.modes?.[modeId]);
+                console.log('🔍 6. Called numbers:', this.calledNumbers);
+                console.log('🔍 7. hasServerActivity result:', this.hasServerActivity(modeId));
+                console.log('🔍 8. isGlobalGameActive result:', this.isGlobalGameActive(modeId));
+                console.log('🔍 9. canPurchaseCards result:', this.canPurchaseCards(modeId));
+            },
+            resetGame: () => {
+                this.gameState = 'waiting';
+                this.modeCycles = {};
+                this.serverGameState = {};
+                console.log('✅ Estado del juego reseteado');
+            }
+        };
+        
+        console.log('🎯 Comandos de debug disponibles:');
+        console.log('🎯 bingoDebug.forceSync() - Forzar sincronización');
+        console.log('🎯 bingoDebug.checkState("RAPID") - Verificar estado del modo');
+        console.log('🎯 bingoDebug.resetGame() - Resetear estado del juego');
     }
 
     /**
@@ -1949,28 +2603,39 @@ class BingoPro {
     }
 
     /**
-     * 🌐 Sincronizar estado del juego con el servidor
+     * 🌐 Sincronizar estado del juego con el servidor (CORREGIDO)
      */
     async syncGameStateWithServer() {
         try {
             console.log('🔄 Sincronizando estado del juego con el servidor...');
             
-            // Obtener estado actual del servidor
-            const response = await fetch('/api/game/state', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const serverState = await response.json();
-                this.serverGameState = serverState;
+            // 🎯 NUEVO: Usar el método inteligente de global-stats en lugar de game/state
+            const serverData = await this.getGlobalStatsIntelligent();
+            
+            if (serverData) {
+                // 🎯 NUEVO: Formatear datos para compatibilidad
+                const formattedState = this.formatServerDataForCompatibility(serverData);
+                console.log('🔍 Estado formateado:', formattedState);
+                
+                // 🎯 NUEVO: LOGS DETALLADOS DE SINCRONIZACIÓN
+                console.log('🔍 ANTES de asignar serverGameState:');
+                console.log('🔍   - this.serverGameState:', this.serverGameState);
+                console.log('🔍   - this.serverGameState?.modes:', this.serverGameState?.modes);
+                
+                this.serverGameState = formattedState;
+                
+                console.log('🔍 DESPUÉS de asignar serverGameState:');
+                console.log('🔍   - this.serverGameState:', this.serverGameState);
+                console.log('🔍   - this.serverGameState?.modes:', this.serverGameState?.modes);
+                console.log('🔍   - this.serverGameState?.modes?.RAPID:', this.serverGameState?.modes?.RAPID);
+                console.log('🔍   - this.serverGameState?.modes?.CLASSIC:', this.serverGameState?.modes?.CLASSIC);
+                console.log('🔍   - this.serverGameState?.modes?.VIP:', this.serverGameState?.modes?.VIP);
+                console.log('🔍   - this.serverGameState?.modes?.NIGHT:', this.serverGameState?.modes?.NIGHT);
                 
                 // Actualizar estado local basado en el servidor
-                this.updateLocalGameState(serverState);
+                this.updateLocalGameState(formattedState);
                 
-                console.log('✅ Estado sincronizado con el servidor:', serverState);
+                console.log('✅ Estado sincronizado con el servidor (formato corregido)');
                 return true;
             } else {
                 console.warn('⚠️ No se pudo sincronizar con el servidor');
@@ -1983,19 +2648,121 @@ class BingoPro {
     }
 
     /**
+     * 🎯 CORREGIDO: Formatear datos del servidor para compatibilidad (ESTRUCTURA REAL)
+     */
+    formatServerDataForCompatibility(serverData) {
+        console.log('🔍 formatServerDataForCompatibility - Datos de entrada:', serverData);
+        console.log('🔍 formatServerDataForCompatibility - Claves disponibles:', Object.keys(serverData || {}));
+        console.log('🔍 formatServerDataForCompatibility - Estructura completa:', {
+            hasStats: !!serverData?.stats,
+            hasGlobalStats: !!serverData?.globalStats,
+            hasModes: !!serverData?.modes,
+            statsKeys: serverData?.stats ? Object.keys(serverData.stats) : 'NO STATS',
+            globalStatsKeys: serverData?.globalStats ? Object.keys(serverData.globalStats) : 'NO GLOBALSTATS'
+        });
+        
+        // 🎯 CORREGIDO: Manejar la estructura real del servidor
+        if (!serverData) {
+            console.log('⚠️ formatServerDataForCompatibility: No hay datos del servidor');
+            return { modes: {} };
+        }
+        
+        // 🎯 CORREGIDO: Verificar si tenemos stats o modes directamente
+        let gameModesData = null;
+        
+        console.log('🔍 formatServerDataForCompatibility - Verificando estructura del servidor:');
+        console.log('🔍   - serverData.stats existe:', !!serverData.stats);
+        console.log('🔍   - serverData.modes existe:', !!serverData.modes);
+        console.log('🔍   - serverData.stats tipo:', typeof serverData.stats);
+        console.log('🔍   - serverData.modes tipo:', typeof serverData.modes);
+        console.log('🔍   - serverData.stats.playersByMode existe:', !!(serverData.stats && serverData.stats.playersByMode));
+        
+        // 🎯 CORREGIDO: Priorizar playersByMode que es donde están los modos de juego
+        if (serverData.stats && serverData.stats.playersByMode) {
+            console.log('🔍 formatServerDataForCompatibility - Usando serverData.stats.playersByMode');
+            console.log('🔍   - serverData.stats.playersByMode contenido:', serverData.stats.playersByMode);
+            gameModesData = serverData.stats.playersByMode;
+        } else if (serverData.stats) {
+            console.log('🔍 formatServerDataForCompatibility - Usando serverData.stats (fallback)');
+            console.log('🔍   - serverData.stats contenido:', serverData.stats);
+            gameModesData = serverData.stats;
+        } else if (serverData.modes) {
+            console.log('🔍 formatServerDataForCompatibility - Usando serverData.modes');
+            console.log('🔍   - serverData.modes contenido:', serverData.modes);
+            gameModesData = serverData.modes;
+        } else {
+            console.log('⚠️ formatServerDataForCompatibility: No hay stats ni modes, creando estructura vacía');
+            console.log('🔍   - serverData completo para análisis:', serverData);
+            return { modes: {} };
+        }
+        
+        console.log('🔍 formatServerDataForCompatibility - Datos de modos disponibles:', Object.keys(gameModesData));
+        
+        const formattedState = { 
+            modes: {},
+            globalStats: serverData.globalStats || serverData.stats || null
+        };
+        
+        console.log('🔍 formatServerDataForCompatibility - globalStats preservado:', formattedState.globalStats);
+        
+        // 🎯 CORREGIDO: Formatear datos de cada modo con verificación de estructura
+        Object.keys(gameModesData).forEach(modeId => {
+            const modeStats = gameModesData[modeId];
+            console.log(`🔍 formatServerDataForCompatibility - Procesando modo ${modeId}:`, modeStats);
+            
+            // 🎯 NUEVO: Verificar si es un modo de juego válido (no estadísticas generales)
+            if (modeId === 'totalOnlinePlayers' || modeId === 'totalPlayersWithCards' || modeId === 'playersByMode') {
+                console.log(`🔍 formatServerDataForCompatibility - Saltando estadística general: ${modeId}`);
+                return; // Saltar estadísticas generales
+            }
+            
+            // 🎯 CORREGIDO: Verificar si el modo tiene la estructura esperada
+            if (modeStats && typeof modeStats === 'object') {
+                formattedState.modes[modeId] = {
+                    gameState: modeStats.isActive ? 'playing' : 'waiting',
+                    gameId: modeStats.gameId || null,
+                    startTime: modeStats.startTime || null,
+                    nextGameTime: modeStats.nextGameTime || null,
+                    totalPlayers: modeStats.totalPlayers || 0,
+                    totalCards: modeStats.totalCards || 0
+                };
+                
+                console.log(`🔍 formatServerDataForCompatibility - Modo ${modeId} formateado:`, formattedState.modes[modeId]);
+            } else {
+                console.log(`⚠️ formatServerDataForCompatibility - Modo ${modeId} no tiene estructura válida:`, modeStats);
+            }
+        });
+        
+        console.log('🔄 Datos del servidor formateados para compatibilidad:', formattedState);
+        return formattedState;
+    }
+
+    /**
      * 🔄 Actualizar estado local basado en el servidor
      */
     updateLocalGameState(serverState) {
-        if (!serverState || !serverState.modes) return;
+        console.log('🔍 updateLocalGameState - Estado del servidor recibido:', serverState);
+        
+        if (!serverState || !serverState.modes) {
+            console.log('⚠️ updateLocalGameState: No hay serverState o modes');
+            return;
+        }
+
+        console.log('🔍 updateLocalGameState - Modos disponibles en servidor:', Object.keys(serverState.modes));
+        console.log('🔍 updateLocalGameState - Modo actual:', this.currentGameMode);
 
         // Actualizar estado por modo de juego
         Object.keys(serverState.modes).forEach(modeId => {
             const modeState = serverState.modes[modeId];
+            console.log(`🔍 updateLocalGameState - Procesando modo ${modeId}:`, modeState);
             
             // Si hay una partida activa en el servidor, actualizar estado local
             if (modeState.gameState === 'playing') {
+                console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando`);
+                
                 // Si el modo actual está jugando, actualizar estado local
                 if (this.currentGameMode === modeId) {
+                    console.log(`🔍 updateLocalGameState - Actualizando estado local para modo actual ${modeId}`);
                     this.gameState = 'playing';
                     this.globalGameState.isActive = true;
                     this.globalGameState.gameId = modeState.gameId;
@@ -2003,7 +2770,11 @@ class BingoPro {
                     
                     // Mostrar notificación de partida activa
                     this.showNotification(`🎮 Partida activa en ${this.gameModes[modeId].name}`, 'info');
+                } else {
+                    console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando pero no es el modo actual`);
                 }
+            } else {
+                console.log(`🔍 updateLocalGameState - Modo ${modeId} NO está jugando (${modeState.gameState})`);
             }
         });
 
@@ -2039,6 +2810,7 @@ class BingoPro {
 
     /**
      * ⏰ Actualizar display del contador para un modo específico
+     * 🎯 CORREGIDO: Verificar estado real antes de permitir compras
      */
     updateCountdownDisplay(modeId, timeRemaining) {
         const countdownElement = document.getElementById(`countdown-${modeId}`);
@@ -2048,6 +2820,25 @@ class BingoPro {
         const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
         
         countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // 🎯 NUEVO: VERIFICAR ESTADO REAL ANTES DE PERMITIR COMPRAS
+        if (timeRemaining > 0) {
+            // ⏰ TIEMPO RESTANTE - VERIFICAR SI REALMENTE SE PUEDE COMPRAR
+            const canActuallyPurchase = this.canPurchaseCards(modeId);
+            console.log(`🔍 updateCountdownDisplay(${modeId}) - Verificación real:`, canActuallyPurchase);
+            
+            if (canActuallyPurchase.canPurchase) {
+                this.allowPurchasesForMode(modeId);
+                console.log(`✅ Compras realmente permitidas para ${modeId} (tiempo restante: ${timeRemaining}ms)`);
+            } else {
+                this.blockPurchasesForMode(modeId, canActuallyPurchase.reason);
+                console.log(`🔒 Compras bloqueadas para ${modeId}: ${canActuallyPurchase.reason}`);
+            }
+        } else {
+            // ⏰ TIEMPO AGOTADO - BLOQUEAR COMPRAS
+            this.blockPurchasesForMode(modeId, 'Tiempo agotado');
+            console.log(`🔒 Compras bloqueadas para ${modeId}: Tiempo agotado`);
+        }
     }
 
     /**
@@ -2071,17 +2862,17 @@ class BingoPro {
         const previousMode = this.currentGameMode;
         this.currentGameMode = modeId;
         
-        // 1. ✨ NUEVO: RESETEAR COMPLETAMENTE EL ESTADO DEL JUEGO ANTERIOR
-        this.resetGameStateForModeChange(previousMode);
+        // 1. 🎯 CORREGIDO: NO RESETEAR ESTADO AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.resetGameStateForModeChange(previousMode);
         
-        // 2. ✨ NUEVO: LIMPIAR COMPLETAMENTE LOS CARTONES ANTERIORES
-        this.clearAllPreviousModeCards(previousMode);
+        // 2. 🎯 CORREGIDO: NO LIMPIAR CARTONES AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.clearAllPreviousModeCards(previousMode);
         
-        // 3. ✨ NUEVO: LIMPIAR COMPLETAMENTE LOS NÚMEROS LLAMADOS
-        this.clearAllCalledNumbers();
+        // 3. 🎯 CORREGIDO: NO LIMPIAR NÚMEROS LLAMADOS AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.clearAllCalledNumbers();
         
-        // 4. ✨ NUEVO: RESETEAR ESTADO DEL JUGADOR
-        this.resetPlayerStateForModeChange();
+        // 4. 🎯 CORREGIDO: NO RESETEAR ESTADO DEL JUGADOR AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.resetPlayerStateForModeChange();
         
         // 5. Actualizar configuración del juego
         this.cardPrice = mode.cardPrice;
@@ -2095,19 +2886,19 @@ class BingoPro {
             this.saveGameMode(modeId);
         });
         
-        // 7. ✨ NUEVO: FORZAR RESET DE CARTONES DEL MODO ANTERIOR (ESPERAR A QUE TERMINE)
-        if (previousMode) {
-            await this.forceResetCardsForMode(previousMode.id || previousMode);
-        }
+        // 7. 🎯 CORREGIDO: NO RESETEAR CARTONES AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // if (previousMode) {
+        //     await this.forceResetCardsForMode(previousMode.id || previousMode);
+        // }
         
-        // 8. ✨ NUEVO: CARGAR CARTONES DEL NUEVO MODO (debería estar vacío)
-        this.loadUserCardsForNewMode(modeId);
+        // 8. 🎯 CORREGIDO: NO CARGAR CARTONES VACÍOS AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.loadUserCardsForNewMode(modeId);
         
-        // 9. ✨ NUEVO: LIMPIAR COMPLETAMENTE LA INTERFAZ
-        this.clearInterfaceForNewMode();
+        // 9. 🎯 CORREGIDO: NO LIMPIAR INTERFAZ AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.clearInterfaceForNewMode();
         
-        // 10. ✨ NUEVO: VERIFICAR Y CORREGIR CARTONES INCORRECTOS
-        this.verifyAndCorrectCards();
+        // 10. 🎯 CORREGIDO: NO VERIFICAR CARTONES AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.verifyAndCorrectCards();
         
         // 11. Actualizar UI del nuevo modo
         this.updateGameModeDisplay();
@@ -2115,16 +2906,17 @@ class BingoPro {
         this.updateCardInfo();
         this.renderCards();
         
-        // 10. ✨ NUEVO: CAMBIAR CONTENEDORES DE NÚMEROS LLAMADOS (LIMPIEZA COMPLETA)
-        this.switchCalledNumbersContainerProfessional(modeId);
+        // 10. 🎯 CORREGIDO: NO CAMBIAR CONTENEDORES AL CAMBIAR DE MODO (PRESERVAR ESTADO)
+        // this.switchCalledNumbersContainerProfessional(modeId);
         
-        // 11. ✨ NUEVO: INICIALIZAR NUEVO MODO DESDE CERO
-        this.initializeNewModeFromScratch(modeId);
+        // 11. 🎯 CORREGIDO: NO INICIALIZAR MODO DESDE CERO AL CAMBIAR (PRESERVAR ESTADO)
+        // this.initializeNewModeFromScratch(modeId);
         
         // 12. Reconectar al bingo global del nuevo modo
-        requestIdleCallback(() => {
-            this.connectToGlobalBingo();
-        });
+        // 🎯 CORREGIDO: NO reconectar automáticamente al cambiar modo
+        // requestIdleCallback(() => {
+        //     this.connectToGlobalBingo();
+        // });
         
         // 13. Actualizar countdown para el nuevo modo
         this.updateCountdownFromServer();
@@ -2417,8 +3209,8 @@ class BingoPro {
     }
     
     /**
-     * ✨ NUEVO: Forzar reset completo de todos los modos
-     * SOLUCIONA: Limpieza masiva para resolver problemas de persistencia
+     * 🎯 CORREGIDO: Forzar reset completo de todos los modos (SOLO MANUAL)
+     * SOLUCIONA: Interferencias con sincronización automática
      */
     forceCompleteReset() {
         console.log('🚨 FORZANDO RESET COMPLETO DE TODOS LOS MODOS...');
@@ -2446,7 +3238,12 @@ class BingoPro {
             this.updateCardInfo();
             this.updateStats();
             
-            // 5. Notificar al usuario
+                    // 5. 🎯 NUEVO: SINCRONIZAR CON SERVIDOR DESPUÉS DEL RESET
+        setTimeout(() => {
+            this.syncGameStateWithServer();
+        }, 500); // Esperar 500ms para que el reset se complete
+            
+            // 6. Notificar al usuario
             this.showNotification('🚨 Reset completo realizado - Todos los modos limpiados', 'warning');
             
             console.log('✅ RESET COMPLETO FORZADO - Todos los modos limpiados');
@@ -2460,7 +3257,14 @@ class BingoPro {
      * Obtener modo de juego actual
      */
     getCurrentGameMode() {
-        return this.gameModes[this.currentGameMode];
+        // 🎯 CORREGIDO: this.currentGameMode ya es un objeto, no un string
+        if (this.currentGameMode && this.currentGameMode.id) {
+            return this.currentGameMode;
+        }
+        
+        // 🎯 FALLBACK: Si no hay modo válido, usar CLASSIC
+        console.log('⚠️ getCurrentGameMode: No hay modo válido, usando CLASSIC como fallback');
+        return this.gameModes['CLASSIC'] || this.gameModes[Object.keys(this.gameModes)[0]];
     }
 
     /**
@@ -2880,24 +3684,8 @@ class BingoPro {
 
         this.userCards.forEach((card, index) => {
             const cardElement = document.createElement('div');
-            // Asignar colores aleatorios a los cartones
-            const colorClasses = ['card-red', 'card-blue', 'card-green', 'card-purple'];
-            const randomColor = colorClasses[index % colorClasses.length];
-            cardElement.className = `bingo-card ${randomColor}`;
-            cardElement.innerHTML = `
-                <div class="card-header">
-                    <h4><i class="fas fa-ticket-alt"></i> Cartón N° ${index + 1}</h4>
-                    <div class="card-status ${card.isActive ? 'active' : 'inactive'}">
-                        ${card.isActive ? 'Activo' : 'Inactivo'}
-                    </div>
-                </div>
-                <div class="bingo-card-grid">
-                    ${this.renderCardGrid(card)}
-                </div>
-                <div class="card-info">
-                    <small>15 números • 12 espacios</small>
-                </div>
-            `;
+            cardElement.className = 'bingo-card';
+            cardElement.innerHTML = this.renderCardGrid(card);
             cardsContainer.appendChild(cardElement);
         });
         
@@ -2909,29 +3697,51 @@ class BingoPro {
 
     renderCardGrid(card) {
         let html = '';
-        const logos = ['', '⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨'];
+        const logos = ['⭐', '🍀', '💎', '🎪', '🎰', '🏆', '🎨', '🌟', '✨', '💫'];
         let logoIndex = 0;
         
         console.log(`Renderizando cartón ${card.id}:`, card.numbers);
         console.log('Números llamados:', Array.from(this.calledNumbers));
         
+        // 🎨 NUEVO: Header del cartón con información
+        html += `
+            <div class="bingo-card-header">
+                <div class="card-id">Cartón #${card.id}</div>
+                <div class="card-mode">${this.getCurrentGameMode()?.name || 'Bingo'}</div>
+            </div>
+        `;
+        
+        // 🎨 NUEVO: Contenedor principal del grid con mejor estructura
+        html += '<div class="bingo-grid-container">';
+        
         for (let row = 0; row < 3; row++) {
+            html += '<div class="bingo-row">';
             for (let col = 0; col < 9; col++) {
                 const number = card.numbers[col][row];
                 const isMarked = number && this.calledNumbers.has(number);
                 const isEmpty = !number;
                 
-                // Asignar logotipo aleatorio para celdas vacías
+                // 🎨 NUEVO: Mejor asignación de logotipos y estilos
                 let logoClass = '';
                 let displayContent = '';
+                let cellClass = 'bingo-cell';
                 
                 if (isEmpty) {
                     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
                     logoClass = `logo-${logoIndex % logos.length}`;
-                    displayContent = randomLogo;
+                    displayContent = `<span class="cell-logo">${randomLogo}</span>`;
+                    cellClass += ' empty';
                     logoIndex++;
                 } else {
-                    displayContent = number.toString();
+                    displayContent = `<span class="cell-number">${number}</span>`;
+                    if (isMarked) {
+                        cellClass += ' marked';
+                    }
+                }
+                
+                // 🎨 NUEVO: Agregar clases adicionales para mejor styling
+                if (isMarked) {
+                    cellClass += ' marked';
                 }
                 
                 // Debug: mostrar si el número está marcado
@@ -2940,16 +3750,41 @@ class BingoPro {
                 }
                 
                 html += `
-                    <div class="bingo-cell ${isMarked ? 'marked' : ''} ${isEmpty ? 'empty' : ''} ${logoClass}" 
-                         data-card-id="${card.id}" data-row="${row}" data-col="${col}" data-number="${number || ''}">
+                    <div class="${cellClass} ${logoClass}" 
+                         data-card-id="${card.id}" 
+                         data-row="${row}" 
+                         data-col="${col}" 
+                         data-number="${number || ''}"
+                         title="${number ? `Número ${number}` : 'Celda vacía'}">
                         ${displayContent}
+                        ${isMarked ? '<div class="mark-indicator">✓</div>' : ''}
                     </div>
                 `;
             }
+            html += '</div>';
         }
         
-        console.log(`Cartón ${card.id} renderizado con ${Array.from(this.calledNumbers).filter(num => 
-            card.numbers.flat().includes(num)).length} números marcados`);
+        html += '</div>'; // Cerrar bingo-grid-container
+        
+        // 🎨 NUEVO: Footer del cartón con estadísticas
+        const markedCount = Array.from(this.calledNumbers).filter(num => 
+            card.numbers.flat().includes(num)).length;
+        html += `
+            <div class="bingo-card-footer">
+                <div class="card-stats">
+                    <span class="stat-item">
+                        <i class="fas fa-check-circle"></i>
+                        ${markedCount} marcados
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-square"></i>
+                        ${card.numbers.flat().filter(num => num).length} números
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        console.log(`Cartón ${card.id} renderizado con ${markedCount} números marcados`);
         return html;
     }
 
@@ -2974,52 +3809,51 @@ class BingoPro {
         
         console.log(`✅ Contenedor encontrado: ${container.id}`);
         
-        // Usar DocumentFragment para optimizar el rendimiento
-        const fragment = document.createDocumentFragment();
+        // 🎨 NUEVO: Estructura HTML moderna con header y grid
+        container.innerHTML = `
+            <div class="numbers-header">
+                <div class="numbers-title">
+                    <i class="fas fa-bullhorn"></i>
+                    NÚMEROS LLAMADOS
+                </div>
+                <div class="numbers-count">
+                    ${this.calledNumbers.size}/90
+                </div>
+            </div>
+            <div class="numbers-grid">
+                ${this.generateNumbersGrid()}
+            </div>
+        `;
         
         // Asegurar que el contenedor tenga las clases correctas
         container.className = 'numbers-container mode-numbers';
         container.setAttribute('data-mode', currentMode.id);
         
-        // Aplicar estilos CSS directamente para asegurar el grid
-        container.style.display = 'grid';
-        container.style.gridTemplateColumns = 'repeat(10, 1fr)';
-        container.style.gap = '4px';
-        container.style.height = '350px';
-        container.style.overflowY = 'auto';
-        container.style.padding = '12px';
-        container.style.background = 'var(--bg-tertiary)';
-        container.style.borderRadius = 'var(--radius-md)';
-        container.style.width = '100%';
-        container.style.boxSizing = 'border-box';
-        container.style.border = '2px solid var(--border-color)';
-        container.style.minHeight = '350px';
-        container.style.marginBottom = 'var(--spacing-md)';
-
-        // Crear grid de 9x10 para los números del 1-90 de forma optimizada
+        console.log(`✅ Panel de números llamados actualizado para modo ${currentMode.id} (optimizado)`);
+    }
+    
+    // 🎨 NUEVO: Función para generar el grid de números
+    generateNumbersGrid() {
+        let html = '';
+        
+        // Crear grid de 9x10 para los números del 1-90
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 10; col++) {
                 const number = row * 10 + col + 1;
                 if (number <= 90) {
-                    const numberDiv = document.createElement('div');
-                    numberDiv.className = 'called-number';
-                    numberDiv.textContent = number;
-                    numberDiv.setAttribute('data-number', number);
+                    const isCalled = this.calledNumbers.has(number);
+                    const numberClass = `called-number ${isCalled ? 'called' : ''}`;
                     
-                    if (this.calledNumbers.has(number)) {
-                        numberDiv.classList.add('called');
-                    }
-                    
-                    fragment.appendChild(numberDiv);
+                    html += `
+                        <div class="${numberClass}" data-number="${number}">
+                            ${number}
+                        </div>
+                    `;
                 }
             }
         }
         
-        // Limpiar contenedor y agregar fragmento de una vez
-        container.innerHTML = '';
-        container.appendChild(fragment);
-        
-        console.log(`✅ Panel de números llamados actualizado para modo ${currentMode.id} (optimizado)`);
+        return html;
     }
 
     updateLastNumber() {
@@ -3839,6 +4673,15 @@ class BingoPro {
         this.countdownSystem.endTime = Date.now() + totalTime;
         this.countdownSystem.breakTime = totalTime;
         
+        // 🎯 NUEVO: ACTUALIZAR modeCycles PARA PERMITIR COMPRAS
+        if (!this.modeCycles[modeId]) {
+            this.modeCycles[modeId] = {};
+        }
+        this.modeCycles[modeId].isActive = false; // Durante descanso, NO hay partida activa
+        this.modeCycles[modeId].countdownStart = Date.now();
+        this.modeCycles[modeId].countdownEnd = Date.now() + totalTime;
+        console.log(`✅ modeCycles[${modeId}] configurado para permitir compras durante descanso`);
+        
         // 4. INICIAR COUNTDOWN EN TIEMPO REAL
         let timeLeft = totalTime;
         
@@ -3888,6 +4731,13 @@ class BingoPro {
         this.countdownSystem.isActive = false;
         this.countdownSystem.currentMode = null;
         
+        // 🎯 NUEVO: ACTUALIZAR modeCycles PARA BLOQUEAR COMPRAS DURANTE PARTIDA
+        if (this.modeCycles[modeId]) {
+            this.modeCycles[modeId].isActive = true; // Partida activa
+            this.modeCycles[modeId].gameStart = Date.now();
+            console.log(`✅ modeCycles[${modeId}] configurado para bloquear compras durante partida`);
+        }
+        
         // 5. 🔒 BLOQUEAR COMPRAS DURANTE PARTIDA ACTIVA
         this.blockPurchasesForMode(modeId, 'Partida en curso');
         
@@ -3915,8 +4765,13 @@ class BingoPro {
             countdownElement.className = 'countdown next-game';
             countdownElement.setAttribute('data-status', 'waiting');
             
-            // 3. ✅ PERMITIR COMPRAS DURANTE DESCANSO
+            // 3. ✅ PERMITIR COMPRAS DURANTE DESCANSO (SOLO SI NO HAY PARTIDA ACTIVA)
+            if (!this.isGlobalGameActive(modeId)) {
             this.allowPurchasesForMode(modeId);
+                console.log(`✅ Compras permitidas para ${modeId} durante descanso (sin partida activa)`);
+            } else {
+                console.log(`🔒 Compras bloqueadas para ${modeId} durante descanso (partida activa detectada)`);
+            }
             
             // 4. ACTUALIZAR SISTEMA DE COUNTDOWN
             this.countdownSystem.lastUpdate = Date.now();
@@ -6183,24 +7038,27 @@ class BingoPro {
             
             // Usar userId persistente
             this.userId = this.userId || this.getOrCreateUserId();
+            console.log('🔍 connectToGlobalBingo - this.userId:', this.userId);
             
             // Unirse al juego global del modo actual
             await this.joinGlobalGame();
             
-            // Obtener estado actual del juego global del modo actual
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
+            // 🎯 CORREGIDO: Obtener estado actual del juego global usando el endpoint correcto
+            const response = await fetch('/api/bingo/global-stats');
             const data = await response.json();
             
-            if (data.success) {
-                console.log(`✅ Conectado al bingo global (${currentMode.name}):`, data.gameState.gameState);
+            if (data.success && data.stats) {
+                const modeStats = data.stats[currentMode.id];
+                if (modeStats) {
+                    console.log(`✅ Conectado al bingo global (${currentMode.name}):`, modeStats.isActive ? 'playing' : 'waiting');
                 
                 // Sincronizar números llamados del servidor global SOLO si hay números nuevos
-                if (data.gameState.calledNumbers && data.gameState.calledNumbers.length > 0) {
+                    if (modeStats.calledNumbers && modeStats.calledNumbers.length > 0) {
                     // Solo actualizar si hay más números que los actuales
-                    if (data.gameState.calledNumbers.length > this.calledNumbers.size) {
-                        this.calledNumbers = new Set(data.gameState.calledNumbers);
-                        this.lastNumberCalled = data.gameState.lastNumberCalled;
-                        console.log('🔄 Números sincronizados del servidor global:', data.gameState.calledNumbers);
+                        if (modeStats.calledNumbers.length > this.calledNumbers.size) {
+                            this.calledNumbers = new Set(modeStats.calledNumbers);
+                            this.lastNumberCalled = modeStats.lastNumberCalled;
+                            console.log('🔄 Números sincronizados del servidor global:', modeStats.calledNumbers);
                         
                         // Actualizar la UI con los números del servidor
                         this.renderCalledNumbers();
@@ -6213,15 +7071,18 @@ class BingoPro {
                 }
                 
                 // Actualizar contador de jugadores
-                this.updatePlayerCount(data.gameState);
+                    this.updatePlayerCount(modeStats);
+                
+                }
                 
                 // Iniciar sincronización con el servidor
                 this.syncWithServerState();
                 
                 // Sincronización adicional cada 3 segundos para datos no críticos
-                setInterval(async () => {
-                    await this.syncWithGlobalServer();
-                }, 3000);
+                // 🎯 CORREGIDO: NO sincronizar automáticamente cada 3 segundos
+                // setInterval(async () => {
+                //     await this.syncWithGlobalServer();
+                // }, 3000);
                 
             } else {
                 console.log('⚠️ No se pudo conectar al bingo global, continuando en modo local');
@@ -6234,13 +7095,20 @@ class BingoPro {
     async joinGlobalGame() {
         try {
             const currentMode = this.getCurrentGameMode();
+            
+            // 🎯 NUEVO: Obtener userId válido
+            const userId = this.getOrCreateUserId();
+            console.log('🔍 joinGlobalGame - userId obtenido:', userId);
+            console.log('🔍 joinGlobalGame - currentMode:', currentMode);
+            console.log('🔍 joinGlobalGame - userCards:', this.userCards);
+            
             const response = await fetch('/api/bingo/join', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    userId: this.userId,
+                    userId: userId,
                     cards: this.userCards,
                     mode: currentMode.id
                 })
@@ -6249,32 +7117,42 @@ class BingoPro {
             const data = await response.json();
             if (data.success) {
                 console.log(`👤 Unido al juego global (${currentMode.name}) como jugador`);
+                return true;
+            } else {
+                console.log('⚠️ No se pudo unir al juego global:', data.error);
+                return false;
             }
         } catch (error) {
             console.error('❌ Error uniéndose al juego global:', error);
+            return false;
         }
     }
     
+    /**
+     * 🎯 CORREGIDO: Sincronizar con el servidor global usando el endpoint correcto
+     */
     async syncWithGlobalServer() {
         try {
-            const currentMode = this.getCurrentGameMode();
-            const response = await fetch(`/api/bingo/state?mode=${currentMode.id}`);
+            // 🎯 CORREGIDO: Usar el endpoint correcto global-stats
+            const response = await fetch('/api/bingo/global-stats');
             const data = await response.json();
             
-            if (data.success) {
-                const globalState = data.gameState;
+            if (data.success && data.stats) {
+                const currentMode = this.getCurrentGameMode();
+                const modeStats = data.stats[currentMode.id];
                 
+                if (modeStats) {
                 // Sincronizar números llamados SOLO si hay números nuevos
-                if (globalState.calledNumbers && globalState.calledNumbers.length > 0) {
+                    if (modeStats.calledNumbers && modeStats.calledNumbers.length > 0) {
                     // Solo actualizar si hay más números que los actuales o si el estado del juego cambió
-                    if (globalState.calledNumbers.length > this.calledNumbers.size || 
-                        globalState.gameState !== this.gameState) {
-                        
-                        this.calledNumbers = new Set(globalState.calledNumbers);
-                        this.lastNumberCalled = globalState.lastNumberCalled;
-                        this.gameState = globalState.gameState;
-                        
-                        console.log('🔄 Nuevos números del servidor global:', globalState.calledNumbers);
+                        if (modeStats.calledNumbers.length > this.calledNumbers.size || 
+                            modeStats.isActive !== (this.gameState === 'playing')) {
+                            
+                            this.calledNumbers = new Set(modeStats.calledNumbers);
+                            this.lastNumberCalled = modeStats.lastNumberCalled;
+                            this.gameState = modeStats.isActive ? 'playing' : 'waiting';
+                            
+                            console.log('🔄 Nuevos números del servidor global:', modeStats.calledNumbers);
                         
                         // Actualizar UI
                         this.renderCalledNumbers();
@@ -6287,12 +7165,13 @@ class BingoPro {
                 }
                 
                 // Actualizar contador de jugadores
-                console.log('🔍 DEBUG: syncWithGlobalServer - estado del servidor:', globalState);
-                this.updatePlayerCount(globalState);
+                    console.log('🔍 DEBUG: syncWithGlobalServer - estado del servidor:', modeStats);
+                    this.updatePlayerCount(modeStats);
                 
                 // Actualizar cartones del usuario en el servidor si han cambiado
                 if (this.userCards.length > 0) {
                     await this.updateGlobalCards();
+                    }
                 }
             }
         } catch (error) {
@@ -6378,16 +7257,8 @@ class BingoPro {
         try {
             console.log('🔄 Actualizando countdowns inteligentes para próximas partidas...');
             
-            // ✨ NUEVO: Intentar obtener datos del servidor primero
-            let serverData = null;
-            try {
-                const response = await fetch('/api/bingo/global-stats');
-                if (response.ok) {
-                    serverData = await response.json();
-                }
-            } catch (error) {
-                console.log('⚠️ Servidor no disponible, usando cálculo local inteligente');
-            }
+            // ✨ NUEVO: Obtener datos del servidor (INTELIGENTE)
+            const serverData = await this.getGlobalStatsIntelligent();
             
             const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
             let updatedCount = 0;
@@ -7196,13 +8067,29 @@ class BingoPro {
         }
         
         // 🔒 BLOQUEO: Verificar que no haya partida global activa
-        if (this.isGlobalGameActive(currentMode.id)) {
+        const isGlobalActive = this.isGlobalGameActive(currentMode.id);
+        console.log(`🔍 Verificación de partida global para ${currentMode.id}:`, isGlobalActive);
+        
+        if (isGlobalActive) {
             this.showNotification(`❌ No puedes comprar cartones. ${currentMode.name} está en curso`, 'error');
             return false;
         }
         
         // 🔒 BLOQUEO: Verificar que el modo esté disponible
+        console.log(`🔍 Verificando si se pueden comprar cartones para ${currentMode?.id}...`);
+        console.log('🔍 currentMode.id:', currentMode?.id);
+        console.log('🔍 currentMode.name:', currentMode?.name);
+        console.log('🔍 currentMode completo:', currentMode);
+        
+        if (!currentMode || !currentMode.id) {
+            console.log('❌ currentMode no válido en buyCards');
+            this.showNotification('❌ Error: Modo de juego no válido', 'error');
+            return false;
+        }
+        
         const canPurchase = this.canPurchaseCards(currentMode.id);
+        console.log(`🔍 Resultado de canPurchaseCards:`, canPurchase);
+        
         if (!canPurchase.canPurchase) {
             this.showNotification(`❌ ${canPurchase.reason}`, 'error');
             return false;
@@ -8386,16 +9273,42 @@ window.addEventListener('load', function() {
  */
 function selectGameMode(modeId) {
     console.log(`🎮 Intentando cambiar modo de juego a: ${modeId}`);
+    console.log('🔍 DIAGNÓSTICO COMPLETO DE selectGameMode:');
+    console.log('🔍 modeId recibido:', modeId);
+    console.log('🔍 typeof window.bingoGame:', typeof window.bingoGame);
+    console.log('🔍 window.bingoGame existe:', !!window.bingoGame);
+    console.log('🔍 window.bingoGame.constructor:', window.bingoGame?.constructor?.name);
     
     if (typeof window.bingoGame !== 'undefined' && window.bingoGame) {
         console.log('✅ BingoGame encontrado, ejecutando changeGameMode...');
+        
+        // 🎯 VERIFICAR MÉTODO changeGameMode
+        if (typeof window.bingoGame.changeGameMode !== 'function') {
+            console.error('❌ changeGameMode no es una función');
+            console.log('🔍 Métodos disponibles:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.bingoGame)));
+            return false;
+        }
+        
+        try {
         const success = window.bingoGame.changeGameMode(modeId);
+            console.log('🔍 Resultado de changeGameMode:', success);
+            
         if (success) {
             console.log('✅ Modo de juego cambiado exitosamente');
             // Actualizar estado visual de las tarjetas
+                if (typeof updateModeCardsVisualState === 'function') {
             updateModeCardsVisualState();
         } else {
-            console.error('❌ Error al cambiar modo de juego');
+                    console.warn('⚠️ updateModeCardsVisualState no está disponible');
+                }
+                return true;
+            } else {
+                console.error('❌ changeGameMode retornó false');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error ejecutando changeGameMode:', error);
+            return false;
         }
     } else {
         console.error('❌ BingoGame no está inicializado');
@@ -8419,8 +9332,10 @@ function selectGameMode(modeId) {
                     const success = window.bingoGame.changeGameMode(modeId);
                     if (success) {
                         console.log('✅ Modo de juego cambiado exitosamente después de reinicialización');
+                        if (typeof updateModeCardsVisualState === 'function') {
                         updateModeCardsVisualState();
-                        return;
+                        }
+                        return true;
                     }
                 }
             } else {
@@ -8429,6 +9344,8 @@ function selectGameMode(modeId) {
         } catch (error) {
             console.error('❌ Error al reinicializar BingoGame:', error);
         }
+        
+        return false;
     }
 }
 

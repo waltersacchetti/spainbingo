@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test - BingoRoyal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .log-area {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success { background: #28a745; }
+        .status.error { background: #dc3545; }
+        .status.warning { background: #ffc107; color: #000; }
+        .status.info { background: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Test - BingoRoyal</h1>
+    
+    <div class="debug-section">
+        <h2>🎮 Pruebas del Botón de Jugar</h2>
+        <button class="test-button" onclick="testSelectGameMode('NIGHT')">Probar Botón Jugar NOCTURNO</button>
+        <button class="test-button" onclick="testSelectGameMode('CLASSIC')">Probar Botón Jugar CLASSIC</button>
+        <button class="test-button" onclick="testSelectGameMode('RAPID')">Probar Botón Jugar RAPID</button>
+        <button class="test-button" onclick="testSelectGameMode('VIP')">Probar Botón Jugar VIP</button>
+        
+        <div id="selectGameModeStatus" class="status info">Estado: Esperando pruebas...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>🛒 Pruebas del Sistema de Compra</h2>
+        <button class="test-button" onclick="testBuyCards(1)">Comprar 1 Cartón</button>
+        <button class="test-button" onclick="testBuyCards(3)">Comprar 3 Cartones</button>
+        <button class="test-button" onclick="testBuyCards(5)">Comprar 5 Cartones</button>
+        
+        <div id="buyCardsStatus" class="status info">Estado: Esperando pruebas...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>🔍 Estado del Sistema</h2>
+        <button class="test-button" onclick="checkSystemStatus()">Verificar Estado del Sistema</button>
+        <button class="test-button" onclick="checkGameModes()">Verificar Modos de Juego</button>
+        <button class="test-button" onclick="checkUserBalance()">Verificar Saldo del Usuario</button>
+        
+        <div id="systemStatus" class="status info">Estado: Esperando verificación...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>📝 Logs de Debug</h2>
+        <button class="test-button" onclick="clearLogs()">Limpiar Logs</button>
+        <button class="test-button" onclick="exportLogs()">Exportar Logs</button>
+        
+        <div id="debugLogs" class="log-area">Iniciando sistema de debug...\n</div>
+    </div>
+
+    <script>
+        // Sistema de logging
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logArea.textContent += logMessage;
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            // También mostrar en consola
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('debugLogs').textContent = 'Logs limpiados...\n';
+        }
+
+        function exportLogs() {
+            const logs = document.getElementById('debugLogs').textContent;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bingo-debug-logs.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Pruebas del botón de jugar
+        function testSelectGameMode(modeId) {
+            log(`🎮 Probando selectGameMode('${modeId}')...`);
+            
+            try {
+                // Verificar si la función existe
+                if (typeof selectGameMode !== 'function') {
+                    log(`❌ ERROR: selectGameMode no es una función`, 'error');
+                    document.getElementById('selectGameModeStatus').className = 'status error';
+                    document.getElementById('selectGameModeStatus').textContent = `ERROR: selectGameMode no es una función`;
+                    return;
+                }
+
+                // Verificar si bingoGame está disponible
+                if (typeof window.bingoGame === 'undefined') {
+                    log(`⚠️ ADVERTENCIA: window.bingoGame no está definido`, 'warning');
+                } else {
+                    log(`✅ window.bingoGame está disponible:`, 'success');
+                    log(`   - Tipo: ${typeof window.bingoGame}`);
+                    log(`   - Constructor: ${window.bingoGame.constructor.name}`);
+                }
+
+                // Ejecutar la función
+                log(`🚀 Ejecutando selectGameMode('${modeId}')...`);
+                const result = selectGameMode(modeId);
+                
+                log(`✅ selectGameMode('${modeId}') ejecutado. Resultado: ${result}`, 'success');
+                document.getElementById('selectGameModeStatus').className = 'status success';
+                document.getElementById('selectGameModeStatus').textContent = `✅ selectGameMode('${modeId}') ejecutado exitosamente`;
+                
+            } catch (error) {
+                log(`❌ ERROR en selectGameMode('${modeId}'): ${error.message}`, 'error');
+                log(`   Stack: ${error.stack}`, 'error');
+                document.getElementById('selectGameModeStatus').className = 'status error';
+                document.getElementById('selectGameModeStatus').textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        // Pruebas del sistema de compra
+        function testBuyCards(quantity) {
+            log(`🛒 Probando compra de ${quantity} cartón(es)...`);
+            
+            try {
+                // Verificar si bingoGame está disponible
+                if (typeof window.bingoGame === 'undefined') {
+                    log(`❌ ERROR: window.bingoGame no está definido`, 'error');
+                    document.getElementById('buyCardsStatus').className = 'status error';
+                    document.getElementById('buyCardsStatus').textContent = `ERROR: bingoGame no disponible`;
+                    return;
+                }
+
+                // Verificar si el método buyCards existe
+                if (typeof window.bingoGame.buyCards !== 'function') {
+                    log(`❌ ERROR: buyCards no es una función`, 'error');
+                    document.getElementById('buyCardsStatus').className = 'status error';
+                    document.getElementById('buyCardsStatus').textContent = `ERROR: buyCards no es una función`;
+                    return;
+                }
+
+                // Verificar modo actual
+                const currentMode = window.bingoGame.getCurrentGameMode ? window.bingoGame.getCurrentGameMode() : null;
+                log(`🔍 Modo actual: ${currentMode ? currentMode.id : 'NO DEFINIDO'}`);
+
+                // Verificar si se pueden comprar cartones
+                if (window.bingoGame.canPurchaseCards) {
+                    const canPurchase = window.bingoGame.canPurchaseCards(currentMode?.id);
+                    log(`🔍 ¿Se pueden comprar cartones? ${canPurchase.canPurchase ? 'SÍ' : 'NO'}`);
+                    if (!canPurchase.canPurchase) {
+                        log(`   Razón: ${canPurchase.reason}`);
+                    }
+                }
+
+                // Ejecutar la compra
+                log(`🚀 Ejecutando buyCards(${quantity})...`);
+                const result = window.bingoGame.buyCards(quantity);
+                
+                log(`✅ buyCards(${quantity}) ejecutado. Resultado: ${result}`, 'success');
+                document.getElementById('buyCardsStatus').className = 'status success';
+                document.getElementById('buyCardsStatus').textContent = `✅ Compra de ${quantity} cartón(es) ejecutada. Resultado: ${result}`;
+                
+            } catch (error) {
+                log(`❌ ERROR en buyCards(${quantity}): ${error.message}`, 'error');
+                log(`   Stack: ${error.stack}`, 'error');
+                document.getElementById('buyCardsStatus').className = 'status error';
+                document.getElementById('buyCardsStatus').textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        // Verificar estado del sistema
+        function checkSystemStatus() {
+            log(`🔍 Verificando estado del sistema...`);
+            
+            try {
+                const status = {
+                    bingoGame: typeof window.bingoGame !== 'undefined',
+                    selectGameMode: typeof selectGameMode === 'function',
+                    window: typeof window !== 'undefined',
+                    document: typeof document !== 'undefined'
+                };
+
+                log(`📊 Estado del sistema:`);
+                log(`   - window.bingoGame: ${status.bingoGame ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE'}`);
+                log(`   - selectGameMode: ${status.selectGameMode ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE'}`);
+                log(`   - window: ${status.window ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE'}`);
+                log(`   - document: ${status.document ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE'}`);
+
+                if (status.bingoGame) {
+                    const bingoGame = window.bingoGame;
+                    log(`🔍 Detalles de bingoGame:`);
+                    log(`   - Constructor: ${bingoGame.constructor.name}`);
+                    log(`   - Métodos disponibles: ${Object.getOwnPropertyNames(Object.getPrototypeOf(bingoGame)).join(', ')}`);
+                }
+
+                document.getElementById('systemStatus').className = 'status success';
+                document.getElementById('systemStatus').textContent = `✅ Estado del sistema verificado`;
+                
+            } catch (error) {
+                log(`❌ ERROR al verificar estado del sistema: ${error.message}`, 'error');
+                document.getElementById('systemStatus').className = 'status error';
+                document.getElementById('systemStatus').textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        // Verificar modos de juego
+        function checkGameModes() {
+            log(`🎮 Verificando modos de juego...`);
+            
+            try {
+                if (typeof window.bingoGame === 'undefined') {
+                    log(`❌ ERROR: bingoGame no disponible`);
+                    return;
+                }
+
+                const bingoGame = window.bingoGame;
+                
+                // Verificar métodos relacionados con modos
+                if (bingoGame.getAvailableGameModes) {
+                    const modes = bingoGame.getAvailableGameModes();
+                    log(`📋 Modos de juego disponibles: ${modes.length}`);
+                    modes.forEach(mode => {
+                        log(`   - ${mode.id}: ${mode.name} (€${mode.cardPrice})`);
+                    });
+                }
+
+                if (bingoGame.getCurrentGameMode) {
+                    const currentMode = bingoGame.getCurrentGameMode();
+                    log(`🎯 Modo actual: ${currentMode ? currentMode.id : 'NO DEFINIDO'}`);
+                }
+
+                if (bingoGame.gameModes) {
+                    log(`🔧 gameModes en bingoGame: ${Object.keys(bingoGame.gameModes).join(', ')}`);
+                }
+
+                log(`✅ Verificación de modos de juego completada`);
+                
+            } catch (error) {
+                log(`❌ ERROR al verificar modos de juego: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar saldo del usuario
+        function checkUserBalance() {
+            log(`💰 Verificando saldo del usuario...`);
+            
+            try {
+                if (typeof window.bingoGame === 'undefined') {
+                    log(`❌ ERROR: bingoGame no disponible`);
+                    return;
+                }
+
+                const bingoGame = window.bingoGame;
+                
+                if (bingoGame.userBalance !== undefined) {
+                    log(`💵 Saldo del usuario: €${bingoGame.userBalance}`);
+                } else {
+                    log(`⚠️ userBalance no está definido`);
+                }
+
+                if (bingoGame.userCards) {
+                    log(`🎫 Cartones del usuario: ${bingoGame.userCards.length}`);
+                } else {
+                    log(`⚠️ userCards no está definido`);
+                }
+
+                log(`✅ Verificación de saldo completada`);
+                
+            } catch (error) {
+                log(`❌ ERROR al verificar saldo: ${error.message}`, 'error');
+            }
+        }
+
+        // Inicialización
+        window.addEventListener('load', function() {
+            log(`🚀 Página de debug cargada`);
+            log(`🔍 Verificando disponibilidad de funciones...`);
+            
+            // Verificar funciones globales
+            if (typeof selectGameMode === 'function') {
+                log(`✅ selectGameMode está disponible`);
+            } else {
+                log(`❌ selectGameMode NO está disponible`);
+            }
+
+            // Verificar bingoGame
+            if (typeof window.bingoGame !== 'undefined') {
+                log(`✅ window.bingoGame está disponible`);
+            } else {
+                log(`❌ window.bingoGame NO está disponible`);
+            }
+
+            log(`🎯 Sistema de debug listo para pruebas`);
+        });
+
+        // Interceptar errores globales
+        window.addEventListener('error', function(event) {
+            log(`🚨 ERROR GLOBAL: ${event.message}`, 'error');
+            log(`   Archivo: ${event.filename}:${event.lineno}:${event.colno}`, 'error');
+        });
+
+        // Interceptar promesas rechazadas
+        window.addEventListener('unhandledrejection', function(event) {
+            log(`🚨 PROMESA RECHAZADA: ${event.reason}`, 'error');
+        });
+    </script>
+    
+    <!-- 🎯 SCRIPTS NECESARIOS EN ORDEN CORRECTO -->
+    <script src="security.js"></script>
+    <script src="device-detection.js"></script>
+    <script src="mobile-mobile.js"></script>
+    <script src="auto-daub-system.js"></script>
+    <script src="multi-room-system.js"></script>
+    <script src="chat-config.js"></script>
+    <script src="advanced-chat-system.js"></script>
+    <script src="chat-test.js"></script>
+    <script src="premium-sound-system.js"></script>
+    <script src="premium-animations.js"></script>
+    <script src="advanced-vip-system.js"></script>
+    <script src="tournament-system.js"></script>
+    <script src="gamification-system.js"></script>
+    <script src="social-system.js"></script>
+    <script src="seasons-system.js"></script>
+    <script src="virtual-currency-system.js"></script>
+    
+    <!-- 🎯 SCRIPT PRINCIPAL DEL JUEGO (DEBE IR AL FINAL) -->
+    <script src="script.js"></script>
+    
+    <!-- 🎯 INICIALIZACIÓN DEL JUEGO DESPUÉS DE CARGAR EL SCRIPT -->
+    <script>
+        // Esperar a que se cargue el script principal
+        window.addEventListener('load', function() {
+            // Esperar un poco más para asegurar que script.js se haya cargado
+            setTimeout(function() {
+                log(`🔧 Verificando carga del script principal...`);
+                
+                if (typeof window.bingoGame !== 'undefined') {
+                    log(`✅ bingoGame cargado correctamente`);
+                    log(`   - Constructor: ${window.bingoGame.constructor.name}`);
+                    log(`   - Métodos: ${Object.getOwnPropertyNames(Object.getPrototypeOf(window.bingoGame)).length} métodos disponibles`);
+                } else {
+                    log(`❌ bingoGame NO se cargó correctamente`);
+                }
+                
+                if (typeof selectGameMode === 'function') {
+                    log(`✅ selectGameMode cargado correctamente`);
+                } else {
+                    log(`❌ selectGameMode NO se cargó correctamente`);
+                }
+                
+                log(`🎯 Sistema de debug completamente inicializado`);
+            }, 2000); // Esperar 2 segundos
+        });
+    </script>
+</body>
+</html>

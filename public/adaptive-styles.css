@@ -41,15 +41,15 @@
         align-items: center;
     }
     
-    /* Layout de juego desktop */
-    .game-layout {
+    /* Layout de juego desktop - DESHABILITADO PARA EVITAR CONFLICTOS */
+    /* .game-layout {
         display: grid;
         grid-template-columns: var(--desktop-sidebar-width) 1fr var(--desktop-sidebar-width);
         gap: var(--desktop-spacing);
         max-width: 1400px;
         margin: 0 auto;
         padding: var(--desktop-spacing);
-    }
+    } */
     
     /* Navegación horizontal en desktop */
     .nav-tabs {
@@ -72,13 +72,13 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    /* Cartones en grid para desktop */
-    .cards-container {
+    /* Cartones en grid para desktop - DESHABILITADO PARA EVITAR CONFLICTOS */
+    /* .cards-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(var(--desktop-card-width), 1fr));
         gap: var(--desktop-spacing);
         padding: var(--desktop-spacing);
-    }
+    } */
     
     /* Chat lateral en desktop */
     .chat-section-fixed {
@@ -202,15 +202,15 @@
 /* ===== ORIENTACIÓN TABLET LANDSCAPE ===== */
 .device-tablet.orientation-landscape {
     
-    /* En landscape, tablet se comporta más como desktop */
-    .game-layout {
+    /* En landscape, tablet se comporta más como desktop - DESHABILITADO PARA EVITAR CONFLICTOS */
+    /* .game-layout {
         grid-template-columns: 250px 1fr 250px;
         gap: var(--tablet-spacing);
     }
     
     .cards-container {
         grid-template-columns: repeat(3, 1fr);
-    }
+    } */
     
     .nav-tabs {
         justify-content: center;
@@ -225,13 +225,13 @@
 /* ===== ESTILOS PARA MÓVIL ===== */
 .device-mobile {
     
-    /* Layout móvil completo */
-    .game-layout {
+    /* Layout móvil completo - DESHABILITADO PARA EVITAR CONFLICTOS */
+    /* .game-layout {
         display: flex;
         flex-direction: column;
         gap: var(--mobile-spacing);
         padding: var(--mobile-spacing);
-    }
+    } */
     
     .header-content {
         flex-direction: column;
@@ -266,13 +266,13 @@
         white-space: nowrap;
     }
     
-    /* Cartones en columna única */
-    .cards-container {
+    /* Cartones en columna única - DESHABILITADO PARA EVITAR CONFLICTOS */
+    /* .cards-container {
         display: flex;
         flex-direction: column;
         gap: var(--mobile-spacing);
         padding: var(--mobile-spacing);
-    }
+    } */
     
     .bingo-card {
         width: 100%;
