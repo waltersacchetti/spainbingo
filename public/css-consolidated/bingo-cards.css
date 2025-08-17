@@ -1,0 +1,323 @@
+/* ===== BINGO ROYAL - ESTILOS ESPECÍFICOS DEL CARTÓN ===== */
+/* Estilos específicos para el cartón de bingo que no se pueden consolidar */
+
+/* ===== CARTÓN DE BINGO MODERNO ===== */
+.bingo-card-modern {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transition: all var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+}
+
+.bingo-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold-color), var(--silver-color), var(--bronze-color));
+    border-radius: 16px 16px 0 0;
+}
+
+.bingo-card-modern:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--gold-color);
+    box-shadow: 0 16px 48px rgba(255,215,0,0.3);
+}
+
+/* ===== GRID DEL CARTÓN ===== */
+.bingo-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.bingo-number-modern {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.bingo-number-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left var(--transition-medium);
+}
+
+.bingo-number-modern:hover::before {
+    left: 100%;
+}
+
+.bingo-number-modern:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15));
+    border-color: var(--gold-color);
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(255,215,0,0.4);
+}
+
+/* ===== ESTADOS DEL NÚMERO ===== */
+.bingo-number-modern.called {
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: white;
+    border-color: var(--success-color);
+    box-shadow: 0 4px 16px rgba(76,175,80,0.4);
+    animation: numberCalled 0.6s ease-in-out;
+}
+
+.bingo-number-modern.bingo {
+    background: linear-gradient(135deg, var(--gold-color), #ffed4e);
+    color: var(--primary-color);
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 20px rgba(255,215,0,0.6);
+    animation: bingoVictory 1s ease-in-out;
+}
+
+.bingo-number-modern.free-space {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    font-weight: 600;
+    cursor: default;
+}
+
+.bingo-number-modern.free-space:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===== ANIMACIONES ESPECÍFICAS ===== */
+@keyframes numberCalled {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 4px 16px rgba(76,175,80,0.4);
+    }
+    50% { 
+        transform: scale(1.2) rotate(5deg);
+        box-shadow: 0 8px 24px rgba(76,175,80,0.6);
+    }
+    100% { 
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 4px 16px rgba(76,175,80,0.4);
+    }
+}
+
+@keyframes bingoVictory {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 4px 20px rgba(255,215,0,0.6);
+    }
+    25% { 
+        transform: scale(1.3) rotate(10deg);
+        box-shadow: 0 12px 32px rgba(255,215,0,0.8);
+    }
+    50% { 
+        transform: scale(1.1) rotate(-5deg);
+        box-shadow: 0 8px 24px rgba(255,215,0,0.7);
+    }
+    75% { 
+        transform: scale(1.3) rotate(10deg);
+        box-shadow: 0 12px 32px rgba(255,215,0,0.8);
+    }
+    100% { 
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 4px 20px rgba(255,215,0,0.6);
+    }
+}
+
+/* ===== CABECERA DEL CARTÓN ===== */
+.card-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+.card-title-modern {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold-color);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.card-price-modern {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ===== PIE DEL CARTÓN ===== */
+.card-footer-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid rgba(255,255,255,0.2);
+}
+
+.card-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold-color);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===== BOTONES DEL CARTÓN ===== */
+.card-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-card-action {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+
+.btn-buy-card {
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: white;
+}
+
+.btn-buy-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(76,175,80,0.4);
+}
+
+.btn-view-card {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-view-card:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: var(--gold-color);
+}
+
+/* ===== VARIANTES DE CARTÓN ===== */
+.bingo-card-modern.premium {
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(192,192,192,0.1));
+    border-color: var(--gold-color);
+    box-shadow: 0 8px 32px rgba(255,215,0,0.3);
+}
+
+.bingo-card-modern.premium::before {
+    background: linear-gradient(90deg, var(--gold-color), var(--silver-color), var(--bronze-color));
+}
+
+.bingo-card-modern.vip {
+    background: linear-gradient(135deg, rgba(138,43,226,0.15), rgba(75,0,130,0.1));
+    border-color: #8a2be2;
+    box-shadow: 0 8px 32px rgba(138,43,226,0.3);
+}
+
+.bingo-card-modern.vip::before {
+    background: linear-gradient(90deg, #8a2be2, #9370db, #ba55d3);
+}
+
+/* ===== RESPONSIVE DEL CARTÓN ===== */
+@media (max-width: 768px) {
+    .bingo-card-modern {
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .bingo-grid-modern {
+        gap: 0.5rem;
+    }
+    
+    .bingo-number-modern {
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .card-header-modern {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .card-footer-modern {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .card-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .bingo-card-modern {
+        padding: 1rem;
+    }
+    
+    .bingo-grid-modern {
+        gap: 0.25rem;
+    }
+    
+    .bingo-number-modern {
+        font-size: 1rem;
+        border-radius: 6px;
+    }
+    
+    .card-title-modern {
+        font-size: 1.2rem;
+    }
+    
+    .card-price-modern {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+}

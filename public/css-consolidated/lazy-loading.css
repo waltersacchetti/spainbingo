@@ -1,0 +1,396 @@
+/* ===== BINGO ROYAL - LAZY LOADING Y OPTIMIZACIONES ===== */
+/* Sistema de carga diferida para mejorar el rendimiento */
+
+/* ===== PRELOADER INTELIGENTE ===== */
+.smart-preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity var(--transition-slow);
+}
+
+.smart-preloader.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.smart-preloader.removed {
+    display: none;
+}
+
+.preloader-progress {
+    width: 300px;
+    max-width: 90vw;
+    background: rgba(255,255,255,0.1);
+    border-radius: 25px;
+    padding: 3px;
+    box-shadow: var(--shadow-medium);
+}
+
+.progress-bar {
+    height: 20px;
+    background: linear-gradient(90deg, var(--gold-color), var(--silver-color));
+    border-radius: 20px;
+    width: 0%;
+    transition: width var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ===== LAZY LOADING VISUAL ===== */
+.lazy-element {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all var(--transition-medium);
+}
+
+.lazy-element.loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.lazy-element.loading {
+    opacity: 0.6;
+    transform: translateY(10px);
+}
+
+/* ===== SKELETON LOADING ===== */
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.1) 25%, 
+        rgba(255,255,255,0.2) 50%, 
+        rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+    height: 200px;
+    margin-bottom: 1rem;
+}
+
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+.skeleton-text.medium {
+    width: 80%;
+}
+
+.skeleton-text.long {
+    width: 100%;
+}
+
+.skeleton-button {
+    height: 44px;
+    width: 120px;
+    border-radius: 8px;
+}
+
+.skeleton-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+}
+
+/* ===== CONTENIDO DIFERIDO ===== */
+.deferred-content {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.deferred-content.loading {
+    background: rgba(255,255,255,0.02);
+}
+
+.deferred-content.loaded {
+    background: transparent;
+    border: none;
+    min-height: auto;
+}
+
+.deferred-content .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top: 3px solid var(--gold-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ===== OPTIMIZACIONES DE IMÁGENES ===== */
+.lazy-image {
+    opacity: 0;
+    transition: opacity var(--transition-medium);
+    filter: blur(5px);
+}
+
+.lazy-image.loaded {
+    opacity: 1;
+    filter: blur(0);
+}
+
+.lazy-image.error {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+/* ===== INTERSECCIÓN OBSERVER ===== */
+.intersection-trigger {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ===== CARGA PROGRESIVA ===== */
+.progressive-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.progressive-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255,255,255,0.1) 50%, 
+        transparent 100%);
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+}
+
+.progressive-loading.loading::before {
+    transform: translateX(100%);
+}
+
+/* ===== OPTIMIZACIONES DE ANIMACIONES ===== */
+.animation-optimized {
+    will-change: transform, opacity;
+}
+
+.animation-optimized:hover {
+    transform: translateY(-2px);
+}
+
+/* ===== CARGA CONDICIONAL ===== */
+.conditional-content {
+    display: none;
+}
+
+.conditional-content.visible {
+    display: block;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== OPTIMIZACIONES DE FUENTES ===== */
+.font-loading {
+    font-display: swap;
+}
+
+.font-optimized {
+    font-display: optional;
+}
+
+/* ===== CARGA DE RECURSOS CRÍTICOS ===== */
+.critical-resource {
+    font-display: block;
+}
+
+.non-critical-resource {
+    font-display: swap;
+}
+
+/* ===== OPTIMIZACIONES DE SCROLL ===== */
+.smooth-scroll {
+    scroll-behavior: smooth;
+}
+
+.scroll-optimized {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto;
+}
+
+/* ===== RESPONSIVE LAZY LOADING ===== */
+@media (max-width: 768px) {
+    .smart-preloader {
+        padding: 1rem;
+    }
+    
+    .preloader-progress {
+        width: 250px;
+    }
+    
+    .skeleton-card {
+        height: 150px;
+    }
+    
+    .deferred-content {
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .preloader-progress {
+        width: 200px;
+    }
+    
+    .skeleton-card {
+        height: 120px;
+    }
+    
+    .deferred-content {
+        min-height: 120px;
+    }
+}
+
+/* ===== REDUCCIÓN DE MOVIMIENTO ===== */
+@media (prefers-reduced-motion: reduce) {
+    .lazy-element,
+    .deferred-content,
+    .progressive-loading,
+    .conditional-content {
+        transition: none;
+        animation: none;
+    }
+    
+    .skeleton {
+        animation: none;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .progress-bar::after {
+        animation: none;
+    }
+}
+
+/* ===== ESTADOS DE CARGA ===== */
+.loading-state {
+    pointer-events: none;
+    user-select: none;
+}
+
+.loading-state * {
+    cursor: wait;
+}
+
+.loaded-state {
+    pointer-events: auto;
+    user-select: auto;
+}
+
+.loaded-state * {
+    cursor: auto;
+}
+
+/* ===== INDICADORES DE CARGA ===== */
+.loading-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.loading-indicator .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top: 2px solid var(--gold-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ===== OPTIMIZACIONES DE MEMORIA ===== */
+.memory-optimized {
+    contain: layout style paint;
+}
+
+.memory-optimized img {
+    contain: layout style paint;
+}
+
+/* ===== CARGA INTELLIGENTE ===== */
+.intelligent-loading {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all var(--transition-medium);
+}
+
+.intelligent-loading.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.intelligent-loading.priority {
+    transition-delay: 0s;
+}
+
+.intelligent-loading.normal {
+    transition-delay: 0.1s;
+}
+
+.intelligent-loading.low {
+    transition-delay: 0.3s;
+}
