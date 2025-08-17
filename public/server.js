@@ -1341,7 +1341,65 @@ app.get('/api/admin/users', rateLimitMiddleware(apiLimiter), async (req, res) =>
     }
 });
 
-// API para obtener usuario por ID
+// API para obtener perfil del usuario logueado
+app.get('/api/user/profile', rateLimitMiddleware(apiLimiter), async (req, res) => {
+    try {
+        // Obtener token de autorización del header
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                success: false,
+                error: 'Token de autorización requerido'
+            });
+        }
+        
+        const token = authHeader.substring(7); // Remover 'Bearer '
+        
+        // Por ahora, simular verificación del token
+        // En producción, deberías verificar el JWT real
+        console.log('🔍 Obteniendo perfil para token:', token);
+        
+        // Obtener datos del usuario desde la sesión o token
+        // Por ahora, devolver datos de ejemplo para testing
+        const userProfile = {
+            id: 1,
+            email: 'usuario@ejemplo.com',
+            firstName: 'Usuario',
+            lastName: 'Ejemplo',
+            level: 5,
+            experience: 250,
+            vipStatus: false,
+            balance: 100.50,
+            registrationDate: new Date('2024-01-01'),
+            totalGames: 25,
+            totalWins: 8,
+            totalSpent: 50.00,
+            totalWon: 75.00,
+            achievements: ['Primera Victoria', 'Jugador Activo'],
+            currentStreak: 3,
+            bestStreak: 5,
+            highestPrize: 25.00,
+            settings: {
+                notifications: true,
+                sounds: true
+            }
+        };
+        
+        res.json({
+            success: true,
+            user: userProfile
+        });
+        
+    } catch (error) {
+        console.error('Error al obtener perfil del usuario:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// API para obtener usuario por ID (admin)
 app.get('/api/admin/users/:id', rateLimitMiddleware(apiLimiter), async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
@@ -2016,6 +2074,18 @@ app.get('/verify', (req, res) => {
         res.status(500).send('Error cargando página de verificación');
     }
 });
+
+// 🎯 RUTA CATCH-ALL PARA SPA (Single Page Application) - MOVIDA AL FINAL
+// app.get('*', (req, res) => {
+//     // No servir la API desde esta ruta
+//     if (req.path.startsWith('/api/')) {
+//         return res.status(404).json({ error: 'API endpoint no encontrado' });
+//     }
+//     
+//     // Servir index.html para todas las rutas del frontend
+//     console.log(`🎯 SPA Route: ${req.path} -> index.html`);
+//     res.sendFile(path.join(__dirname, 'index.html'));
+// });
 
 // Manejo de errores
 app.use((err, req, res, next) => {

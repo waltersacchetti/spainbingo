@@ -84,6 +84,7 @@ if (!window.cancelIdleCallback) {
 // Clase principal del juego
 class BingoPro {
     constructor() {
+        console.log('🚨🚨🚨 CONSTRUCTOR BINGOPRO INICIANDO 🚨🚨🚨');
         console.log('Inicializando BingoPro...');
         this.calledNumbers = new Set();
         this.userCards = [];
@@ -426,6 +427,11 @@ class BingoPro {
     initializeGame() {
         console.log('🚀 Inicializando juego de bingo (optimizado)...');
         
+        // ✨ NUEVO: CARGAR PERFIL DE USUARIO PRIMERO (ANTES DE TODO)
+        console.log('🚀 ANTES DE loadUserProfile()');
+        this.loadUserProfile();
+        console.log('🚀 DESPUÉS DE loadUserProfile()');
+        
         // Inicializar estado del juego
         this.gameState = 'waiting';
         this.currentGameId = this.generateGameId();
@@ -505,7 +511,10 @@ class BingoPro {
         this.initializeLiveChat();
         
         // ✨ NUEVO: Actualizar información del usuario en el header
+        this.initializeUserSession();
         updateHeaderUserInfo();
+        
+
         
         // ✨ NUEVO: Configurar sincronización automática de userId
         this.setupUserIdSyncListener();
@@ -526,20 +535,96 @@ class BingoPro {
         
         console.log('✅ Inicialización optimizada completada');
         
-        // ✨ NUEVO: Cargar perfil de usuario
-        this.loadUserProfile();
-        
         // 🎯 NUEVO: Agregar comandos de debug a la consola
         this.setupDebugCommands();
     }
 
     /**
+     * ✨ VERIFICAR SESIÓN DE USUARIO EXISTENTE
+     */
+    initializeUserSession() {
+        // Verificar si ya existe una sesión del login
+        let sessionData = localStorage.getItem('bingoroyal_session');
+        
+        if (sessionData) {
+            try {
+                const session = JSON.parse(sessionData);
+                
+                if (session.user && session.user.email) {
+                    console.log('✅ Sesión del login cargada:', session.user);
+                } else {
+                    console.log('⚠️ Sesión sin datos de usuario válidos');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error al cargar sesión existente:', error);
+            }
+        } else {
+            console.log('ℹ️ No hay sesión de login activa');
+        }
+    }
+    
+
+    
+    /**
      * ✨ NUEVO: FUNCIONES DE PERFIL DE USUARIO
      */
     
-    // Cargar perfil desde localStorage
+    // Cargar perfil desde localStorage y sesión real
     loadUserProfile() {
+        console.log('🚨🚨🚨 FUNCIÓN loadUserProfile() EJECUTÁNDOSE 🚨🚨🚨');
+        console.log('🔍 INICIO: loadUserProfile() ejecutándose...');
+        
         try {
+            // Primero intentar cargar desde la sesión real
+            const sessionData = localStorage.getItem('bingoroyal_session');
+            console.log('🔍 Session data encontrada:', sessionData ? 'SÍ' : 'NO');
+            
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    console.log('🔍 Sesión parseada:', session);
+                    console.log('🔍 Usuario en sesión:', session.user);
+                    
+                    if (session.user) {
+                        console.log('🔍 Datos del usuario encontrados:', {
+                            id: session.user.id,
+                            email: session.user.email,
+                            firstName: session.user.firstName,
+                            lastName: session.user.lastName,
+                            level: session.user.level,
+                            balance: session.user.balance
+                        });
+                        
+                        // Actualizar perfil con datos reales de la sesión
+                        this.userProfile = {
+                            ...this.userProfile,
+                            id: session.user.id,
+                            email: session.user.email,
+                            firstName: session.user.firstName,
+                            lastName: session.user.lastName,
+                            level: session.user.level || 1,
+                            experience: session.user.experience || 0,
+                            vipStatus: session.user.vipStatus || false,
+                            balance: session.user.balance || 0,
+                            registrationDate: session.user.registrationDate ? new Date(session.user.registrationDate) : new Date()
+                        };
+                        
+                        // Actualizar userId también
+                        this.userId = session.user.id;
+                        
+                        console.log('✅ Perfil actualizado con datos reales de la sesión:', this.userProfile);
+                        return;
+                    } else {
+                        console.log('⚠️ Sesión encontrada pero sin datos de usuario');
+                    }
+                } catch (error) {
+                    console.log('⚠️ Error procesando sesión:', error);
+                }
+            } else {
+                console.log('⚠️ No hay datos de sesión en localStorage');
+            }
+            
+            // Fallback: cargar perfil guardado localmente
             const savedProfile = localStorage.getItem('bingoroyal_user_profile');
             if (savedProfile) {
                 const profileData = JSON.parse(savedProfile);
@@ -548,11 +633,15 @@ class BingoPro {
                 if (profileData.registrationDate) {
                     this.userProfile.registrationDate = new Date(profileData.registrationDate);
                 }
-                console.log('📂 Perfil de usuario cargado:', this.userProfile);
+                console.log('📂 Perfil de usuario cargado desde localStorage:', this.userProfile);
+            } else {
+                console.log('⚠️ No hay perfil guardado localmente');
             }
         } catch (error) {
             console.log('⚠️ Error cargando perfil de usuario:', error);
         }
+        
+        console.log('🔍 FINAL: Perfil final:', this.userProfile);
     }
 
     // Guardar perfil en localStorage
@@ -567,6 +656,13 @@ class BingoPro {
 
     // Obtener nombre de usuario
     getUserName() {
+        if (this.userProfile.firstName && this.userProfile.lastName) {
+            return `${this.userProfile.firstName} ${this.userProfile.lastName}`;
+        } else if (this.userProfile.email) {
+            // Extraer nombre del email si no hay firstName/lastName
+            const emailName = this.userProfile.email.split('@')[0];
+            return emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        }
         return `Usuario ${this.userProfile.level}`;
     }
 
@@ -9081,7 +9177,9 @@ document.addEventListener('DOMContentLoaded', function() {
             updateUserInfoSimple(user);
             
             // Inicializar el juego
+            console.log('🚨🚨🚨 INSTANCIANDO BINGOPRO 🚨🚨🚨');
             window.bingoGame = new BingoPro();
+            console.log('🚨🚨🚨 BINGOPRO INSTANCIADO, LLAMANDO initializeGame() 🚨🚨🚨');
             window.bingoGame.initializeGame();
             
             // ✨ NUEVO: Inicializar modo de tarjetas después del juego
@@ -9218,20 +9316,30 @@ function updateHeaderUserInfo() {
     const levelElement = document.getElementById('headerUserLevel');
     
     if (usernameElement && levelElement) {
-        // Obtener datos del usuario desde localStorage o perfil
+        // Obtener datos del usuario desde localStorage
         const sessionData = localStorage.getItem('bingoroyal_session');
         if (sessionData) {
             try {
                 const session = JSON.parse(sessionData);
                 const user = session.user;
                 
+                console.log('🔍 Actualizando header con usuario real:', user);
+                
                 // Actualizar nombre de usuario
                 if (user.firstName && user.lastName) {
                     usernameElement.textContent = `${user.firstName} ${user.lastName}`;
+                    console.log('✅ Nombre actualizado:', `${user.firstName} ${user.lastName}`);
                 } else if (user.name) {
                     usernameElement.textContent = user.name;
+                    console.log('✅ Nombre actualizado:', user.name);
+                } else if (user.email) {
+                    // Si solo tenemos email, extraer nombre del email
+                    const emailName = user.email.split('@')[0];
+                    usernameElement.textContent = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                    console.log('✅ Nombre extraído del email:', emailName);
                 } else {
-                    usernameElement.textContent = 'Usuario Bingo';
+                    usernameElement.textContent = 'Usuario';
+                    console.log('⚠️ Usando nombre por defecto');
                 }
                 
                 // Actualizar nivel
@@ -9241,18 +9349,27 @@ function updateHeaderUserInfo() {
                     levelElement.textContent = 'Nivel 1';
                 }
                 
-                console.log('✅ Header actualizado con información real del usuario');
+                // Actualizar balance si existe
+                const balanceElement = document.getElementById('userBalance');
+                if (balanceElement && user.balance !== undefined) {
+                    balanceElement.textContent = `€${user.balance.toFixed(2)}`;
+                }
+                
+                console.log('✅ Header actualizado con datos reales del usuario');
             } catch (error) {
                 console.warn('⚠️ Error al actualizar header:', error);
                 // Valores por defecto
-                usernameElement.textContent = 'Usuario Bingo';
+                usernameElement.textContent = 'Usuario';
                 levelElement.textContent = 'Nivel 1';
             }
         } else {
             // Si no hay sesión, usar valores por defecto
-            usernameElement.textContent = 'Usuario Bingo';
+            usernameElement.textContent = 'Usuario';
             levelElement.textContent = 'Nivel 1';
+            console.log('ℹ️ No hay sesión activa');
         }
+    } else {
+        console.warn('⚠️ Elementos del header no encontrados');
     }
 }
 

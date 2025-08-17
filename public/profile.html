@@ -441,6 +441,11 @@
     </div>
     </div> <!-- Cierre de app-container -->
 
+    <script>
+        // 🚨 PRUEBA SIMPLE DE JAVASCRIPT
+        alert('🚨 JAVASCRIPT FUNCIONA - PÁGINA CARGADA');
+        console.log('🚨 JAVASCRIPT FUNCIONA - PÁGINA CARGADA');
+    </script>
     <script src="security.js"></script>
     <script src="script.js"></script>
     <script>
@@ -458,22 +463,141 @@
         });
 
         function initializeProfile() {
+            alert('🚀 FUNCIÓN initializeProfile() EJECUTÁNDOSE');
+            console.log('🚀 Inicializando perfil...');
+            
             // Obtener instancia del juego
-            if (typeof bingoGame !== 'undefined') {
+            if (window.bingoGame) {
+                alert('✅ Juego ya inicializado');
+                console.log('✅ Juego ya inicializado, actualizando perfil...');
                 updateProfileData();
             } else {
-                // Si no hay instancia, crear una temporal
-                setTimeout(updateProfileData, 1000);
+                alert('🚨 Creando nueva instancia del juego');
+                console.log('🚨 No hay instancia del juego, creando una nueva...');
+                
+                // Crear nueva instancia del juego
+                try {
+                    window.bingoGame = new BingoPro();
+                    alert('✅ BingoPro creado exitosamente');
+                    console.log('✅ BingoPro creado exitosamente');
+                    
+                    // Inicializar el juego
+                    window.bingoGame.initializeGame();
+                    alert('✅ Juego inicializado');
+                    console.log('✅ Juego inicializado, actualizando perfil...');
+                    
+                    // Actualizar perfil después de un breve delay
+                    setTimeout(() => {
+                        updateProfileData();
+                    }, 500);
+                    
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                    console.error('❌ Error creando BingoPro:', error);
+                }
             }
         }
 
-        function updateProfileData() {
-            const game = window.bingoGame || window.gameInstance;
-            if (!game) {
-                console.log('⚠️ Instancia del juego no encontrada');
-                return;
+        async function updateProfileData() {
+            console.log('🚀 Actualizando datos del perfil...');
+            
+            try {
+                // Obtener token de la sesión
+                const sessionData = localStorage.getItem('bingoroyal_session');
+                if (!sessionData) {
+                    console.log('⚠️ No hay sesión activa');
+                    return;
+                }
+                
+                const session = JSON.parse(sessionData);
+                const token = session.token;
+                
+                if (!token) {
+                    console.log('⚠️ No hay token de autorización');
+                    return;
+                }
+                
+                // Llamar a la API para obtener datos reales del usuario
+                const response = await fetch('/api/user/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.user) {
+                    const user = data.user;
+                    console.log('✅ Datos del usuario obtenidos:', user);
+                    
+                    // Actualizar UI con datos reales
+                    document.getElementById('profileName').textContent = `${user.firstName} ${user.lastName}`;
+                    document.getElementById('userId').textContent = user.id;
+                    document.getElementById('userLevel').textContent = user.level;
+                    document.getElementById('userExp').textContent = `${user.experience} XP`;
+                    document.getElementById('userVip').textContent = user.vipStatus ? 'VIP' : 'Estándar';
+                    document.getElementById('userRegDate').textContent = new Date(user.registrationDate).toLocaleDateString('es-ES');
+                    
+                    // Actualizar estado del perfil
+                    const statusElement = document.getElementById('profileStatus');
+                    if (user.vipStatus) {
+                        statusElement.textContent = 'VIP';
+                        statusElement.style.background = 'linear-gradient(45deg, #ffd700, #ffb347)';
+                    } else {
+                        statusElement.textContent = 'Estándar';
+                        statusElement.style.background = 'linear-gradient(45deg, #00d4aa, #0099cc)';
+                    }
+                    
+                    // Estadísticas del juego
+                    document.getElementById('totalGames').textContent = user.totalGames;
+                    document.getElementById('totalWins').textContent = user.totalWins;
+                    document.getElementById('winRate').textContent = user.totalGames > 0 ? `${Math.round((user.totalWins / user.totalGames) * 100)}%` : '0%';
+                    document.getElementById('totalCards').textContent = '0'; // Por ahora
+                    
+                    // Información financiera
+                    document.getElementById('userBalance').textContent = `€${user.balance.toFixed(2)}`;
+                    document.getElementById('totalSpent').textContent = `€${user.totalSpent.toFixed(2)}`;
+                    document.getElementById('totalWon').textContent = `€${user.totalWon.toFixed(2)}`;
+                    
+                    const netProfit = user.totalWon - user.totalSpent;
+                    document.getElementById('netProfit').textContent = `€${netProfit.toFixed(2)}`;
+                    document.getElementById('netProfit').style.color = netProfit >= 0 ? '#4ecdc4' : '#ff6b6b';
+                    
+                    // Logros
+                    document.getElementById('achievementsUnlocked').textContent = user.achievements.length;
+                    document.getElementById('highestPrize').textContent = `€${user.highestPrize.toFixed(2)}`;
+                    document.getElementById('currentStreak').textContent = user.currentStreak;
+                    document.getElementById('bestStreak').textContent = user.bestStreak;
+                    
+                    // Configuración
+                    document.getElementById('notificationsToggle').checked = user.settings.notifications;
+                    document.getElementById('soundsToggle').checked = user.settings.sounds;
+                    
+                    console.log('✅ Perfil actualizado con datos reales');
+                    
+                } else {
+                    console.log('⚠️ Error en la respuesta de la API:', data.error);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error obteniendo datos del perfil:', error);
+                
+                // Fallback: usar datos del juego si está disponible
+                const game = window.bingoGame || window.gameInstance;
+                if (game) {
+                    console.log('🔄 Usando datos del juego como fallback...');
+                    updateProfileDataFromGame(game);
+                }
             }
-
+        }
+        
+        function updateProfileDataFromGame(game) {
             // Información personal
             document.getElementById('profileName').textContent = game.getUserName() || 'Usuario Bingo';
             document.getElementById('userId').textContent = game.getUserId() || 'N/A';

@@ -1332,25 +1332,10 @@
                 // Marcar como inicializado para evitar que script.js interfiera
                 window.gameInitialized = true;
                 
-                // Inicializar UI básica
-                setTimeout(() => {
-                    const user = session.user;
-                    console.log(`👋 Bienvenido ${user.firstName} ${user.lastName}!`);
-                    
-                    // Actualizar UI si existe
-                    const userNameElement = document.querySelector('.username');
-                    const userBalanceElement = document.querySelector('#userBalance');
-                    
-                    if (userNameElement) {
-                        userNameElement.textContent = `${user.firstName} ${user.lastName}`;
-                    }
-                    
-                    if (userBalanceElement) {
-                        userBalanceElement.textContent = `€${user.balance}`;
-                    }
-                    
-                    console.log('✅ Juego listo para usar');
-                }, 100);
+                // Marcar como inicializado para evitar que script.js interfiera
+                window.gameInitialized = true;
+                
+                console.log('✅ Sesión válida, script.js se encargará de la UI');
                 
             } catch (error) {
                 console.error('❌ Error verificando sesión:', error);
