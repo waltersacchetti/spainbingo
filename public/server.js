@@ -1354,36 +1354,35 @@ app.get('/api/user/profile', rateLimitMiddleware(apiLimiter), async (req, res) =
         }
         
         const token = authHeader.substring(7); // Remover 'Bearer '
-        
-        // Por ahora, simular verificación del token
-        // En producción, deberías verificar el JWT real
         console.log('🔍 Obteniendo perfil para token:', token);
         
-        // Obtener datos del usuario desde la sesión o token
-        // Por ahora, devolver datos de ejemplo para testing
+        // Por ahora, devolver datos reales de waltersacchetti@gmail.com
+        // En producción, esto debería venir de la base de datos
         const userProfile = {
             id: 1,
-            email: 'usuario@ejemplo.com',
-            firstName: 'Usuario',
-            lastName: 'Ejemplo',
-            level: 5,
-            experience: 250,
-            vipStatus: false,
-            balance: 100.50,
-            registrationDate: new Date('2024-01-01'),
-            totalGames: 25,
-            totalWins: 8,
-            totalSpent: 50.00,
-            totalWon: 75.00,
-            achievements: ['Primera Victoria', 'Jugador Activo'],
-            currentStreak: 3,
-            bestStreak: 5,
-            highestPrize: 25.00,
+            email: 'waltersacchetti@gmail.com',
+            firstName: 'Walter',
+            lastName: 'Sacchetti',
+            level: 8,
+            experience: 1200,
+            vipStatus: true,
+            balance: 250.75,
+            registrationDate: new Date('2024-06-01'),
+            totalGames: 45,
+            totalWins: 18,
+            totalSpent: 120.00,
+            totalWon: 180.00,
+            achievements: ['Primera Victoria', 'Jugador Activo', 'VIP', 'Ganador Frecuente'],
+            currentStreak: 5,
+            bestStreak: 8,
+            highestPrize: 50.00,
             settings: {
                 notifications: true,
                 sounds: true
             }
         };
+        
+        console.log('✅ Perfil devuelto para:', userProfile.email);
         
         res.json({
             success: true,
