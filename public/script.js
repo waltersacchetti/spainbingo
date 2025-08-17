@@ -613,6 +613,12 @@ class BingoPro {
                         this.userId = session.user.id;
                         
                         console.log('✅ Perfil actualizado con datos reales de la sesión:', this.userProfile);
+                        
+                        // ✨ NUEVO: Actualizar también el header después de cargar el perfil
+                        setTimeout(() => {
+                            updateHeaderUserInfo();
+                        }, 100);
+                        
                         return;
                     } else {
                         console.log('⚠️ Sesión encontrada pero sin datos de usuario');

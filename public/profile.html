@@ -581,6 +581,14 @@
                     
                     console.log('✅ Perfil actualizado con datos reales');
                     
+                    // ✨ NUEVO: Actualizar también el header con los datos reales
+                    setTimeout(() => {
+                        if (typeof updateHeaderUserInfo === 'function') {
+                            updateHeaderUserInfo();
+                            console.log('✅ Header actualizado con datos reales');
+                        }
+                    }, 100);
+                    
                 } else {
                     console.log('⚠️ Error en la respuesta de la API:', data.error);
                 }

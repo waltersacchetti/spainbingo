@@ -1407,7 +1407,7 @@ app.get('/api/user/profile', rateLimitMiddleware(apiLimiter), authenticateToken,
             
             // Por ahora, buscar por email específico (waltersacchetti@gmail.com)
             // En producción, esto debería usar el token para identificar al usuario
-            const user = await userManager.getUserByEmail('waltersacchetti@gmail.com');
+            const user = await userManager.findUserByEmailOrUsername('waltersacchetti@gmail.com', 'waltersacchetti');
             
             if (user) {
                 console.log('✅ Usuario encontrado en base de datos:', user.email);
