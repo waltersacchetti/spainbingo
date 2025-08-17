@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Test Sincronización - BingoRoyal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+        
+        .test-button.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .status-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .log-info { background: rgba(78, 205, 196, 0.2); }
+        .log-success { background: rgba(46, 204, 113, 0.2); }
+        .log-warning { background: rgba(241, 196, 15, 0.2); }
+        .log-error { background: rgba(231, 76, 60, 0.2); }
+        
+        .sync-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .status-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Sincronización - BingoRoyal</h1>
+        <p>Esta página permite probar las correcciones de sincronización implementadas.</p>
+        
+        <!-- Estado del Sistema -->
+        <div class="test-section">
+            <div class="test-title">📊 Estado del Sistema</div>
+            <div class="sync-status">
+                <div class="status-card">
+                    <div class="status-label">Estado del Juego</div>
+                    <div class="status-value" id="gameStateStatus">❓</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Números Llamados</div>
+                    <div class="status-value" id="calledNumbersStatus">❓</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Modo Actual</div>
+                    <div class="status-value" id="currentModeStatus">❓</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Sincronización</div>
+                    <div class="status-value" id="syncStatus">❓</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tests de Sincronización -->
+        <div class="test-section">
+            <div class="test-title">🔄 Tests de Sincronización</div>
+            
+            <button class="test-button success" onclick="testFullSync()">
+                🔄 Sincronización Completa
+            </button>
+            
+            <button class="test-button" onclick="testCalledNumbersSync()">
+                🎯 Sincronizar Números Llamados
+            </button>
+            
+            <button class="test-button" onclick="testGameStateSync()">
+                🎮 Sincronizar Estado del Juego
+            </button>
+            
+            <button class="test-button" onclick="testCountdownSync()">
+                ⏰ Sincronizar Countdowns
+            </button>
+            
+            <button class="test-button danger" onclick="clearAllData()">
+                🗑️ Limpiar Todos los Datos
+            </button>
+        </div>
+        
+        <!-- Tests de Estado -->
+        <div class="test-section">
+            <div class="test-title">🔍 Tests de Estado</div>
+            
+            <button class="test-button" onclick="checkPurchaseState()">
+                🛒 Verificar Estado de Compra
+            </button>
+            
+            <button class="test-button" onclick="checkServerState()">
+                🌐 Verificar Estado del Servidor
+            </button>
+            
+            <button class="test-button" onclick="checkModeCycles()">
+                🔄 Verificar Ciclos de Modo
+            </button>
+            
+            <button class="test-button" onclick="checkCalledNumbers()">
+                📊 Verificar Números Llamados
+            </button>
+        </div>
+        
+        <!-- Log de Eventos -->
+        <div class="test-section">
+            <div class="test-title">📝 Log de Eventos</div>
+            <div class="status-display" id="eventLog">
+                <div class="log-entry log-info">✅ Sistema de test cargado correctamente</div>
+                <div class="log-entry log-info">🔧 Esperando acciones del usuario...</div>
+            </div>
+            <button class="test-button" onclick="clearLog()">🗑️ Limpiar Log</button>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de logging
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('eventLog');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '';
+            log('Log limpiado', 'info');
+        }
+        
+        // Función principal de test
+        async function testFullSync() {
+            log('🔄 Iniciando sincronización completa...', 'info');
+            
+            try {
+                if (window.bingoGame && window.bingoGame.forceFullSynchronization) {
+                    await window.bingoGame.forceFullSynchronization();
+                    log('✅ Sincronización completa exitosa', 'success');
+                    updateStatus();
+                } else {
+                    log('❌ Función forceFullSynchronization no disponible', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error en sincronización completa: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCalledNumbersSync() {
+            log('🎯 Sincronizando números llamados...', 'info');
+            
+            try {
+                if (window.bingoGame && window.bingoGame.syncCalledNumbersWithServer) {
+                    await window.bingoGame.syncCalledNumbersWithServer();
+                    log('✅ Números llamados sincronizados', 'success');
+                    updateStatus();
+                } else {
+                    log('❌ Función syncCalledNumbersWithServer no disponible', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error sincronizando números llamados: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testGameStateSync() {
+            log('🎮 Sincronizando estado del juego...', 'info');
+            
+            try {
+                if (window.bingoGame && window.bingoGame.syncGameStateWithServer) {
+                    await window.bingoGame.syncGameStateWithServer();
+                    log('✅ Estado del juego sincronizado', 'success');
+                    updateStatus();
+                } else {
+                    log('❌ Función syncGameStateWithServer no disponible', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error sincronizando estado del juego: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCountdownSync() {
+            log('⏰ Sincronizando countdowns...', 'info');
+            
+            try {
+                if (window.bingoGame && window.bingoGame.updateAllModeCountdownsCoordinated) {
+                    await window.bingoGame.updateAllModeCountdownsCoordinated();
+                    log('✅ Countdowns sincronizados', 'success');
+                    updateStatus();
+                } else {
+                    log('❌ Función updateAllModeCountdownsCoordinated no disponible', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error sincronizando countdowns: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkPurchaseState() {
+            log('🛒 Verificando estado de compra...', 'info');
+            
+            if (window.bingoGame) {
+                const currentMode = window.bingoGame.getCurrentGameMode();
+                if (currentMode) {
+                    const canPurchase = window.bingoGame.canPurchaseCards(currentMode.id);
+                    log(`📊 Modo: ${currentMode.name}`, 'info');
+                    log(`📊 Puede comprar: ${canPurchase.canPurchase}`, canPurchase.canPurchase ? 'success' : 'warning');
+                    log(`📊 Razón: ${canPurchase.reason}`, 'info');
+                } else {
+                    log('❌ No se pudo obtener modo actual', 'error');
+                }
+            } else {
+                log('❌ BingoGame no disponible', 'error');
+            }
+        }
+        
+        function checkServerState() {
+            log('🌐 Verificando estado del servidor...', 'info');
+            
+            if (window.bingoGame) {
+                const serverState = window.bingoGame.serverGameState;
+                if (serverState) {
+                    log(`📊 Estado del servidor: ${JSON.stringify(serverState, null, 2)}`, 'info');
+                } else {
+                    log('⚠️ No hay estado del servidor', 'warning');
+                }
+            } else {
+                log('❌ BingoGame no disponible', 'error');
+            }
+        }
+        
+        function checkModeCycles() {
+            log('🔄 Verificando ciclos de modo...', 'info');
+            
+            if (window.bingoGame) {
+                const modeCycles = window.bingoGame.modeCycles;
+                if (modeCycles) {
+                    log(`📊 Ciclos de modo: ${JSON.stringify(modeCycles, null, 2)}`, 'info');
+                } else {
+                    log('⚠️ No hay ciclos de modo', 'warning');
+                }
+            } else {
+                log('❌ BingoGame no disponible', 'error');
+            }
+        }
+        
+        function checkCalledNumbers() {
+            log('📊 Verificando números llamados...', 'info');
+            
+            if (window.bingoGame) {
+                const calledNumbers = window.bingoGame.calledNumbers;
+                if (calledNumbers) {
+                    log(`📊 Cantidad de números llamados: ${calledNumbers.size}`, 'info');
+                    log(`📊 Números: ${Array.from(calledNumbers).join(', ')}`, 'info');
+                } else {
+                    log('⚠️ No hay números llamados', 'warning');
+                }
+            } else {
+                log('❌ BingoGame no disponible', 'error');
+            }
+        }
+        
+        function clearAllData() {
+            log('🗑️ Limpiando todos los datos...', 'warning');
+            
+            if (window.bingoGame) {
+                try {
+                    // Limpiar números llamados
+                    if (window.bingoGame.calledNumbers) {
+                        window.bingoGame.calledNumbers.clear();
+                    }
+                    
+                    // Resetear estado del juego
+                    if (window.bingoGame.forceGameStateSync) {
+                        window.bingoGame.forceGameStateSync();
+                    }
+                    
+                    log('✅ Datos limpiados correctamente', 'success');
+                    updateStatus();
+                } catch (error) {
+                    log(`❌ Error limpiando datos: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ BingoGame no disponible', 'error');
+            }
+        }
+        
+        function updateStatus() {
+            if (window.bingoGame) {
+                // Estado del juego
+                const gameState = window.bingoGame.gameState || 'unknown';
+                document.getElementById('gameStateStatus').textContent = gameState.toUpperCase();
+                
+                // Números llamados
+                const calledCount = window.bingoGame.calledNumbers ? window.bingoGame.calledNumbers.size : 0;
+                document.getElementById('calledNumbersStatus').textContent = calledCount;
+                
+                // Modo actual
+                const currentMode = window.bingoGame.getCurrentGameMode();
+                const modeName = currentMode ? currentMode.name : 'N/A';
+                document.getElementById('currentModeStatus').textContent = modeName;
+                
+                // Estado de sincronización
+                const hasServerState = !!(window.bingoGame.serverGameState && Object.keys(window.bingoGame.serverGameState).length > 0);
+                document.getElementById('syncStatus').textContent = hasServerState ? '✅' : '❌';
+            }
+        }
+        
+        // Inicialización
+        window.addEventListener('load', () => {
+            log('🚀 Página de test cargada', 'success');
+            
+            // Verificar si BingoGame está disponible
+            if (window.bingoGame) {
+                log('✅ BingoGame detectado', 'success');
+                updateStatus();
+            } else {
+                log('⚠️ BingoGame no detectado - carga la página principal primero', 'warning');
+            }
+            
+            // Actualizar estado cada 5 segundos
+            setInterval(updateStatus, 5000);
+        });
+        
+        // Comandos de debug en consola
+        window.testSync = {
+            fullSync: testFullSync,
+            calledNumbersSync: testCalledNumbersSync,
+            gameStateSync: testGameStateSync,
+            countdownSync: testCountdownSync,
+            checkPurchase: checkPurchaseState,
+            checkServer: checkServerState,
+            checkModes: checkModeCycles,
+            checkNumbers: checkCalledNumbers,
+            clearData: clearAllData,
+            updateStatus: updateStatus
+        };
+        
+        log('🔧 Comandos de test disponibles en window.testSync', 'info');
+        log('🔧 También puedes usar la consola del navegador', 'info');
+    </script>
+</body>
+</html>

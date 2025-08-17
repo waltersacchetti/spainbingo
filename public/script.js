@@ -820,6 +820,11 @@ class BingoPro {
             this.clearCalledNumbersIfNoActiveGame();
         }, 2000); // Esperar 2 segundos para que la sincronización se complete
         
+        // 5.5. 🎯 NUEVO: SINCRONIZAR NÚMEROS LLAMADOS CON SERVIDOR
+        setTimeout(() => {
+            this.syncCalledNumbersWithServer();
+        }, 2500); // Esperar 2.5 segundos para sincronización completa
+        
         // 6. 🎯 NUEVO: LIMPIAR PARTIDAS EXPIRADAS AL INICIALIZAR
         setTimeout(() => {
             this.cleanupExpiredGames();
@@ -829,6 +834,7 @@ class BingoPro {
         setInterval(() => {
             this.updatePurchaseButtonsState();
             this.updateAllModeCountdownsCoordinated();
+            this.syncCalledNumbersWithServer(); // 🎯 NUEVO: Sincronizar números llamados
         }, 5000);
     }
     
@@ -1217,6 +1223,11 @@ class BingoPro {
                 // 🔒 BLOQUEAR COMPRAS INMEDIATAMENTE
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
+                // 🎯 NUEVO: Limpiar números llamados si no hay partida activa real
+                if (!isRealPartidaActiva) {
+                    this.clearCalledNumbersForMode(modeId);
+                }
+                
                 console.log(`🎮 Countdown ${modeId}: PARTIDA EN CURSO - COMPRAS BLOQUEADAS`);
                 
             } else {
@@ -1227,6 +1238,9 @@ class BingoPro {
                 
                 // ✅ PERMITIR COMPRAS INMEDIATAMENTE
                 this.allowPurchasesForMode(modeId);
+                
+                // 🎯 NUEVO: Limpiar números llamados del modo terminado
+                this.clearCalledNumbersForMode(modeId);
                 
                 console.log(`✅ Countdown ${modeId}: COMPRAR CARTONES - COMPRAS PERMITIDAS`);
             }
@@ -1926,9 +1940,8 @@ class BingoPro {
         console.log(`🔍 serverGameState.modes[${modeId}]:`, this.serverGameState?.modes?.[modeId]);
         console.log(`🔍 serverGameState completo:`, this.serverGameState);
         console.log(`🔍 serverGameState.modes:`, this.serverGameState?.modes);
-        console.log(`🔍 serverGameState.globalStats:`, this.serverGameState?.globalStats || 'undefined');
-        console.log(`🔍 serverGameState.globalStats?.stats:`, this.serverGameState?.globalStats?.stats || 'undefined');
-        console.log(`🔍 serverGameState.globalStats?.stats?.[${modeId}]:`, this.serverGameState?.globalStats?.stats?.[modeId] || 'undefined');
+        console.log(`🔍 serverGameState.stats:`, this.serverGameState?.stats || 'undefined');
+        console.log(`🔍 serverGameState.stats?.[${modeId}]:`, this.serverGameState?.stats?.[modeId] || 'undefined');
         
         const isActive = Object.values(indicators).some(indicator => indicator === true);
         console.log(`🔍 Resultado final isGlobalGameActive(${modeId}):`, isActive);
@@ -1967,24 +1980,44 @@ class BingoPro {
     
     /**
      * 🎯 CORREGIDO: Verificar si hay actividad del servidor (MÁS PRECISO)
+     * SOLUCIONA: Desincronización entre números llamados y estado del juego
      */
     hasServerActivity(modeId) {
-        // Verificar si hay números llamados globalmente (indicador de partida activa)
-        if (this.calledNumbers && this.calledNumbers.size > 0) {
-            console.log(`🔍 hasServerActivity(${modeId}): Números llamados detectados:`, this.calledNumbers.size);
-            return true;
-        }
-
-        // Verificar si hay partida activa confirmada en el servidor
+        // 🎯 NUEVO: Verificar si hay partida activa confirmada en el servidor (MÁS CONFIABLE)
         if (this.serverGameState?.modes?.[modeId]?.gameState === 'playing') {
             console.log(`🔍 hasServerActivity(${modeId}): Partida activa confirmada en servidor`);
-                return true;
-            }
-        
-        // Verificar si hay partida activa en globalStats
-        if (this.serverGameState?.globalStats?.stats?.[modeId]?.isActive === true) {
-            console.log(`🔍 hasServerActivity(${modeId}): Partida activa en globalStats`);
             return true;
+        }
+        
+        // 🎯 NUEVO: Verificar si hay partida activa en stats
+        if (this.serverGameState?.stats?.[modeId]?.isActive === true) {
+            console.log(`🔍 hasServerActivity(${modeId}): Partida activa en stats`);
+            return true;
+        }
+        
+        // 🎯 NUEVO: Verificar si hay partida activa en stats directos (estructura real del servidor)
+        if (this.serverGameState?.stats?.[modeId]?.gameState === 'playing') {
+            console.log(`🔍 hasServerActivity(${modeId}): Partida activa en stats directos`);
+            return true;
+        }
+        
+        // 🎯 NUEVO: Verificar si hay partida activa en playersByMode (estructura real del servidor)
+        if (this.serverGameState?.stats?.playersByMode?.[modeId]?.gameState === 'playing') {
+            console.log(`🔍 hasServerActivity(${modeId}): Partida activa en playersByMode`);
+            return true;
+        }
+        
+        // 🎯 CORREGIDO: Verificar números llamados SOLO si son del modo específico
+        if (this.calledNumbers && this.calledNumbers.size > 0) {
+            // 🎯 NUEVO: Verificar si los números llamados son del modo actual
+            const currentMode = this.getCurrentGameMode();
+            if (currentMode && currentMode.id === modeId) {
+                console.log(`🔍 hasServerActivity(${modeId}): Números llamados del modo actual detectados:`, this.calledNumbers.size);
+                return true;
+            } else {
+                console.log(`🔍 hasServerActivity(${modeId}): Números llamados detectados pero NO del modo ${modeId}`);
+                return false;
+            }
         }
         
         console.log(`🔍 hasServerActivity(${modeId}): No hay actividad del servidor`);
@@ -2011,6 +2044,86 @@ class BingoPro {
         setTimeout(() => {
             this.verifyAndCorrectState(modeId);
         }, 1000);
+    }
+    
+    /**
+     * 🎯 NUEVO: Sincronizar números llamados con el servidor
+     * SOLUCIONA: Desincronización entre números llamados y estado del juego
+     */
+    async syncCalledNumbersWithServer() {
+        try {
+            console.log('🔄 Sincronizando números llamados con el servidor...');
+            
+            // Obtener estado del servidor
+            const serverData = await this.getGlobalStatsIntelligent();
+            
+            if (serverData && serverData.stats) {
+                let hasAnyActiveGame = false;
+                
+                // Verificar si hay partida activa en cualquier modo
+                Object.keys(serverData.stats).forEach(modeId => {
+                    const modeStats = serverData.stats[modeId];
+                    // 🎯 CORREGIDO: Verificar tanto isActive como gameState
+                    if (modeStats && (modeStats.isActive === true || modeStats.gameState === 'playing')) {
+                        hasAnyActiveGame = true;
+                        console.log(`🔍 Modo ${modeId} tiene partida activa en servidor:`, {
+                            isActive: modeStats.isActive,
+                            gameState: modeStats.gameState
+                        });
+                    }
+                });
+                
+                // 🎯 CORREGIR: Si no hay partida activa en el servidor, limpiar números llamados
+                if (!hasAnyActiveGame && this.calledNumbers && this.calledNumbers.size > 0) {
+                    console.log('🔧 Sincronización: Limpiando números llamados (no hay partida activa en servidor)');
+                    this.calledNumbers.clear();
+                    this.lastNumberCalled = null;
+                    
+                    // Limpiar display
+                    this.clearCalledNumbersDisplay();
+                    
+                    console.log('✅ Números llamados sincronizados con servidor');
+                } else if (hasAnyActiveGame) {
+                    console.log('🔧 Sincronización: Manteniendo números llamados (hay partida activa en servidor)');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error sincronizando números llamados:', error);
+        }
+    }
+    
+    /**
+     * 🎯 NUEVO: Limpiar números llamados de un modo específico
+     * SOLUCIONA: Desincronización entre modos de juego
+     */
+    clearCalledNumbersForMode(modeId) {
+        console.log(`🔧 Limpiando números llamados para modo ${modeId}...`);
+        
+        // Verificar si hay partida activa en este modo específico
+        const isModeActive = this.serverGameState?.modes?.[modeId]?.gameState === 'playing' ||
+                            this.modeCycles[modeId]?.isActive;
+        
+        if (!isModeActive && this.calledNumbers && this.calledNumbers.size > 0) {
+            console.log(`🔧 Limpiando números llamados del modo ${modeId} (no está activo)`);
+            
+            // Limpiar números llamados
+            this.calledNumbers.clear();
+            this.lastNumberCalled = null;
+            
+            // Limpiar display específico del modo
+            const modeContainer = document.getElementById(`calledNumbers-${modeId}`);
+            if (modeContainer) {
+                modeContainer.innerHTML = '';
+                console.log(`✅ Display del modo ${modeId} limpiado`);
+            }
+            
+            // Limpiar display general
+            this.clearCalledNumbersDisplay();
+            
+            console.log(`✅ Números llamados del modo ${modeId} limpiados`);
+        } else {
+            console.log(`🔧 NO limpiando números llamados del modo ${modeId} (está activo)`);
+        }
     }
     
     /**
@@ -2136,18 +2249,36 @@ class BingoPro {
      * 🎯 CORREGIDO: Limpiar números llamados si no hay partida activa
      */
     clearCalledNumbersIfNoActiveGame() {
-        console.log('🔧 Verificando si hay números llamados sin partida activa...');
+        console.log('🔧 Verificando si hay números llamados sin partida activa REAL...');
         
-        let hasActiveGame = false;
+        // 🎯 NUEVO: Verificar estado REAL del servidor, no solo local
+        let hasActiveGameInServer = false;
+        
+        // 1. Verificar si hay partida activa en el servidor
+        if (this.serverGameState && this.serverGameState.modes) {
+            Object.keys(this.serverGameState.modes).forEach(modeId => {
+                const modeState = this.serverGameState.modes[modeId];
+                if (modeState && modeState.gameState === 'playing') {
+                    hasActiveGameInServer = true;
+                    console.log(`🔍 Modo ${modeId} tiene partida activa en el servidor`);
+                }
+            });
+        }
+        
+        // 2. Verificar si hay partida activa local (como respaldo)
+        let hasActiveGameLocal = false;
         Object.keys(this.modeCycles).forEach(modeId => {
             if (this.modeCycles[modeId]?.isActive) {
-                hasActiveGame = true;
-                console.log(`🔍 Modo ${modeId} tiene partida activa`);
+                hasActiveGameLocal = true;
+                console.log(`🔍 Modo ${modeId} tiene partida activa local`);
             }
         });
         
-        if (!hasActiveGame && this.calledNumbers && this.calledNumbers.size > 0) {
-            console.log('🔧 Limpiando números llamados antiguos (no hay partida activa)');
+        // 3. 🎯 DECISIÓN INTELIGENTE: Solo limpiar si NO hay partida activa en NINGÚN lado
+        const hasAnyActiveGame = hasActiveGameInServer || hasActiveGameLocal;
+        
+        if (!hasAnyActiveGame && this.calledNumbers && this.calledNumbers.size > 0) {
+            console.log('🔧 Limpiando números llamados antiguos (no hay partida activa en servidor ni local)');
             this.calledNumbers.clear();
             this.lastNumberCalled = null;
             
@@ -2162,6 +2293,13 @@ class BingoPro {
             if (lastNumberElement) {
                 lastNumberElement.textContent = '';
             }
+            
+            console.log('✅ Números llamados limpiados correctamente');
+        } else if (hasAnyActiveGame) {
+            console.log('🔧 NO limpiando números llamados - hay partida activa en:', {
+                server: hasActiveGameInServer,
+                local: hasActiveGameLocal
+            });
         }
     }
     
@@ -2467,12 +2605,104 @@ class BingoPro {
     }
     
     /**
+     * 🎯 NUEVO: Forzar sincronización completa del sistema
+     * SOLUCIONA: Desincronización entre todos los componentes
+     */
+    async forceFullSynchronization() {
+        console.log('🔄 Forzando sincronización COMPLETA del sistema...');
+        
+        try {
+            // 1. Sincronizar con servidor
+            await this.syncGameStateWithServer();
+            
+            // 2. Sincronizar números llamados
+            await this.syncCalledNumbersWithServer();
+            
+            // 3. Limpiar números llamados obsoletos
+            this.clearCalledNumbersIfNoActiveGame();
+            
+            // 4. Actualizar countdowns
+            this.updateAllModeCountdownsCoordinated();
+            
+            // 5. Actualizar estado de botones
+            this.updatePurchaseButtonsState();
+            
+            // 6. Actualizar mensaje de estado
+            this.updateGameStatusMessage();
+            
+            console.log('✅ Sincronización completa realizada');
+            
+            // Mostrar notificación al usuario
+            this.showNotification('🔄 Sistema sincronizado correctamente', 'success');
+            
+        } catch (error) {
+            console.error('❌ Error en sincronización completa:', error);
+            this.showNotification('❌ Error en sincronización', 'error');
+        }
+    }
+    
+    /**
+     * 🧪 FUNCIÓN DE PRUEBA: Verificar layout de todos los modos
+     */
+    testAllModesLayout() {
+        console.log('🧪 Probando layout de todos los modos...');
+        
+        const modes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+        
+        modes.forEach(modeId => {
+            console.log(`\n🔍 Probando modo: ${modeId}`);
+            
+            // Verificar contenedor de números llamados
+            const numbersContainer = document.getElementById(`calledNumbers-${modeId}`);
+            if (numbersContainer) {
+                console.log(`✅ Contenedor ${modeId} encontrado:`, {
+                    display: numbersContainer.style.display,
+                    className: numbersContainer.className,
+                    children: numbersContainer.children.length,
+                    innerHTML: numbersContainer.innerHTML.substring(0, 100) + '...'
+                });
+            } else {
+                console.log(`❌ Contenedor ${modeId} NO encontrado`);
+            }
+            
+            // Verificar contenedor de cartones
+            const cardsContainer = document.getElementById('cards-container');
+            if (cardsContainer) {
+                console.log(`✅ Contenedor de cartones encontrado:`, {
+                    className: cardsContainer.className,
+                    children: cardsContainer.children.length,
+                    expanded: cardsContainer.classList.contains('expanded')
+                });
+            } else {
+                console.log(`❌ Contenedor de cartones NO encontrado`);
+            }
+        });
+        
+        // Verificar estilos CSS aplicados
+        const testContainer = document.getElementById('calledNumbers-CLASSIC');
+        if (testContainer) {
+            const computedStyle = window.getComputedStyle(testContainer);
+            console.log('\n🎨 Estilos CSS del contenedor CLASSIC:', {
+                background: computedStyle.background,
+                borderRadius: computedStyle.borderRadius,
+                padding: computedStyle.padding,
+                margin: computedStyle.margin,
+                minHeight: computedStyle.minHeight,
+                width: computedStyle.width
+            });
+        }
+        
+        console.log('🧪 Prueba de layout completada');
+    }
+
+    /**
      * 🎯 NUEVO: Configurar comandos de debug en la consola
      */
     setupDebugCommands() {
         // Agregar comandos de debug a window para acceso desde consola
         window.bingoDebug = {
             forceSync: () => this.forceGameStateSync(),
+            forceFullSync: () => this.forceFullSynchronization(), // 🎯 NUEVO: Sincronización completa
             checkState: (modeId) => {
                 console.log('🔍 Estado del juego para modo:', modeId);
                 console.log('🔍 this.gameState:', this.gameState);
@@ -2498,13 +2728,15 @@ class BingoPro {
                 this.modeCycles = {};
                 this.serverGameState = {};
                 console.log('✅ Estado del juego reseteado');
-            }
+            },
+            testLayout: () => this.testAllModesLayout()
         };
         
         console.log('🎯 Comandos de debug disponibles:');
         console.log('🎯 bingoDebug.forceSync() - Forzar sincronización');
         console.log('🎯 bingoDebug.checkState("RAPID") - Verificar estado del modo');
         console.log('🎯 bingoDebug.resetGame() - Resetear estado del juego');
+        console.log('🎯 bingoDebug.testLayout() - Probar layout de todos los modos');
     }
 
     /**
@@ -2583,6 +2815,7 @@ class BingoPro {
 
     /**
      * 📢 Actualizar mensaje de estado del juego
+     * 🎯 CORREGIDO: Mostrar estado real del servidor, no solo local
      */
     updateGameStatusMessage() {
         const currentMode = this.getCurrentGameMode();
@@ -2590,13 +2823,32 @@ class BingoPro {
         
         if (!statusElement) return;
         
-        if (this.gameState === 'playing') {
-            statusElement.innerHTML = `🎮 <strong>Partida activa en ${currentMode.name}</strong> - No se pueden comprar cartones hasta que termine`;
-            statusElement.className = 'game-status playing';
-        } else if (this.isGlobalGameActive(currentMode.id)) {
-            statusElement.innerHTML = `🌐 <strong>Partida global activa en ${currentMode.name}</strong> - Espera a que termine para comprar cartones`;
-            statusElement.className = 'game-status global-active';
+        // 🎯 NUEVO: Verificar estado REAL del servidor primero
+        const isServerActive = this.serverGameState?.modes?.[currentMode.id]?.gameState === 'playing' || 
+                              this.serverGameState?.stats?.[currentMode.id]?.isActive === true;
+        const isLocalActive = this.gameState === 'playing';
+        const isGlobalActive = this.isGlobalGameActive(currentMode.id);
+        
+        console.log(`🔍 updateGameStatusMessage para ${currentMode.id}:`, {
+            serverActive: isServerActive,
+            localActive: isLocalActive,
+            globalActive: isGlobalActive
+        });
+        
+        if (isServerActive || isLocalActive || isGlobalActive) {
+            // 🎮 PARTIDA ACTIVA - Mostrar mensaje correcto
+            if (isServerActive) {
+                statusElement.innerHTML = `🎮 <strong>Partida en curso en ${currentMode.name}</strong> - No se pueden comprar cartones hasta que termine`;
+                statusElement.className = 'game-status playing';
+            } else if (isGlobalActive) {
+                statusElement.innerHTML = `🌐 <strong>Partida global activa en ${currentMode.name}</strong> - Espera a que termine para comprar cartones`;
+                statusElement.className = 'game-status global-active';
+            } else {
+                statusElement.innerHTML = `🎮 <strong>Partida activa en ${currentMode.name}</strong> - No se pueden comprar cartones hasta que termine`;
+                statusElement.className = 'game-status playing';
+            }
         } else {
+            // ✅ PARTIDA DISPONIBLE - Permitir compras
             statusElement.innerHTML = `✅ <strong>${currentMode.name} disponible</strong> - Puedes comprar cartones y unirte a la próxima partida`;
             statusElement.className = 'game-status available';
         }
@@ -2696,14 +2948,25 @@ class BingoPro {
             return { modes: {} };
         }
         
-        console.log('🔍 formatServerDataForCompatibility - Datos de modos disponibles:', Object.keys(gameModesData));
-        
+        // 🎯 NUEVO: Crear estructura compatible con globalStats
         const formattedState = { 
             modes: {},
-            globalStats: serverData.globalStats || serverData.stats || null
+            stats: serverData.stats || {} // 🎯 CORREGIDO: Usar stats directamente
         };
         
-        console.log('🔍 formatServerDataForCompatibility - globalStats preservado:', formattedState.globalStats);
+        // 🎯 NUEVO: Crear estructura de modes compatible
+        if (serverData.stats && serverData.stats.playersByMode) {
+            formattedState.modes = serverData.stats.playersByMode;
+            console.log('🔍 formatServerDataForCompatibility - modes creados desde playersByMode:', Object.keys(formattedState.modes));
+        }
+        
+        console.log('🔍 formatServerDataForCompatibility - globalStats creado:', formattedState.globalStats);
+        console.log('🔍 formatServerDataForCompatibility - modes creados:', Object.keys(formattedState.modes));
+        
+        console.log('🔍 formatServerDataForCompatibility - Datos de modos disponibles:', Object.keys(gameModesData));
+        
+        // 🎯 CORREGIDO: Usar la estructura ya creada arriba
+        console.log('🔍 formatServerDataForCompatibility - globalStats creado:', formattedState.globalStats);
         
         // 🎯 CORREGIDO: Formatear datos de cada modo con verificación de estructura
         Object.keys(gameModesData).forEach(modeId => {
@@ -2756,26 +3019,26 @@ class BingoPro {
             const modeState = serverState.modes[modeId];
             console.log(`🔍 updateLocalGameState - Procesando modo ${modeId}:`, modeState);
             
-            // Si hay una partida activa en el servidor, actualizar estado local
-            if (modeState.gameState === 'playing') {
-                console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando`);
+                    // Si hay una partida activa en el servidor, actualizar estado local
+        if (modeState.gameState === 'playing') {
+            console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando`);
+            
+            // Si el modo actual está jugando, actualizar estado local
+            if (this.currentGameMode && this.currentGameMode.id === modeId) {
+                console.log(`🔍 updateLocalGameState - Actualizando estado local para modo actual ${modeId}`);
+                this.gameState = 'playing';
+                this.globalGameState.isActive = true;
+                this.globalGameState.gameId = modeState.gameId;
+                this.globalGameState.startTime = new Date(modeState.startTime);
                 
-                // Si el modo actual está jugando, actualizar estado local
-                if (this.currentGameMode === modeId) {
-                    console.log(`🔍 updateLocalGameState - Actualizando estado local para modo actual ${modeId}`);
-                    this.gameState = 'playing';
-                    this.globalGameState.isActive = true;
-                    this.globalGameState.gameId = modeState.gameId;
-                    this.globalGameState.startTime = new Date(modeState.startTime);
-                    
-                    // Mostrar notificación de partida activa
-                    this.showNotification(`🎮 Partida activa en ${this.gameModes[modeId].name}`, 'info');
-                } else {
-                    console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando pero no es el modo actual`);
-                }
+                // Mostrar notificación de partida activa
+                this.showNotification(`🎮 Partida activa en ${this.gameModes[modeId].name}`, 'info');
             } else {
-                console.log(`🔍 updateLocalGameState - Modo ${modeId} NO está jugando (${modeState.gameState})`);
+                console.log(`🔍 updateLocalGameState - Modo ${modeId} está jugando pero no es el modo actual`);
             }
+        } else {
+            console.log(`🔍 updateLocalGameState - Modo ${modeId} NO está jugando (${modeState.gameState})`);
+        }
         });
 
         // Actualizar contadores y próximas partidas
@@ -2860,7 +3123,7 @@ class BingoPro {
 
         const mode = this.gameModes[modeId];
         const previousMode = this.currentGameMode;
-        this.currentGameMode = modeId;
+        this.currentGameMode = mode; // 🎯 CORREGIDO: Asignar el objeto completo, no solo el ID
         
         // 1. 🎯 CORREGIDO: NO RESETEAR ESTADO AL CAMBIAR DE MODO (PRESERVAR ESTADO)
         // this.resetGameStateForModeChange(previousMode);
@@ -2921,7 +3184,10 @@ class BingoPro {
         // 13. Actualizar countdown para el nuevo modo
         this.updateCountdownFromServer();
         
-        // 14. Mostrar confirmación
+        // 14. 🎯 NUEVO: Cambiar contenedor de números llamados al nuevo modo
+        this.switchCalledNumbersContainer(modeId);
+        
+        // 15. Mostrar confirmación
         requestIdleCallback(() => {
             this.showGameModeChanged(mode);
         });
@@ -4833,12 +5099,12 @@ class BingoPro {
      */
     clearCalledNumbersDisplay() {
         // Limpiar contenedor de números llamados
-        const calledNumbersContainer = document.getElementById('calledNumbers');
-        if (calledNumbersContainer) {
-            calledNumbersContainer.innerHTML = '';
-        }
-        
-        // Limpiar último número llamado
+            const calledNumbersContainer = document.getElementById('calledNumbers');
+            if (calledNumbersContainer) {
+                calledNumbersContainer.innerHTML = '';
+            }
+            
+            // Limpiar último número llamado
         const lastNumberDisplay = document.getElementById('lastNumber');
         if (lastNumberDisplay) {
             lastNumberDisplay.textContent = '-';
