@@ -10,11 +10,28 @@
     <meta name="msapplication-tap-highlight" content="no">
     <title>BingoRoyal - El Rey del Bingo Online</title>
     
-    <!-- CSS CONSOLIDADO - Estilos base optimizados -->
-    <link rel="stylesheet" href="css-consolidated/main-consolidated.css">
-    <link rel="stylesheet" href="css-consolidated/bingo-cards.css">
-    <link rel="stylesheet" href="css-consolidated/premium-features.css">
-    <link rel="stylesheet" href="css-consolidated/mobile-specific.css">
+    <!-- Estilos base y responsivos -->
+    <link rel="stylesheet" href="styles-codere.css">
+    <link rel="stylesheet" href="mobile-optimizations.css">
+    <link rel="stylesheet" href="adaptive-styles.css">
+    
+    <!-- Fuentes premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PREMIUM THEME v3.0 - Sistema visual avanzado -->
+    <link rel="stylesheet" href="premium-theme.css">
+    
+    <!-- Corrección específica para user-info -->
+    <link rel="stylesheet" href="user-fix.css">
+    <link rel="stylesheet" href="game-improvements.css">
+    
+    <!-- 🎨 ESTILOS MODERNOS DEL CARTÓN DE BINGO -->
+    <link rel="stylesheet" href="bingo-card-modern.css">
+    
+    <!-- CSS CONSOLIDADO ADICIONAL - Solo para funcionalidades extra -->
     <link rel="stylesheet" href="css-consolidated/lazy-loading.css">
     
     <!-- Fuentes premium -->
@@ -298,6 +315,10 @@
                                 <div class="mode-countdown">
                                     <span id="countdown-CLASSIC">✅ COMPRAR CARTONES</span>
                                 </div>
+                                <div class="mode-players-info">
+                                    <span class="mode-player-count" data-mode="CLASSIC">0</span>
+                                    <span class="mode-player-label">jugadores activos</span>
+                                </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('CLASSIC')">
                                     <i class="fas fa-play"></i>
                                     Jugar
@@ -329,6 +350,10 @@
                                 </div>
                                 <div class="mode-countdown">
                                     <span id="countdown-RAPID">✅ COMPRAR CARTONES</span>
+                                </div>
+                                <div class="mode-players-info">
+                                    <span class="mode-player-count" data-mode="RAPID">0</span>
+                                    <span class="mode-player-label">jugadores activos</span>
                                 </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('RAPID')">
                                     <i class="fas fa-play"></i>
@@ -362,6 +387,10 @@
                                 <div class="mode-countdown">
                                     <span id="countdown-VIP">✅ COMPRAR CARTONES</span>
                                 </div>
+                                <div class="mode-players-info">
+                                    <span class="mode-player-count" data-mode="VIP">0</span>
+                                    <span class="mode-player-label">jugadores activos</span>
+                                </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('VIP')">
                                     <i class="fas fa-play"></i>
                                     Jugar
@@ -394,6 +423,10 @@
                                 <div class="mode-countdown">
                                     <span id="countdown-NIGHT">✅ COMPRAR CARTONES</span>
                                 </div>
+                                <div class="mode-players-info">
+                                    <span class="mode-player-count" data-mode="NIGHT">0</span>
+                                    <span class="mode-player-label">jugadores activos</span>
+                                </div>
                                 <button class="btn-select-mode" onclick="selectGameMode('NIGHT')">
                                     <i class="fas fa-play"></i>
                                     Jugar
@@ -406,23 +439,21 @@
                 <!-- Hero Section - Premio Principal -->
                 <div class="hero-section">
                     <div class="hero-content">
-                        <h1>¡El mayor Bote de Bingo en España!</h1>
-                        <div class="main-prize-display">
-                            <div id="globalJackpot" class="prize-amount">€67,152.10</div>
-                            <div class="prize-label">Bote Global Acumulado</div>
+                        <div class="hero-main-info">
+                            <h1>¡El mayor Bote de Bingo en España!</h1>
+                            <div class="main-prize-display">
+                                <div id="globalJackpot" class="prize-amount">€67,152.10</div>
+                                <div class="prize-label">Bote Global Acumulado</div>
+                            </div>
                         </div>
-                        <div class="hero-stats">
-                            <div class="stat-item">
-                                <span id="activePlayers" class="stat-number">0</span>
-                                <span class="stat-text">Jugando Ahora</span>
+                        <div class="hero-stats-compact">
+                            <div class="stat-item-compact">
+                                <span id="totalPlayers" class="stat-number-compact">0</span>
+                                <span class="stat-text-compact">Jugadores Online</span>
                             </div>
-                            <div class="stat-item">
-                                <span id="totalPlayers" class="stat-number">0</span>
-                                <span class="stat-text">Online</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">€1</span>
-                                <span class="stat-text">Cartones desde</span>
+                            <div class="stat-item-compact">
+                                <span class="stat-number-compact">€1</span>
+                                <span class="stat-text-compact">Cartones desde</span>
                             </div>
                         </div>
                     </div>

@@ -468,17 +468,17 @@ body {
     display: block;
 }
 
-/* Hero section tipo casino - MEJORADO */
+/* Hero section tipo casino - OPTIMIZADO Y COMPACTO */
 .hero-section {
     background: var(--gradient-card);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-2xl);
-    margin-bottom: var(--spacing-2xl);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--border-color);
-    min-height: 280px;
+    min-height: 200px;
     display: flex;
     align-items: center;
 }
@@ -502,18 +502,22 @@ body {
 .hero-content {
     position: relative;
     z-index: 2;
-    text-align: center;
     width: 100%;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
     gap: var(--spacing-lg);
 }
 
+.hero-main-info {
+    text-align: left;
+    flex: 1;
+}
+
 .hero-section h1 {
-    font-size: 3rem;
+    font-size: 2.2rem;
     font-weight: 900;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
     background: var(--gradient-gold);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -521,25 +525,24 @@ body {
     text-shadow: var(--shadow-glow);
 }
 
-/* Prize display - MEJORADO */
+/* Prize display - OPTIMIZADO */
 .main-prize-display {
-    margin-bottom: var(--spacing-lg);
     background: var(--bg-card);
-    padding: var(--spacing-xl);
-    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
     border: 2px solid var(--border-accent);
     box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
-    min-width: 300px;
+    min-width: 250px;
 }
 
 .prize-amount {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     font-weight: 900;
     color: var(--text-accent);
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     display: block;
     line-height: 1;
 }
@@ -550,7 +553,48 @@ body {
     font-weight: 500;
 }
 
-/* Hero stats - MEJORADO */
+/* Hero stats - OPTIMIZADO Y COMPACTO */
+.hero-stats-compact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    min-width: 180px;
+}
+
+.stat-item-compact {
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-item-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-accent);
+}
+
+.stat-number-compact {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-accent);
+    margin-bottom: var(--spacing-xs);
+    text-shadow: var(--shadow-glow);
+    display: block;
+}
+
+.stat-text-compact {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* Hero stats - MEJORADO (mantener para compatibilidad) */
 .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -4661,6 +4705,22 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-md);
+    }
+    
+    .hero-main-info {
+        text-align: center;
+    }
+    
+    .hero-stats-compact {
+        flex-direction: row;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+    
     .modes-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
@@ -4687,6 +4747,68 @@ body {
     border-radius: 8px;
     padding: 8px 12px;
     margin: 10px 0;
+}
+
+/* ===== ESTILOS PARA CONTADORES DE JUGADORES ACTIVOS ===== */
+.mode-players-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 8px 16px;
+    margin: 10px 0;
+    transition: all var(--transition-normal);
+}
+
+.mode-players-info:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.5);
+    transform: translateY(-1px);
+}
+
+.mode-player-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.mode-player-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Animación para cuando cambia el contador */
+.player-count-updated {
+    animation: playerCountPulse 0.6s ease-in-out;
+}
+
+@keyframes playerCountPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive para contadores de jugadores */
+@media (max-width: 768px) {
+    .mode-players-info {
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px 12px;
+    }
+    
+    .mode-player-count {
+        font-size: 1rem;
+    }
+    
+    .mode-player-label {
+        font-size: 0.7rem;
+    }
+}
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-height: 70px;
