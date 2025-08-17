@@ -4055,27 +4055,56 @@ class BingoPro {
     }
 
     renderCalledNumbers() {
-        // Obtener el modo actual y usar su contenedor específico
-        const currentMode = this.getCurrentGameMode();
-        const containerId = `calledNumbers-${currentMode.id}`;
-        let container = document.getElementById(containerId);
+        console.log(`🎯 Renderizando números llamados para TODOS los modos (SOLUCIÓN OPCIÓN A)`);
         
-        console.log(`🎯 Renderizando números llamados para modo: ${currentMode.id} (optimizado)`);
+        // 🎯 SOLUCIÓN: Renderizar en TODOS los contenedores, no solo en el activo
+        const allModes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
         
-        // Si no existe el contenedor específico, usar CLASSIC como fallback
+        allModes.forEach(modeId => {
+            const container = document.getElementById(`calledNumbers-${modeId}`);
+            if (container) {
+                console.log(`✅ Renderizando números llamados para modo: ${modeId}`);
+                
+                // 🎨 Estructura HTML moderna con header y grid (IDÉNTICA para todos los modos)
+                container.innerHTML = `
+                    <div class="numbers-header">
+                        <div class="numbers-title">
+                            <i class="fas fa-bullhorn"></i>
+                            NÚMEROS LLAMADOS
+                        </div>
+                        <div class="numbers-count">
+                            ${this.calledNumbers.size}/90
+                        </div>
+                    </div>
+                    <div class="numbers-grid">
+                        ${this.generateNumbersGrid()}
+                    </div>
+                `;
+                
+                // Asegurar que el contenedor tenga las clases correctas
+                container.className = 'numbers-container mode-numbers';
+                container.setAttribute('data-mode', modeId);
+                
+                console.log(`✅ Panel de números llamados actualizado para modo ${modeId}`);
+            } else {
+                console.warn(`⚠️ Contenedor para modo ${modeId} no encontrado`);
+            }
+        });
+        
+        console.log(`✅ TODOS los modos tienen ahora el mismo grid de números llamados`);
+    }
+    
+    // 🎯 NUEVO: Función para renderizar números llamados para un modo específico
+    renderCalledNumbersForMode(modeId) {
+        const container = document.getElementById(`calledNumbers-${modeId}`);
         if (!container) {
-            console.log(`⚠️ Contenedor ${containerId} no encontrado, usando CLASSIC como fallback`);
-            container = document.getElementById('calledNumbers-CLASSIC');
-        }
-        
-        if (!container) {
-            console.log('❌ Contenedor de números llamados no encontrado');
+            console.warn(`⚠️ Contenedor para modo ${modeId} no encontrado`);
             return;
         }
         
-        console.log(`✅ Contenedor encontrado: ${container.id}`);
+        console.log(`🔧 Renderizando números llamados para modo específico: ${modeId}`);
         
-        // 🎨 NUEVO: Estructura HTML moderna con header y grid
+        // 🎨 Estructura HTML IDÉNTICA para todos los modos
         container.innerHTML = `
             <div class="numbers-header">
                 <div class="numbers-title">
@@ -4093,9 +4122,9 @@ class BingoPro {
         
         // Asegurar que el contenedor tenga las clases correctas
         container.className = 'numbers-container mode-numbers';
-        container.setAttribute('data-mode', currentMode.id);
+        container.setAttribute('data-mode', modeId);
         
-        console.log(`✅ Panel de números llamados actualizado para modo ${currentMode.id} (optimizado)`);
+        console.log(`✅ Modo ${modeId} renderizado con éxito`);
     }
     
     // 🎨 NUEVO: Función para generar el grid de números
@@ -4308,6 +4337,9 @@ class BingoPro {
         if (modal && modal.style.display === 'block') {
             this.updateCalledNumbersModal();
         }
+        
+        // 🎯 NUEVO: ACTUALIZAR NÚMEROS LLAMADOS EN TODOS LOS MODOS
+        this.renderCalledNumbers();
         
         // Actualizar estadísticas en tiempo real
         this.updateStats();
@@ -7875,6 +7907,8 @@ class BingoPro {
      */
     switchCalledNumbersContainer(modeId) {
         try {
+            console.log(`🔄 Cambiando contenedor de números llamados a modo: ${modeId}`);
+            
             // Ocultar todos los contenedores de modo
             const allContainers = document.querySelectorAll('.mode-numbers');
             allContainers.forEach(el => {
@@ -7885,6 +7919,14 @@ class BingoPro {
             const targetContainer = document.getElementById(`calledNumbers-${modeId}`);
             if (targetContainer) {
                 targetContainer.style.display = 'block';
+                
+                // 🎯 NUEVO: Verificar que el contenedor tenga contenido
+                if (!targetContainer.innerHTML.trim() || !targetContainer.querySelector('.numbers-grid')) {
+                    console.log(`🔧 Contenedor ${modeId} está vacío, renderizando contenido...`);
+                    // Renderizar números llamados para este modo específico
+                    this.renderCalledNumbersForMode(modeId);
+                }
+                
                 console.log(`✅ Contenedor de números llamados cambiado a modo: ${modeId}`);
             } else {
                 console.log(`⚠️ Contenedor de números llamados para modo ${modeId} no encontrado`);
