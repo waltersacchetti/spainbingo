@@ -539,6 +539,11 @@ class BingoPro {
             this.updatePlayerCounts();
         }, 10000);
         
+        // 🎯 NUEVO: Registrar sesión activa en el backend
+        setTimeout(() => {
+            this.registerActiveSession();
+        }, 2000);
+        
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
         
@@ -3584,6 +3589,63 @@ class BingoPro {
             
         } catch (error) {
             console.error('❌ Error sincronizando todos los modos:', error);
+        }
+    }
+
+    // 🎯 NUEVO: Registrar sesión activa en el backend
+    async registerActiveSession() {
+        try {
+            console.log('🔄 Registrando sesión activa en el backend...');
+            
+            // Obtener información del usuario actual
+            const userInfo = this.getUserInfo();
+            if (!userInfo) {
+                console.log('⚠️ No hay usuario logueado para registrar sesión');
+                return;
+            }
+            
+            const userId = userInfo.email || userInfo.username || 'anonymous';
+            console.log(`👤 Registrando sesión para usuario: ${userId}`);
+            
+            // Registrar en todos los modos disponibles
+            const allModes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+            
+            for (const modeId of allModes) {
+                try {
+                    const response = await fetch('/api/bingo/join', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: userId,
+                            mode: modeId,
+                            cards: [] // Sin cartones por ahora
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            console.log(`✅ Sesión registrada en modo ${modeId}`);
+                        } else {
+                            console.warn(`⚠️ Error registrando en modo ${modeId}:`, data.error);
+                        }
+                    } else {
+                        console.warn(`⚠️ Error HTTP registrando en modo ${modeId}:`, response.status);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Error registrando en modo ${modeId}:`, error);
+                }
+            }
+            
+            // Actualizar contadores después de registrar la sesión
+            setTimeout(() => {
+                this.updatePlayerCounts();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Error registrando sesión activa:', error);
         }
     }
 
@@ -10989,6 +11051,16 @@ window.checkPlayerCounts = function() {
             const modeId = parentMode ? parentMode.dataset.mode : 'UNKNOWN';
             console.log(`🎮 ${modeId}: ${element.textContent} jugadores activos`);
         });
+    } else {
+        console.error('❌ BingoGame no disponible');
+    }
+};
+
+// 🎯 NUEVO: Función para registrar manualmente la sesión
+window.registerMySession = function() {
+    if (window.bingoGame) {
+        console.log('🧪 REGISTRANDO SESIÓN MANUALMENTE...');
+        window.bingoGame.registerActiveSession();
     } else {
         console.error('❌ BingoGame no disponible');
     }
