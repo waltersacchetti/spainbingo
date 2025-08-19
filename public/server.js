@@ -1943,6 +1943,59 @@ app.post('/api/bingo/join-test', (req, res) => {
     }
 });
 
+// 🔍 ENDPOINT DE DEBUGGING - Ver jugadores reales en cada modo
+app.get('/api/bingo/debug-players', (req, res) => {
+    try {
+        console.log('🔍 DEBUG: Endpoint de debugging de jugadores llamado');
+        
+        const debugInfo = {
+            timestamp: new Date().toISOString(),
+            totalGames: globalBingoManager.games.size,
+            playersByMode: {},
+            totalUniquePlayers: 0,
+            allPlayerIds: new Set()
+        };
+        
+        // Obtener información detallada de cada modo
+        globalBingoManager.activeModes.forEach(mode => {
+            const game = globalBingoManager.getGame(mode);
+            if (game) {
+                const players = Array.from(game.players.keys());
+                debugInfo.playersByMode[mode] = {
+                    totalPlayers: game.players.size,
+                    playerIds: players,
+                    gameState: game.gameState,
+                    lastActivity: game.players.size > 0 ? 
+                        Array.from(game.players.values()).map(p => ({
+                            userId: p.userId,
+                            lastSeen: p.lastSeen,
+                            sessionId: p.sessionId
+                        })) : []
+                };
+                
+                // Agregar a la lista total de jugadores únicos
+                players.forEach(playerId => debugInfo.allPlayerIds.add(playerId));
+            }
+        });
+        
+        debugInfo.totalUniquePlayers = debugInfo.allPlayerIds.size;
+        
+        console.log('🔍 DEBUG: Información de debugging generada:', debugInfo);
+        
+        res.json({
+            success: true,
+            debug: debugInfo
+        });
+        
+    } catch (error) {
+        console.error('❌ ERROR: Error generando debugging de jugadores:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error generando debugging'
+        });
+    }
+});
+
 // API para unirse al juego global por modo
 app.post('/api/bingo/join', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
