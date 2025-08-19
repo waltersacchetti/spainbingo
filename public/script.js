@@ -529,6 +529,16 @@ class BingoPro {
             this.syncAllModesFromBackend();
         }, 1000);
         
+        // 🎯 NUEVO: Actualizar contadores de jugadores al inicio
+        setTimeout(() => {
+            this.updatePlayerCounts();
+        }, 1500);
+        
+        // 🎯 NUEVO: Sistema de actualización automática de contadores cada 10 segundos
+        setInterval(() => {
+            this.updatePlayerCounts();
+        }, 10000);
+        
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
         
@@ -1273,8 +1283,82 @@ class BingoPro {
     /**
      * 🎯 NUEVO: SISTEMA DE JUGADORES ONLINE Y ACTIVOS POR MODO
      */
-    updatePlayerCounts() {
-        // Obtener datos reales del servidor o simular basado en el estado del juego
+    async updatePlayerCounts() {
+        try {
+            console.log('🔄 Actualizando contadores de jugadores desde backend...');
+            
+            // Obtener datos reales del servidor
+            const response = await fetch('/api/bingo/global-stats');
+            if (!response.ok) {
+                console.warn('⚠️ Error obteniendo estadísticas del backend, usando datos locales');
+                this.updatePlayerCountsFromLocalData();
+                return;
+            }
+            
+            const data = await response.json();
+            if (!data.success || !data.stats) {
+                console.warn('⚠️ Respuesta inválida del backend, usando datos locales');
+                this.updatePlayerCountsFromLocalData();
+                return;
+            }
+            
+            const stats = data.stats;
+            console.log('📊 Estadísticas recibidas del backend:', stats);
+            
+            // Actualizar contador total de jugadores online
+            const totalOnlinePlayers = stats.totalOnlinePlayers || 0;
+            const totalPlayersElement = document.getElementById('totalPlayers');
+            if (totalPlayersElement) {
+                totalPlayersElement.textContent = totalOnlinePlayers.toLocaleString('es-ES');
+                console.log(`✅ Total jugadores online actualizado: ${totalOnlinePlayers}`);
+            }
+            
+            // Actualizar jugadores activos por modo
+            if (stats.playersByMode) {
+                Object.keys(stats.playersByMode).forEach(modeId => {
+                    const modeStats = stats.playersByMode[modeId];
+                    const activePlayers = modeStats.playersWithCards || 0;
+                    this.updateModePlayerCount(modeId, activePlayers);
+                    console.log(`✅ Modo ${modeId}: ${activePlayers} jugadores activos`);
+                });
+            }
+            
+            // Actualizar contador general de jugadores activos
+            const totalActivePlayers = stats.totalPlayersWithCards || 0;
+            const activePlayersElement = document.getElementById('activePlayers');
+            if (activePlayersElement) {
+                activePlayersElement.textContent = totalActivePlayers.toLocaleString('es-ES');
+                console.log(`✅ Total jugadores activos actualizado: ${totalActivePlayers}`);
+            }
+            
+            // Guardar estadísticas para uso local
+            this.globalGameState = {
+                ...this.globalGameState,
+                totalOnlinePlayers,
+                totalPlayersWithCards: totalActivePlayers,
+                lastUpdate: Date.now()
+            };
+            
+            console.log('👥 Contadores de jugadores actualizados desde backend:', {
+                totalOnline: totalOnlinePlayers,
+                totalActive: totalActivePlayers,
+                byMode: stats.playersByMode
+            });
+            
+        } catch (error) {
+            console.error('❌ Error actualizando contadores desde backend:', error);
+            console.log('🔄 Usando datos locales como fallback...');
+            this.updatePlayerCountsFromLocalData();
+        }
+    }
+    
+    /**
+     * 🎯 FALLBACK: Actualizar contadores con datos locales
+     */
+    updatePlayerCountsFromLocalData() {
+        console.log('🔄 Actualizando contadores con datos locales...');
+        
+        // Obtener datos del estado local
         const totalOnlinePlayers = this.getTotalOnlinePlayers();
         const playersByMode = this.getActivePlayersByMode();
         
@@ -1297,13 +1381,13 @@ class BingoPro {
             activePlayersElement.textContent = totalActivePlayers.toLocaleString('es-ES');
         }
         
-        console.log('👥 Jugadores online actualizados:', {
+        console.log('👥 Contadores actualizados con datos locales:', {
             total: totalOnlinePlayers,
             byMode: playersByMode,
             totalActive: totalActivePlayers
         });
     }
-    
+
     /**
      * 🎯 OBTENER TOTAL DE JUGADORES ONLINE
      */
@@ -1355,22 +1439,47 @@ class BingoPro {
      * 🎯 ACTUALIZAR CONTADOR DE JUGADORES PARA UN MODO ESPECÍFICO
      */
     updateModePlayerCount(modeId, activePlayers) {
+        console.log(`🎯 Actualizando contador para modo ${modeId}: ${activePlayers} jugadores`);
+        
         // Buscar elementos del DOM que muestren jugadores por modo
-        const modeContainer = document.querySelector(`[data-mode="${modeId}"]`);
-        if (modeContainer) {
-            const playerCountElement = modeContainer.querySelector('.mode-player-count');
-            if (playerCountElement) {
-                playerCountElement.textContent = activePlayers;
-                
-                // Añadir clase para animación si cambió
-                if (playerCountElement.dataset.lastCount !== activePlayers.toString()) {
-                    playerCountElement.classList.add('player-count-updated');
-                    setTimeout(() => {
-                        playerCountElement.classList.remove('player-count-updated');
-                    }, 1000);
-                    playerCountElement.dataset.lastCount = activePlayers.toString();
-                }
+        // Primero intentar con el selector específico del modo
+        let playerCountElement = document.querySelector(`.mode-player-count[data-mode="${modeId}"]`);
+        
+        // Si no se encuentra, buscar dentro del contenedor del modo
+        if (!playerCountElement) {
+            const modeContainer = document.querySelector(`[data-mode="${modeId}"]`);
+            if (modeContainer) {
+                playerCountElement = modeContainer.querySelector('.mode-player-count');
             }
+        }
+        
+        // Si aún no se encuentra, buscar por el texto del modo
+        if (!playerCountElement) {
+            const allPlayerCounts = document.querySelectorAll('.mode-player-count');
+            allPlayerCounts.forEach(element => {
+                const parentMode = element.closest('[data-mode]');
+                if (parentMode && parentMode.dataset.mode === modeId) {
+                    playerCountElement = element;
+                }
+            });
+        }
+        
+        if (playerCountElement) {
+            const previousCount = playerCountElement.textContent;
+            playerCountElement.textContent = activePlayers;
+            
+            // Añadir clase para animación si cambió
+            if (previousCount !== activePlayers.toString()) {
+                playerCountElement.classList.add('player-count-updated');
+                setTimeout(() => {
+                    playerCountElement.classList.remove('player-count-updated');
+                }, 1000);
+                playerCountElement.dataset.lastCount = activePlayers.toString();
+                
+                console.log(`✅ Contador ${modeId} actualizado: ${previousCount} → ${activePlayers}`);
+            }
+        } else {
+            console.warn(`⚠️ No se encontró elemento de contador para modo ${modeId}`);
         }
     }
     
@@ -10853,5 +10962,34 @@ window.syncAllModes = function() {
         window.bingoGame.syncAllModesFromBackend();
     } else {
         console.error('❌ Función syncAllModesFromBackend no disponible');
+    }
+};
+
+// 🎯 NUEVO: Función para testing de contadores de jugadores
+window.testPlayerCounts = function() {
+    if (window.bingoGame) {
+        console.log('🧪 TESTING CONTADORES DE JUGADORES:');
+        console.log('🔄 Actualizando contadores...');
+        window.bingoGame.updatePlayerCounts();
+    } else {
+        console.error('❌ BingoGame no disponible');
+    }
+};
+
+// 🎯 NUEVO: Función para ver estado de contadores
+window.checkPlayerCounts = function() {
+    if (window.bingoGame) {
+        console.log('📊 ESTADO DE CONTADORES:');
+        console.log('🎯 Total jugadores online:', document.getElementById('totalPlayers')?.textContent);
+        console.log('🎯 Total jugadores activos:', document.getElementById('activePlayers')?.textContent);
+        
+        const allModeCounts = document.querySelectorAll('.mode-player-count');
+        allModeCounts.forEach(element => {
+            const parentMode = element.closest('[data-mode]');
+            const modeId = parentMode ? parentMode.dataset.mode : 'UNKNOWN';
+            console.log(`🎮 ${modeId}: ${element.textContent} jugadores activos`);
+        });
+    } else {
+        console.error('❌ BingoGame no disponible');
     }
 };
