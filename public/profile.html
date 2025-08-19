@@ -442,9 +442,8 @@
     </div> <!-- Cierre de app-container -->
 
     <script>
-        // 🚨 PRUEBA SIMPLE DE JAVASCRIPT
-        alert('🚨 JAVASCRIPT FUNCIONA - PÁGINA CARGADA');
-        console.log('🚨 JAVASCRIPT FUNCIONA - PÁGINA CARGADA');
+        // ✅ Verificación de JavaScript
+        console.log('✅ JavaScript funcionando en profile.html');
     </script>
     <script src="security.js"></script>
     <script src="script.js"></script>
@@ -463,27 +462,22 @@
         });
 
         function initializeProfile() {
-            alert('🚀 FUNCIÓN initializeProfile() EJECUTÁNDOSE');
             console.log('🚀 Inicializando perfil...');
             
             // Obtener instancia del juego
             if (window.bingoGame) {
-                alert('✅ Juego ya inicializado');
                 console.log('✅ Juego ya inicializado, actualizando perfil...');
                 updateProfileData();
             } else {
-                alert('🚨 Creando nueva instancia del juego');
                 console.log('🚨 No hay instancia del juego, creando una nueva...');
                 
                 // Crear nueva instancia del juego
                 try {
                     window.bingoGame = new BingoPro();
-                    alert('✅ BingoPro creado exitosamente');
                     console.log('✅ BingoPro creado exitosamente');
                     
                     // Inicializar el juego
                     window.bingoGame.initializeGame();
-                    alert('✅ Juego inicializado');
                     console.log('✅ Juego inicializado, actualizando perfil...');
                     
                     // Actualizar perfil después de un breve delay
@@ -492,8 +486,9 @@
                     }, 500);
                     
                 } catch (error) {
-                    alert('❌ Error: ' + error.message);
                     console.error('❌ Error creando BingoPro:', error);
+                    // Fallback: intentar actualizar con datos básicos
+                    updateProfileDataFromGame(null);
                 }
             }
         }
@@ -586,6 +581,10 @@
                         if (typeof updateHeaderUserInfo === 'function') {
                             updateHeaderUserInfo();
                             console.log('✅ Header actualizado con datos reales');
+                        } else {
+                            // Fallback: actualizar header directamente
+                            updateHeaderDirectly(user);
+                            console.log('✅ Header actualizado directamente');
                         }
                     }, 100);
                     
@@ -606,13 +605,26 @@
         }
         
         function updateProfileDataFromGame(game) {
+            console.log('🔄 Actualizando perfil con datos del juego...');
+            
             // Información personal
-            document.getElementById('profileName').textContent = game.getUserName() || 'Usuario Bingo';
-            document.getElementById('userId').textContent = game.getUserId() || 'N/A';
-            document.getElementById('userLevel').textContent = game.getUserLevel() || '0';
-            document.getElementById('userExp').textContent = game.getUserExperience() || '0 XP';
-            document.getElementById('userVip').textContent = game.isUserVip() ? 'VIP' : 'Estándar';
-            document.getElementById('userRegDate').textContent = game.getUserRegistrationDate() || 'N/A';
+            if (game && typeof game.getUserName === 'function') {
+                document.getElementById('profileName').textContent = game.getUserName() || 'Usuario Bingo';
+                document.getElementById('userId').textContent = game.getUserId() || 'N/A';
+                document.getElementById('userLevel').textContent = game.getUserLevel() || '0';
+                document.getElementById('userExp').textContent = game.getUserExperience() || '0 XP';
+                document.getElementById('userVip').textContent = game.isUserVip() ? 'VIP' : 'Estándar';
+                document.getElementById('userRegDate').textContent = game.getUserRegistrationDate() || 'N/A';
+            } else {
+                // Fallback con datos básicos
+                console.log('⚠️ Usando datos básicos del perfil');
+                document.getElementById('profileName').textContent = 'Usuario Bingo';
+                document.getElementById('userId').textContent = 'N/A';
+                document.getElementById('userLevel').textContent = '1';
+                document.getElementById('userExp').textContent = '0 XP';
+                document.getElementById('userVip').textContent = 'Estándar';
+                document.getElementById('userRegDate').textContent = 'N/A';
+            }
 
             // Estado del perfil
             const statusElement = document.getElementById('profileStatus');
@@ -653,6 +665,54 @@
             // Configuración
             document.getElementById('notificationsToggle').checked = game.getNotificationSetting() !== false;
             document.getElementById('soundsToggle').checked = game.getSoundSetting() !== false;
+        }
+
+        // 🚀 FUNCIÓN ROBUSTA PARA ACTUALIZAR HEADER
+        function updateHeaderDirectly(user) {
+            console.log('🚀 ACTUALIZANDO HEADER ROBUSTO con datos:', user);
+            
+            if (window.location.pathname.includes('profile.html')) {
+                console.log('🔄 Estamos en profile, actualizando estado central...');
+                
+                // 🚀 ACTUALIZAR ESTADO CENTRAL (si está disponible)
+                if (window.BingoAppState) {
+                    window.BingoAppState.updateUser(user);
+                    console.log('✅ Usuario actualizado en estado central');
+                    
+                    // Mostrar confirmación
+                    alert(`✅ Estado central actualizado: ${user.firstName || user.email} - Nivel ${user.level || 1}`);
+                    
+                    // Redirigir al index para que use el estado central
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 1000);
+                } else {
+                    // Fallback: actualizar sesión directamente
+                    console.log('⚠️ Estado central no disponible, usando fallback...');
+                    
+                    const sessionData = localStorage.getItem('bingoroyal_session');
+                    if (sessionData) {
+                        try {
+                            const session = JSON.parse(sessionData);
+                            if (session.user) {
+                                session.user = { ...session.user, ...user };
+                                localStorage.setItem('bingoroyal_session', JSON.stringify(session));
+                                console.log('✅ Sesión actualizada con datos reales:', session.user);
+                                
+                                alert(`✅ Sesión actualizada: ${user.firstName || user.email} - Nivel ${user.level || 1}`);
+                                
+                                setTimeout(() => {
+                                    window.location.href = '/index.html';
+                                }, 1000);
+                            }
+                        } catch (error) {
+                            console.error('❌ Error actualizando sesión:', error);
+                        }
+                    }
+                }
+            } else {
+                console.log('⚠️ No estamos en profile, no se puede actualizar header');
+            }
         }
 
         function updateCardsByMode(game) {

@@ -153,6 +153,10 @@ class BingoPro {
         this.globalJackpot = 67152.10; // Bote global acumulado
         this.jackpotUpdateInterval = null;
         
+        // 🚀 NUEVO: SISTEMA DE DEBOUNCE PARA RENDERIZADO
+        this.renderTimeout = null;
+        this.debouncedRenderUI = this.debouncedRenderUI.bind(this);
+        
         // ===== SISTEMA DE NIVELES Y PROGRESIÓN =====
         this.userProgression = {
             // Sistema de niveles inspirado en bingos españoles
@@ -427,6 +431,15 @@ class BingoPro {
     initializeGame() {
         console.log('🚀 Inicializando juego de bingo (optimizado)...');
         
+        // 🚀 INICIALIZAR SISTEMAS ROBUSTOS
+        if (window.BingoAppState && !window.BingoAppState.isInitialized) {
+            window.BingoAppState.init();
+        }
+        
+        if (window.HeaderManager) {
+            window.HeaderManager.init();
+        }
+        
         // ✨ NUEVO: CARGAR PERFIL DE USUARIO PRIMERO (ANTES DE TODO)
         console.log('🚀 ANTES DE loadUserProfile()');
         this.loadUserProfile();
@@ -498,6 +511,11 @@ class BingoPro {
         setInterval(() => {
             this.syncGameStateWithServer();
         }, 30000);
+        
+        // 🚀 NUEVO: SINCRONIZACIÓN RÁPIDA DE NÚMEROS LLAMADOS (cada 2 segundos)
+        setInterval(() => {
+            this.syncCalledNumbersWithBackend();
+        }, 2000);
         
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
@@ -613,6 +631,12 @@ class BingoPro {
                         this.userId = session.user.id;
                         
                         console.log('✅ Perfil actualizado con datos reales de la sesión:', this.userProfile);
+                        
+                        // 🚀 ACTUALIZAR ESTADO CENTRAL
+                        if (window.BingoAppState) {
+                            window.BingoAppState.updateUser(session.user);
+                            console.log('✅ Usuario actualizado en estado central');
+                        }
                         
                         // ✨ NUEVO: Actualizar también el header después de cargar el perfil
                         setTimeout(() => {
@@ -1072,8 +1096,12 @@ class BingoPro {
         // 2. 🎯 NUEVO: VERIFICACIÓN ROBUSTA DE PARTIDAS ACTIVAS
         const cycle = this.modeCycles[modeId];
         
+        // 🚨 PRIORIDAD 1: Estado del servidor (más confiable)
+        const serverSaysPlaying = this.serverGameState?.modes?.[modeId]?.gameState === 'playing';
+        
         // 🎯 VERIFICAR MÚLTIPLES INDICADORES DE PARTIDA ACTIVA
         const isPartidaActiva = 
+            serverSaysPlaying || // 🚨 PRIORIDAD MÁXIMA: Servidor
             (cycle && cycle.isActive) || // Por ciclos
             (this.gameState === 'playing' && this.currentGameMode === modeId) || // Por estado local
             this.isGlobalGameActive(modeId); // Por verificación global
@@ -1419,7 +1447,9 @@ class BingoPro {
             const isRealPartidaActiva = this.isGlobalGameActive(modeId);
             console.log(`🔍 Verificación real de partida activa para ${modeId}:`, isRealPartidaActiva);
             
-            if (countdownInfo.isActive || isRealPartidaActiva) {
+            // 🚨 Regla robusta: SOLO mostrar "PARTIDA EN CURSO" si el backend confirma playing
+            const serverSaysPlaying = this.serverGameState?.modes?.[modeId]?.gameState === 'playing';
+            if (serverSaysPlaying) {
                 // 🎮 PARTIDA EN CURSO - MOSTRAR "PARTIDA EN CURSO"
                 countdownElement.textContent = '🎮 PARTIDA EN CURSO';
                 countdownElement.className = 'countdown active-game';
@@ -1429,7 +1459,7 @@ class BingoPro {
                 this.blockPurchasesForMode(modeId, 'Partida en curso');
                 
                 // 🎯 NUEVO: Limpiar números llamados si no hay partida activa real
-                if (!isRealPartidaActiva) {
+                if (!serverSaysPlaying) {
                     this.clearCalledNumbersForMode(modeId);
                 }
                 
@@ -2130,11 +2160,14 @@ class BingoPro {
         const countdownStatusResult = this.getCountdownStatus(modeId);
         console.log(`🔍 getCountdownStatus(${modeId}) retorna:`, countdownStatusResult, 'tipo:', typeof countdownStatusResult);
         
+        // 🚨 PRIORIDAD 1: Estado del servidor (más confiable)
+        const serverState = this.serverGameState?.modes?.[modeId]?.gameState === 'playing';
+        
         const indicators = {
+            serverState: serverState, // 🚨 PRIORIDAD MÁXIMA
             modeCycles: this.modeCycles[modeId]?.isActive || false,
             gameState: this.gameState === 'playing' && this.currentGameMode === modeId,
-            countdownStatus: countdownStatusResult,
-            serverState: this.serverGameState?.modes?.[modeId]?.gameState === 'playing'
+            countdownStatus: countdownStatusResult
         };
         
         console.log(`🔍 Indicadores de partida activa para ${modeId}:`, indicators);
@@ -2147,6 +2180,12 @@ class BingoPro {
         console.log(`🔍 serverGameState.modes:`, this.serverGameState?.modes);
         console.log(`🔍 serverGameState.stats:`, this.serverGameState?.stats || 'undefined');
         console.log(`🔍 serverGameState.stats?.[${modeId}]:`, this.serverGameState?.stats?.[modeId] || 'undefined');
+        
+        // 🚨 REGLA ROBUSTA: Si el servidor dice "waiting", NO hay partida activa
+        if (serverState === false) {
+            console.log(`🔍 Servidor confirma NO hay partida activa para ${modeId}`);
+            return false;
+        }
         
         const isActive = Object.values(indicators).some(indicator => indicator === true);
         console.log(`🔍 Resultado final isGlobalGameActive(${modeId}):`, isActive);
@@ -2400,16 +2439,22 @@ class BingoPro {
             return true;
         }
 
-        // 🎯 PRIORIDAD 2: Verificar estado del servidor
+        // 🎯 PRIORIDAD 2: Verificar estado del servidor (MÁS CONFIABLE)
         console.log(`🔍 getCountdownStatus(${modeId}): Verificando estado del servidor...`);
         console.log(`🔍   - this.serverGameState:`, this.serverGameState);
         console.log(`🔍   - this.serverGameState?.modes:`, this.serverGameState?.modes);
         console.log(`🔍   - this.serverGameState?.modes?.[${modeId}]:`, this.serverGameState?.modes?.[modeId]);
         console.log(`🔍   - this.serverGameState?.modes?.[${modeId}]?.gameState:`, this.serverGameState?.modes?.[modeId]?.gameState);
         
+        // 🚨 REGLA ROBUSTA: Si el servidor dice "waiting", NO hay partida activa
+        if (this.serverGameState?.modes?.[modeId]?.gameState === 'waiting') {
+            console.log(`🔍 getCountdownStatus(${modeId}): Servidor confirma NO hay partida activa`);
+            return false;
+        }
+        
         if (this.serverGameState?.modes?.[modeId]?.gameState === 'playing') {
             console.log(`🔍 getCountdownStatus(${modeId}): Servidor confirma partida activa`);
-                return true;
+            return true;
         }
         
         // 🎯 PRIORIDAD 3: Verificar números llamados (indicador de partida activa)
@@ -3092,6 +3137,9 @@ class BingoPro {
                 // Actualizar estado local basado en el servidor
                 this.updateLocalGameState(formattedState);
                 
+                // 🚀 NUEVO: SINCRONIZAR NÚMEROS LLAMADOS CON EL BACKEND
+                await this.syncCalledNumbersWithBackend();
+                
                 console.log('✅ Estado sincronizado con el servidor (formato corregido)');
                 return true;
             } else {
@@ -3274,6 +3322,109 @@ class BingoPro {
                 }
             }
         });
+    }
+
+    /**
+     * 🚀 SINCRONIZAR NÚMEROS LLAMADOS CON EL BACKEND
+     */
+    async syncCalledNumbersWithBackend() {
+        try {
+            const currentMode = this.getCurrentGameMode();
+            if (!currentMode) {
+                console.log('⚠️ No hay modo válido para sincronizar números');
+                return;
+            }
+
+            const modeId = currentMode.id;
+            console.log(`🔍 Sincronizando números llamados para modo: ${modeId}`);
+
+            // Obtener estado actual del juego desde el backend
+            const response = await fetch(`/api/bingo/state?mode=${modeId}`);
+            if (!response.ok) {
+                console.log(`⚠️ Error obteniendo estado del backend para ${modeId}`);
+                return;
+            }
+
+            const data = await response.json();
+            if (!data.success || !data.gameState) {
+                console.log(`⚠️ Respuesta inválida del backend para ${modeId}`);
+                return;
+            }
+
+            const backendState = data.gameState;
+            console.log(`🔍 Estado del backend para ${modeId}:`, backendState);
+
+            // Verificar si hay partida activa en el backend
+            if (backendState.gameState === 'playing') {
+                console.log(`🎮 Partida activa detectada en backend para ${modeId}`);
+                
+                // Sincronizar números llamados
+                if (backendState.calledNumbers && Array.isArray(backendState.calledNumbers)) {
+                    const newNumbers = backendState.calledNumbers.filter(num => 
+                        !this.calledNumbers.has(num)
+                    );
+                    
+                    if (newNumbers.length > 0) {
+                        console.log(`🆕 Nuevos números detectados del backend:`, newNumbers);
+                        
+                        // Agregar nuevos números al estado local
+                        newNumbers.forEach(num => {
+                            this.calledNumbers.add(num);
+                            this.markNumberOnSelectedCards(num);
+                        });
+                        
+                        // Actualizar UI (solo una vez después de procesar todos los números)
+                        // 🚀 NUEVO: Usar debounce para evitar renderizados múltiples
+                        this.debouncedRenderUI();
+                        this.saveUserCards();
+                        
+                        console.log(`✅ Números sincronizados con backend. Total local: ${this.calledNumbers.size}`);
+                    }
+                }
+                
+                // Sincronizar último número llamado
+                if (backendState.lastNumberCalled && 
+                    backendState.lastNumberCalled !== this.lastNumberCalled) {
+                    this.lastNumberCalled = backendState.lastNumberCalled;
+                    console.log(`🆕 Último número actualizado desde backend: ${this.lastNumberCalled}`);
+                }
+                
+                // Verificar condiciones de victoria
+                this.checkWin();
+                
+            } else {
+                console.log(`⏸️ No hay partida activa en backend para ${modeId}`);
+                
+                // Si el backend dice que no hay partida activa, limpiar números
+                if (this.calledNumbers.size > 0) {
+                    console.log(`🧹 Limpiando números llamados (backend dice no hay partida)`);
+                    this.calledNumbers.clear();
+                    this.lastNumberCalled = null;
+                    // 🚀 NUEVO: Usar debounce para evitar renderizados múltiples
+                    this.debouncedRenderUI();
+                    this.saveUserCards();
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Error sincronizando con backend:', error);
+        }
+    }
+
+    /**
+     * 🚀 DEBOUNCE PARA RENDERIZADO DE UI (EVITA RENDERIZADOS MÚLTIPLES)
+     */
+    debouncedRenderUI() {
+        if (this.renderTimeout) {
+            clearTimeout(this.renderTimeout);
+        }
+        
+        this.renderTimeout = setTimeout(() => {
+            console.log('🚀 Ejecutando renderizado de UI (debounced)');
+            this.renderCalledNumbers();
+            this.renderCards();
+            this.renderTimeout = null;
+        }, 100); // 100ms de debounce
     }
 
     /**
@@ -8431,17 +8582,73 @@ class BingoPro {
         }
     }
 
+    // 🚀 NUEVO: Método para agregar números llamados al estado central
+    addCalledNumber(number) {
+        console.log(`🎯 addCalledNumber() ejecutándose para número: ${number}`);
+        
+        if (!this.calledNumbers.has(number)) {
+            this.calledNumbers.add(number);
+            console.log(`✅ Número ${number} agregado a calledNumbers. Total: ${this.calledNumbers.size}`);
+            
+            // 🎯 MARCAR NÚMEROS EN CARTAS SELECCIONADAS
+            this.markNumberOnSelectedCards(number);
+            
+            // 🔄 ACTUALIZAR VISUALIZACIÓN
+            this.renderCalledNumbers();
+            this.renderCards();
+            
+            // 💾 GUARDAR ESTADO
+            this.saveCalledNumbers();
+            
+            // 🎯 VERIFICAR CONDICIONES DE VICTORIA
+            this.checkVictoryConditions();
+            
+            console.log(`✅ Número ${number} procesado completamente`);
+        } else {
+            console.log(`ℹ️ Número ${number} ya estaba en calledNumbers`);
+        }
+    }
+    
+    // 🚀 NUEVO: Método para marcar números en cartas seleccionadas (SIN RENDERIZAR)
+    markNumberOnSelectedCards(number) {
+        console.log(`🎯 Marcando número ${number} en cartas seleccionadas...`);
+        
+        let marked = false;
+        this.selectedCards.forEach(cardId => {
+            const card = this.userCards.find(c => c.id === cardId);
+            if (card && card.markedNumbers && !card.markedNumbers.has(number)) {
+                // Verificar si el número está en el cartón
+                const hasNumber = card.numbers.flat().includes(number);
+                if (hasNumber) {
+                    card.markedNumbers.add(number);
+                    marked = true;
+                    console.log(`✅ Número ${number} marcado en cartón ${card.id}`);
+                    
+                    // ✨ NUEVO: Agregar experiencia por marcar número
+                    this.addUserExperience('markNumber');
+                }
+            }
+        });
+        
+        // 🚀 NUEVO: NO RENDERIZAR AQUÍ - Se hará desde el método padre
+        if (marked) {
+            console.log(`✅ Números marcados en cartas (sin renderizar)`);
+        }
+        
+        return marked;
+    }
+
     markNumber(number) {
         console.log(`🎯 Marcando número: ${number}`);
         
         let marked = false;
         this.selectedCards.forEach(cardId => {
             const card = this.userCards.find(c => c.id === cardId);
-            if (card && !card.markedNumbers.includes(number)) {
+            if (card && card.markedNumbers && !card.markedNumbers.has(number)) {
                 // Verificar si el número está en el cartón
                 const hasNumber = card.numbers.flat().includes(number);
                 if (hasNumber) {
-                    card.markedNumbers.push(number);
+                    card.markedNumbers.add(number);
                     marked = true;
                     console.log(`✅ Número ${number} marcado en cartón ${card.id}`);
                     
@@ -8452,7 +8659,7 @@ class BingoPro {
         });
 
         if (marked) {
-            this.checkVictoryConditions();
+            this.checkWin();
             this.updateCards();
             this.saveUserCards();
         }
@@ -9317,35 +9524,64 @@ function closeBingoCardsModal() {
 }
 
 // ✨ NUEVO: Función para actualizar información del usuario en el header
-function updateHeaderUserInfo() {
+window.updateHeaderUserInfo = function() {
+    console.log('🚨🚨🚨 FUNCIÓN updateHeaderUserInfo() EJECUTÁNDOSE 🚨🚨🚨');
+    console.log('🚨🚨🚨 ESTA FUNCIÓN SE ESTÁ EJECUTANDO AHORA MISMO 🚨🚨🚨');
+    
     const usernameElement = document.getElementById('headerUsername');
     const levelElement = document.getElementById('headerUserLevel');
+    
+    console.log('🔍 Elementos del header encontrados:', {
+        usernameElement: !!usernameElement,
+        levelElement: !!levelElement
+    });
+    
+    // 🔍 DEBUG: Verificar el contenido actual del header
+    if (usernameElement) {
+        console.log('🔍 Contenido ACTUAL del headerUsername:', usernameElement.textContent);
+        console.log('🔍 Contenido ACTUAL del headerUserLevel:', levelElement ? levelElement.textContent : 'NO ENCONTRADO');
+    }
     
     if (usernameElement && levelElement) {
         // Obtener datos del usuario desde localStorage
         const sessionData = localStorage.getItem('bingoroyal_session');
+        console.log('🔍 Session data en updateHeaderUserInfo:', sessionData ? 'SÍ' : 'NO');
+        
         if (sessionData) {
             try {
                 const session = JSON.parse(sessionData);
                 const user = session.user;
                 
                 console.log('🔍 Actualizando header con usuario real:', user);
+                console.log('🔍 Datos del usuario:', {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    name: user.name,
+                    email: user.email,
+                    level: user.level
+                });
                 
                 // Actualizar nombre de usuario
                 if (user.firstName && user.lastName) {
-                    usernameElement.textContent = `${user.firstName} ${user.lastName}`;
-                    console.log('✅ Nombre actualizado:', `${user.firstName} ${user.lastName}`);
+                    const fullName = `${user.firstName} ${user.lastName}`;
+                    usernameElement.textContent = fullName;
+                    console.log('✅ Nombre actualizado:', fullName);
+                    console.log('🔍 Elemento username actualizado con:', usernameElement.textContent);
                 } else if (user.name) {
                     usernameElement.textContent = user.name;
                     console.log('✅ Nombre actualizado:', user.name);
+                    console.log('🔍 Elemento username actualizado con:', usernameElement.textContent);
                 } else if (user.email) {
                     // Si solo tenemos email, extraer nombre del email
                     const emailName = user.email.split('@')[0];
-                    usernameElement.textContent = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-                    console.log('✅ Nombre extraído del email:', emailName);
+                    const displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                    usernameElement.textContent = displayName;
+                    console.log('✅ Nombre extraído del email:', displayName);
+                    console.log('🔍 Elemento username actualizado con:', usernameElement.textContent);
                 } else {
                     usernameElement.textContent = 'Usuario';
                     console.log('⚠️ Usando nombre por defecto');
+                    console.log('🔍 Elemento username actualizado con:', usernameElement.textContent);
                 }
                 
                 // Actualizar nivel
@@ -9362,17 +9598,38 @@ function updateHeaderUserInfo() {
                 }
                 
                 console.log('✅ Header actualizado con datos reales del usuario');
+                
+                // 🔍 DEBUG: Verificar el contenido DESPUÉS de actualizar
+                console.log('🔍 Contenido DESPUÉS de actualizar headerUsername:', usernameElement.textContent);
+                console.log('🔍 Contenido DESPUÉS de actualizar headerUserLevel:', levelElement.textContent);
+                
             } catch (error) {
                 console.warn('⚠️ Error al actualizar header:', error);
-                // Valores por defecto
-                usernameElement.textContent = 'Usuario';
-                levelElement.textContent = 'Nivel 1';
+                // Solo usar valores por defecto si no hay datos reales
+                if (usernameElement.textContent === 'Jugador' || usernameElement.textContent === 'Usuario') {
+                    usernameElement.textContent = 'Usuario';
+                    levelElement.textContent = 'Nivel 1';
+                    console.log('⚠️ Usando valores por defecto por error');
+                } else {
+                    console.log('✅ Header ya tiene datos reales, no sobrescribiendo por error');
+                }
             }
         } else {
-            // Si no hay sesión, usar valores por defecto
-            usernameElement.textContent = 'Usuario';
-            levelElement.textContent = 'Nivel 1';
+            // Si no hay sesión, verificar si ya hay datos reales antes de usar valores por defecto
             console.log('ℹ️ No hay sesión activa');
+            console.log('🔍 Verificando localStorage completo...');
+            console.log('🔍 bingoroyal_session:', localStorage.getItem('bingoroyal_session'));
+            console.log('🔍 bingoroyal_user_profile:', localStorage.getItem('bingoroyal_user_profile'));
+            console.log('🔍 Todas las claves de localStorage:', Object.keys(localStorage));
+            
+            // Solo usar valores por defecto si no hay datos reales
+            if (usernameElement.textContent === 'Jugador' || usernameElement.textContent === 'Usuario') {
+                usernameElement.textContent = 'Usuario';
+                levelElement.textContent = 'Nivel 1';
+                console.log('⚠️ Usando valores por defecto');
+            } else {
+                console.log('✅ Header ya tiene datos reales, no sobrescribiendo');
+            }
         }
     } else {
         console.warn('⚠️ Elementos del header no encontrados');
@@ -9398,8 +9655,17 @@ function updateUserInfo(user) {
         levelElement.textContent = `Nivel ${user.level}`;
     }
     
-    // ✨ NUEVO: Actualizar también el header
-    updateHeaderUserInfo();
+    // ✨ NUEVO: Actualizar también el header (solo si no está ya actualizado)
+    if (typeof updateHeaderUserInfo === 'function') {
+        // Verificar si el header ya tiene datos reales
+        const usernameElement = document.querySelector('.username, #headerUsername');
+        if (usernameElement && usernameElement.textContent === 'Usuario') {
+            console.log('🔄 Header no actualizado, llamando a updateHeaderUserInfo...');
+            updateHeaderUserInfo();
+        } else {
+            console.log('✅ Header ya actualizado, saltando updateHeaderUserInfo');
+        }
+    }
 }
 
 // Función para actualizar información del usuario en modo simple (sin authManager)
@@ -9429,8 +9695,17 @@ function updateUserInfoSimple(user) {
     
     console.log('✅ UI actualizada con datos de sesión simple');
     
-    // ✨ NUEVO: Actualizar también el header
-    updateHeaderUserInfo();
+    // ✨ NUEVO: Actualizar también el header (solo si no está ya actualizado)
+    if (typeof updateHeaderUserInfo === 'function') {
+        // Verificar si el header ya tiene datos reales
+        const usernameElement = document.querySelector('.username, #headerUsername');
+        if (usernameElement && usernameElement.textContent === 'Usuario') {
+            console.log('🔄 Header no actualizado, llamando a updateHeaderUserInfo...');
+            updateHeaderUserInfo();
+        } else {
+            console.log('✅ Header ya actualizado, saltando updateHeaderUserInfo');
+        }
+    }
 }
 
 // Función de logout
@@ -9729,12 +10004,26 @@ function generateCalledNumbers() {
 
 // Función para marcar números como llamados
 function markNumberAsCalled(number) {
+    console.log(`🎯 markNumberAsCalled() ejecutándose para número: ${number}`);
+    
+    // 🚀 ACTUALIZAR ESTADO CENTRAL DEL JUEGO
+    if (window.bingoGame && typeof window.bingoGame.addCalledNumber === 'function') {
+        window.bingoGame.addCalledNumber(number);
+        console.log(`✅ Número ${number} agregado al estado central del juego`);
+    } else {
+        console.warn('⚠️ BingoGame no disponible o método addCalledNumber no encontrado');
+    }
+    
+    // 🎨 ACTUALIZAR VISUALIZACIÓN
     const numberElement = document.querySelector(`[data-number="${number}"]`);
     if (numberElement) {
         numberElement.classList.add('called', 'recent');
         setTimeout(() => {
             numberElement.classList.remove('recent');
         }, 1000);
+        console.log(`✅ Número ${number} marcado visualmente`);
+    } else {
+        console.warn(`⚠️ Elemento del número ${number} no encontrado en el DOM`);
     }
 }
 
@@ -10144,3 +10433,265 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== PRELOADER Y TRANSICIONES SUAVES =====
 // ===== PRELOADER Y TRANSICIONES SUAVES =====
+
+    // 🚨 FUNCIÓN DE PRUEBA PARA VERIFICAR EL HEADER
+    window.testHeaderUpdate = function() {
+        console.log('🚨🚨🚨 FUNCIÓN DE PRUEBA EJECUTÁNDOSE 🚨🚨🚨');
+
+        const usernameElement = document.getElementById('headerUsername');
+        const levelElement = document.getElementById('headerUserLevel');
+
+        if (usernameElement && levelElement) {
+            console.log('🔍 Elementos del header encontrados en prueba');
+            console.log('🔍 Contenido ACTUAL del headerUsername:', usernameElement.textContent);
+            console.log('🔍 Contenido ACTUAL del headerUserLevel:', levelElement.textContent);
+
+            // Intentar actualizar con datos de prueba
+            usernameElement.textContent = 'USUARIO DE PRUEBA';
+            levelElement.textContent = 'NIVEL DE PRUEBA';
+
+            console.log('🔍 Contenido DESPUÉS de prueba headerUsername:', usernameElement.textContent);
+            console.log('🔍 Contenido DESPUÉS de prueba headerUserLevel:', levelElement.textContent);
+
+            // Verificar si se mantiene
+            setTimeout(() => {
+                console.log('🔍 Contenido DESPUÉS de 2 segundos headerUsername:', usernameElement.textContent);
+                console.log('🔍 Contenido DESPUÉS de 2 segundos headerUserLevel:', levelElement.textContent);
+            }, 2000);
+
+        } else {
+            console.log('❌ Elementos del header NO encontrados en prueba');
+        }
+    };
+    
+    // 🚀 NUEVO: Función para simular llamado de números (testing)
+    window.simulateNumberCall = function(number) {
+        console.log(`🎲 Simulando llamado del número: ${number}`);
+        
+        if (window.bingoGame && typeof window.bingoGame.addCalledNumber === 'function') {
+            window.bingoGame.addCalledNumber(number);
+            console.log(`✅ Número ${number} simulado correctamente`);
+        } else {
+            console.error('❌ BingoGame no disponible o método addCalledNumber no encontrado');
+        }
+    };
+    
+    // 🚀 NUEVO: Función para verificar estado del juego
+    window.checkGameState = function() {
+        console.log('🔍 Verificando estado del juego...');
+        
+        if (window.bingoGame) {
+            console.log('✅ BingoGame disponible');
+            console.log('🔍 Números llamados:', Array.from(window.bingoGame.calledNumbers || []));
+            console.log('🔍 Cartas del usuario:', window.bingoGame.userCards?.length || 0);
+            console.log('🔍 Modo actual:', window.bingoGame.getCurrentGameMode()?.id || 'N/A');
+        } else {
+            console.error('❌ BingoGame no disponible');
+        }
+    };
+
+// 🚀 SISTEMA ROBUSTO DE ESTADO CENTRAL
+window.BingoAppState = {
+    // Estado central de la aplicación
+    user: null,
+    isInitialized: false,
+    
+    // Inicializar estado
+    init() {
+        console.log('🚀 Inicializando BingoAppState...');
+        this.loadFromSession();
+        this.isInitialized = true;
+        console.log('✅ BingoAppState inicializado:', this.user);
+    },
+    
+    // Cargar datos de la sesión
+    loadFromSession() {
+        try {
+            const sessionData = localStorage.getItem('bingoroyal_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                this.user = session.user || null;
+                console.log('✅ Usuario cargado desde sesión:', this.user);
+            }
+        } catch (error) {
+            console.error('❌ Error cargando sesión:', error);
+        }
+    },
+    
+    // Actualizar usuario
+    updateUser(userData) {
+        console.log('🔄 Actualizando usuario en estado central:', userData);
+        this.user = { ...this.user, ...userData };
+        
+        // Guardar en localStorage
+        this.saveToSession();
+        
+        // Disparar evento de cambio
+        this.notifyUserUpdate();
+        
+        console.log('✅ Usuario actualizado en estado central:', this.user);
+    },
+    
+    // Guardar en sesión
+    saveToSession() {
+        try {
+            const sessionData = localStorage.getItem('bingoroyal_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                session.user = this.user;
+                localStorage.setItem('bingoroyal_session', JSON.stringify(session));
+                console.log('✅ Sesión actualizada en localStorage');
+            }
+        } catch (error) {
+            console.error('❌ Error guardando sesión:', error);
+        }
+    },
+    
+    // Notificar cambio de usuario
+    notifyUserUpdate() {
+        const event = new CustomEvent('userUpdated', { 
+            detail: { user: this.user } 
+        });
+        document.dispatchEvent(event);
+        console.log('📡 Evento userUpdated disparado');
+    },
+    
+    // Obtener datos del usuario
+    getUser() {
+        return this.user;
+    },
+    
+    // Verificar si hay usuario
+    hasUser() {
+        return this.user !== null;
+    }
+};
+
+// 🚀 SISTEMA ROBUSTO DE HEADER
+window.HeaderManager = {
+    // Estado del header
+    isLocked: false,
+    lastUpdate: null,
+    
+    // Inicializar header
+    init() {
+        console.log('🚀 Inicializando HeaderManager...');
+        this.bindEvents();
+        this.updateFromState();
+        console.log('✅ HeaderManager inicializado');
+    },
+    
+    // Vincular eventos
+    bindEvents() {
+        // Escuchar cambios de usuario
+        document.addEventListener('userUpdated', (event) => {
+            console.log('📡 HeaderManager recibió evento userUpdated:', event.detail);
+            this.updateFromState();
+        });
+        
+        // Proteger contra cambios externos
+        this.protectHeader();
+        
+        console.log('✅ Eventos vinculados en HeaderManager');
+    },
+    
+    // Proteger header contra cambios externos
+    protectHeader() {
+        const usernameElement = document.getElementById('headerUsername');
+        const levelElement = document.getElementById('headerUserLevel');
+        
+        if (usernameElement && levelElement) {
+            // Observar cambios en el DOM
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        // Verificar si el cambio no viene de nosotros
+                        if (!this.isLocked && this.lastUpdate) {
+                            const timeSinceUpdate = Date.now() - this.lastUpdate;
+                            if (timeSinceUpdate < 1000) { // Cambio reciente, ignorar
+                                return;
+                            }
+                            
+                            // Cambio externo detectado, restaurar
+                            console.log('🚨 Cambio externo detectado en header, restaurando...');
+                            this.updateFromState();
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(usernameElement, { 
+                childList: true, 
+                characterData: true, 
+                subtree: true 
+            });
+            
+            observer.observe(levelElement, { 
+                childList: true, 
+                characterData: true, 
+                subtree: true 
+            });
+            
+            console.log('✅ Header protegido contra cambios externos');
+        }
+    },
+    
+    // Actualizar header desde estado central
+    updateFromState() {
+        console.log('🔄 HeaderManager actualizando desde estado central...');
+        
+        const user = window.BingoAppState.getUser();
+        if (!user) {
+            console.log('⚠️ No hay usuario en estado central');
+            return;
+        }
+        
+        const usernameElement = document.getElementById('headerUsername');
+        const levelElement = document.getElementById('headerUserLevel');
+        const balanceElement = document.getElementById('userBalance');
+        
+        if (usernameElement && levelElement) {
+            // Bloquear actualizaciones
+            this.isLocked = true;
+            
+            // Actualizar username
+            let displayName = 'Usuario';
+            if (user.firstName && user.lastName) {
+                displayName = `${user.firstName} ${user.lastName}`;
+            } else if (user.email) {
+                const emailName = user.email.split('@')[0];
+                displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            }
+            
+            usernameElement.textContent = displayName;
+            console.log('✅ Username actualizado:', displayName);
+            
+            // Actualizar nivel
+            const level = user.level || 1;
+            levelElement.textContent = `Nivel ${level}`;
+            console.log('✅ Nivel actualizado:', level);
+            
+            // Actualizar balance
+            if (balanceElement && user.balance !== undefined) {
+                balanceElement.textContent = `€${user.balance.toFixed(2)}`;
+                console.log('✅ Balance actualizado:', user.balance);
+            }
+            
+            // Marcar última actualización
+            this.lastUpdate = Date.now();
+            
+            // Desbloquear
+            this.isLocked = false;
+            
+            console.log('✅ Header actualizado desde estado central');
+        } else {
+            console.warn('⚠️ Elementos del header no encontrados');
+        }
+    },
+    
+    // Forzar actualización
+    forceUpdate() {
+        console.log('🚨 Forzando actualización del header...');
+        this.updateFromState();
+    }
+};

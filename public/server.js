@@ -1,8 +1,11 @@
+// Cargar variables de entorno
+require('dotenv').config({ path: '/home/ec2-user/.env' });
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
 
-// Las variables de entorno se cargan automáticamente por PM2
+// Variables de entorno cargadas desde .env
 
 const app = express();
 const PORT = process.env.PORT || 3000;
