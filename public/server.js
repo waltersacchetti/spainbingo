@@ -112,10 +112,18 @@ class GlobalBingoManager {
     }
     
     joinPlayer(mode, userId, cards = []) {
+        console.log(`🔍 DEBUG: GlobalBingoManager.joinPlayer llamado con mode: ${mode}, userId: ${userId}`);
+        
         const game = this.getGame(mode);
+        console.log(`🔍 DEBUG: Game encontrado para modo ${mode}:`, !!game);
+        
         if (game) {
-            return game.joinPlayer(userId, cards);
+            const result = game.joinPlayer(userId, cards);
+            console.log(`🔍 DEBUG: Resultado de game.joinPlayer:`, result);
+            return result;
         }
+        
+        console.log(`❌ ERROR: No se encontró game para modo ${mode}`);
         return false;
     }
     
