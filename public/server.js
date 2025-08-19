@@ -1899,23 +1899,34 @@ app.get('/api/bingo/state', rateLimitMiddleware(bingoApiLimiter), (req, res) => 
 // API para unirse al juego global por modo
 app.post('/api/bingo/join', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
+        console.log('🔍 DEBUG: Endpoint /api/bingo/join llamado');
+        console.log('🔍 DEBUG: Body recibido:', req.body);
+        
         const { userId, cards, mode = 'CLASSIC' } = req.body;
         
         if (!userId) {
+            console.log('❌ ERROR: userId no proporcionado');
             return res.status(400).json({
                 success: false,
                 error: 'userId es requerido'
             });
         }
         
+        console.log(`🔍 DEBUG: Procesando join para userId: ${userId}, mode: ${mode}`);
+        
         const success = globalBingoManager.joinPlayer(mode, userId, cards || []);
         
+        console.log(`🔍 DEBUG: Resultado de joinPlayer: ${success}`);
+        
         if (!success) {
+            console.log('❌ ERROR: joinPlayer retornó false');
             return res.status(400).json({
                 success: false,
                 error: 'No se pudo unir al modo de juego'
             });
         }
+        
+        console.log('✅ SUCCESS: Jugador unido correctamente');
         
         res.json({
             success: true,
@@ -1924,7 +1935,7 @@ app.post('/api/bingo/join', rateLimitMiddleware(bingoApiLimiter), (req, res) => 
             mode: mode
         });
     } catch (error) {
-        console.error('Error uniendo jugador al bingo global:', error);
+        console.error('❌ ERROR: Error uniendo jugador al bingo global:', error);
         res.status(500).json({
             success: false,
             error: 'Error uniendo al juego'
