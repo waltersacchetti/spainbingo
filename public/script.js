@@ -86,7 +86,14 @@ class BingoPro {
     constructor() {
         console.log('🚨🚨🚨 CONSTRUCTOR BINGOPRO INICIANDO 🚨🚨🚨');
         console.log('Inicializando BingoPro...');
-        this.calledNumbers = new Set();
+        // ===== SISTEMA DE NÚMEROS LLAMADOS POR MODO =====
+        this.calledNumbersByMode = {
+            CLASSIC: new Set(),
+            RAPID: new Set(),
+            VIP: new Set(),
+            NIGHT: new Set()
+        };
+        this.calledNumbers = new Set(); // Mantener compatibilidad (modo actual)
         this.userCards = [];
         this.userBalance = 50.00;
         this.autoPlayInterval = null;
@@ -516,6 +523,11 @@ class BingoPro {
         setInterval(() => {
             this.syncCalledNumbersWithBackend();
         }, 2000);
+        
+        // 🎯 NUEVO: Sincronizar todos los modos al inicio
+        setTimeout(() => {
+            this.syncAllModesFromBackend();
+        }, 1000);
         
         // ✨ NUEVO: Inicializar sistema de usuario y progresión
         this.initializeUserProgression();
@@ -3358,18 +3370,18 @@ class BingoPro {
             if (backendState.gameState === 'playing') {
                 console.log(`🎮 Partida activa detectada en backend para ${modeId}`);
                 
-                // Sincronizar números llamados
+                // Sincronizar números llamados del modo específico
                 if (backendState.calledNumbers && Array.isArray(backendState.calledNumbers)) {
                     const newNumbers = backendState.calledNumbers.filter(num => 
-                        !this.calledNumbers.has(num)
+                        !this.calledNumbersByMode[modeId]?.has(num)
                     );
                     
                     if (newNumbers.length > 0) {
-                        console.log(`🆕 Nuevos números detectados del backend:`, newNumbers);
+                        console.log(`🆕 Nuevos números detectados del backend para modo ${modeId}:`, newNumbers);
                         
-                        // Agregar nuevos números al estado local
+                        // Agregar nuevos números al modo específico
                         newNumbers.forEach(num => {
-                            this.calledNumbers.add(num);
+                            this.addCalledNumberToMode(modeId, num);
                             this.markNumberOnSelectedCards(num);
                         });
                         
@@ -3378,7 +3390,7 @@ class BingoPro {
                         this.debouncedRenderUI();
                         this.saveUserCards();
                         
-                        console.log(`✅ Números sincronizados con backend. Total local: ${this.calledNumbers.size}`);
+                        console.log(`✅ Números sincronizados con backend para modo ${modeId}. Total local: ${this.calledNumbersByMode[modeId].size}`);
                     }
                 }
                 
@@ -3395,10 +3407,10 @@ class BingoPro {
             } else {
                 console.log(`⏸️ No hay partida activa en backend para ${modeId}`);
                 
-                // Si el backend dice que no hay partida activa, limpiar números
-                if (this.calledNumbers.size > 0) {
-                    console.log(`🧹 Limpiando números llamados (backend dice no hay partida)`);
-                    this.calledNumbers.clear();
+                // Si el backend dice que no hay partida activa, limpiar números del modo específico
+                if (this.calledNumbersByMode[modeId]?.size > 0) {
+                    console.log(`🧹 Limpiando números llamados del modo ${modeId} (backend dice no hay partida)`);
+                    this.clearCalledNumbersForMode(modeId);
                     this.lastNumberCalled = null;
                     // 🚀 NUEVO: Usar debounce para evitar renderizados múltiples
                     this.debouncedRenderUI();
@@ -3425,6 +3437,45 @@ class BingoPro {
             this.renderCards();
             this.renderTimeout = null;
         }, 100); // 100ms de debounce
+    }
+
+    // 🎯 NUEVO: Sincronizar todos los modos desde el backend
+    async syncAllModesFromBackend() {
+        try {
+            console.log('🔄 Sincronizando todos los modos desde el backend...');
+            
+            const allModes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
+            
+            for (const modeId of allModes) {
+                try {
+                    const response = await fetch(`/api/bingo/state?mode=${modeId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.gameState) {
+                            const backendNumbers = data.gameState.calledNumbers || [];
+                            
+                            // Limpiar números existentes del modo
+                            this.clearCalledNumbersForMode(modeId);
+                            
+                            // Agregar números del backend
+                            backendNumbers.forEach(number => {
+                                this.addCalledNumberToMode(modeId, number);
+                            });
+                            
+                            console.log(`✅ Modo ${modeId} sincronizado: ${backendNumbers.length} números`);
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Error sincronizando modo ${modeId}:`, error);
+                }
+            }
+            
+            // Actualizar UI después de sincronizar todos los modos
+            this.renderCalledNumbers();
+            
+        } catch (error) {
+            console.error('❌ Error sincronizando todos los modos:', error);
+        }
     }
 
     /**
@@ -3542,6 +3593,9 @@ class BingoPro {
         
         // 14. 🎯 NUEVO: Cambiar contenedor de números llamados al nuevo modo
         this.switchCalledNumbersContainer(modeId);
+        
+        // 15. 🎯 NUEVO: Actualizar números llamados del modo actual
+        this.calledNumbers = this.getCalledNumbersForMode(modeId);
         
         // 15. Mostrar confirmación
         requestIdleCallback(() => {
@@ -4411,9 +4465,9 @@ class BingoPro {
     }
 
     renderCalledNumbers() {
-        console.log(`🎯 Renderizando números llamados para TODOS los modos (SOLUCIÓN OPCIÓN A)`);
+        console.log(`🎯 Renderizando números llamados para TODOS los modos (INDEPENDIENTES)`);
         
-        // 🎯 SOLUCIÓN: Renderizar en TODOS los contenedores, no solo en el activo
+        // 🎯 SOLUCIÓN: Renderizar en TODOS los contenedores con números independientes por modo
         const allModes = ['CLASSIC', 'RAPID', 'VIP', 'NIGHT'];
         
         allModes.forEach(modeId => {
@@ -4421,7 +4475,9 @@ class BingoPro {
             if (container) {
                 console.log(`✅ Renderizando números llamados para modo: ${modeId}`);
                 
-                // 🎨 Estructura HTML moderna con header y grid (IDÉNTICA para todos los modos)
+                const calledNumbers = this.getCalledNumbersForMode(modeId);
+                
+                // 🎨 Estructura HTML moderna con header y grid (INDEPENDIENTE para cada modo)
                 container.innerHTML = `
                     <div class="numbers-header">
                         <div class="numbers-title">
@@ -4429,11 +4485,11 @@ class BingoPro {
                             NÚMEROS LLAMADOS
                         </div>
                         <div class="numbers-count">
-                            ${this.calledNumbers.size}/90
+                            ${calledNumbers.size}/90
                         </div>
                     </div>
                     <div class="numbers-grid">
-                        ${this.generateNumbersGrid()}
+                        ${this.generateNumbersGrid(modeId)}
                     </div>
                 `;
                 
@@ -4441,13 +4497,13 @@ class BingoPro {
                 container.className = 'numbers-container mode-numbers';
                 container.setAttribute('data-mode', modeId);
                 
-                console.log(`✅ Panel de números llamados actualizado para modo ${modeId}`);
+                console.log(`✅ Panel de números llamados actualizado para modo ${modeId} (${calledNumbers.size} números)`);
             } else {
                 console.warn(`⚠️ Contenedor para modo ${modeId} no encontrado`);
             }
         });
         
-        console.log(`✅ TODOS los modos tienen ahora el mismo grid de números llamados`);
+        console.log(`✅ TODOS los modos tienen ahora números llamados INDEPENDIENTES`);
     }
     
     // 🎯 NUEVO: Función para renderizar números llamados para un modo específico
@@ -4460,7 +4516,9 @@ class BingoPro {
         
         console.log(`🔧 Renderizando números llamados para modo específico: ${modeId}`);
         
-        // 🎨 Estructura HTML IDÉNTICA para todos los modos
+        const calledNumbers = this.getCalledNumbersForMode(modeId);
+        
+        // 🎨 Estructura HTML INDEPENDIENTE para cada modo
         container.innerHTML = `
             <div class="numbers-header">
                 <div class="numbers-title">
@@ -4468,11 +4526,11 @@ class BingoPro {
                     NÚMEROS LLAMADOS
                 </div>
                 <div class="numbers-count">
-                    ${this.calledNumbers.size}/90
+                    ${calledNumbers.size}/90
                 </div>
             </div>
             <div class="numbers-grid">
-                ${this.generateNumbersGrid()}
+                ${this.generateNumbersGrid(modeId)}
             </div>
         `;
         
@@ -4480,11 +4538,15 @@ class BingoPro {
         container.className = 'numbers-container mode-numbers';
         container.setAttribute('data-mode', modeId);
         
-        console.log(`✅ Modo ${modeId} renderizado con éxito`);
+        console.log(`✅ Modo ${modeId} renderizado con éxito (${calledNumbers.size} números)`);
     }
     
     // 🎨 NUEVO: Función para generar el grid de números
-    generateNumbersGrid() {
+    // 🎯 NUEVO: Función para generar el grid de números
+    generateNumbersGrid(modeId = null) {
+        const targetMode = modeId || this.currentGameMode?.id || 'CLASSIC';
+        const calledNumbers = this.calledNumbersByMode[targetMode] || new Set();
+        
         let html = '';
         
         // Crear grid de 9x10 para los números del 1-90
@@ -4492,7 +4554,7 @@ class BingoPro {
             for (let col = 0; col < 10; col++) {
                 const number = row * 10 + col + 1;
                 if (number <= 90) {
-                    const isCalled = this.calledNumbers.has(number);
+                    const isCalled = calledNumbers.has(number);
                     const numberClass = `called-number ${isCalled ? 'called' : ''}`;
                     
                     html += `
@@ -4505,6 +4567,51 @@ class BingoPro {
         }
         
         return html;
+    }
+
+    // 🎯 NUEVO: Función para testing - mostrar estado de todos los modos
+    showAllModesStatus() {
+        console.log('📊 ESTADO DE TODOS LOS MODOS:');
+        Object.keys(this.calledNumbersByMode).forEach(modeId => {
+            const numbers = this.calledNumbersByMode[modeId];
+            console.log(`🎮 ${modeId}: ${numbers.size} números llamados - [${Array.from(numbers).join(', ')}]`);
+        });
+        console.log(`🎯 Modo actual: ${this.currentGameMode?.id}`);
+        console.log(`🎯 Números del modo actual: ${this.calledNumbers.size}`);
+    }
+
+    // 🎯 NUEVO: Obtener números llamados para un modo específico
+    getCalledNumbersForMode(modeId) {
+        return this.calledNumbersByMode[modeId] || new Set();
+    }
+
+    // 🎯 NUEVO: Agregar número llamado a un modo específico
+    addCalledNumberToMode(modeId, number) {
+        if (!this.calledNumbersByMode[modeId]) {
+            this.calledNumbersByMode[modeId] = new Set();
+        }
+        this.calledNumbersByMode[modeId].add(number);
+        
+        // Actualizar el modo actual si es el mismo
+        if (modeId === this.currentGameMode?.id) {
+            this.calledNumbers.add(number);
+        }
+        
+        console.log(`✅ Número ${number} agregado al modo ${modeId}`);
+    }
+
+    // 🎯 NUEVO: Limpiar números llamados de un modo específico
+    clearCalledNumbersForMode(modeId) {
+        if (this.calledNumbersByMode[modeId]) {
+            this.calledNumbersByMode[modeId].clear();
+            
+            // Limpiar también el modo actual si es el mismo
+            if (modeId === this.currentGameMode?.id) {
+                this.calledNumbers.clear();
+            }
+            
+            console.log(`🧹 Números llamados limpiados para modo ${modeId}`);
+        }
     }
 
     updateLastNumber() {
@@ -8584,29 +8691,28 @@ class BingoPro {
 
     // 🚀 NUEVO: Método para agregar números llamados al estado central
     addCalledNumber(number) {
-        console.log(`🎯 addCalledNumber() ejecutándose para número: ${number}`);
+        const currentMode = this.currentGameMode?.id || 'CLASSIC';
+        console.log(`🎯 addCalledNumber() ejecutándose para número: ${number} en modo ${currentMode}`);
         
-        if (!this.calledNumbers.has(number)) {
-            this.calledNumbers.add(number);
-            console.log(`✅ Número ${number} agregado a calledNumbers. Total: ${this.calledNumbers.size}`);
-            
-            // 🎯 MARCAR NÚMEROS EN CARTAS SELECCIONADAS
-            this.markNumberOnSelectedCards(number);
-            
-            // 🔄 ACTUALIZAR VISUALIZACIÓN
-            this.renderCalledNumbers();
-            this.renderCards();
-            
-            // 💾 GUARDAR ESTADO
-            this.saveCalledNumbers();
-            
-            // 🎯 VERIFICAR CONDICIONES DE VICTORIA
-            this.checkVictoryConditions();
-            
-            console.log(`✅ Número ${number} procesado completamente`);
-        } else {
-            console.log(`ℹ️ Número ${number} ya estaba en calledNumbers`);
-        }
+        // Agregar al modo específico
+        this.addCalledNumberToMode(currentMode, number);
+        
+        console.log(`✅ Número ${number} agregado a modo ${currentMode}. Total: ${this.calledNumbersByMode[currentMode].size}`);
+        
+        // 🎯 MARCAR NÚMEROS EN CARTAS SELECCIONADAS
+        this.markNumberOnSelectedCards(number);
+        
+        // 🔄 ACTUALIZAR VISUALIZACIÓN
+        this.renderCalledNumbers();
+        this.renderCards();
+        
+        // 💾 GUARDAR ESTADO
+        this.saveUserCards();
+        
+        // 🎯 VERIFICAR CONDICIONES DE VICTORIA
+        this.checkWin();
+        
+        console.log(`✅ Número ${number} procesado completamente en modo ${currentMode}`);
     }
     
     // 🚀 NUEVO: Método para marcar números en cartas seleccionadas (SIN RENDERIZAR)
@@ -10693,5 +10799,59 @@ window.HeaderManager = {
     forceUpdate() {
         console.log('🚨 Forzando actualización del header...');
         this.updateFromState();
+    }
+};
+
+// ===== FUNCIONES DE TESTING GLOBALES =====
+window.simulateNumberCall = function(number) {
+    if (window.bingoGame && window.bingoGame.addCalledNumber) {
+        window.bingoGame.addCalledNumber(number);
+    } else {
+        console.error('❌ BingoGame no disponible');
+    }
+};
+
+window.checkGameState = function() {
+    if (window.bingoGame) {
+        console.log('🎮 ESTADO DEL JUEGO:');
+        console.log('🎯 Modo actual:', window.bingoGame.currentGameMode?.id);
+        console.log('🎯 Números llamados:', window.bingoGame.calledNumbers);
+        console.log('🎯 Cartones del usuario:', window.bingoGame.userCards);
+        console.log('🎯 Modo actual:', window.bingoGame.currentGameMode);
+    } else {
+        console.error('❌ BingoGame no disponible');
+    }
+};
+
+// 🎯 NUEVO: Función para testing del sistema por modo
+window.testModeSystem = function() {
+    if (window.bingoGame) {
+        console.log('🧪 TESTING SISTEMA POR MODO:');
+        window.bingoGame.showAllModesStatus();
+        
+        // Simular números en diferentes modos
+        console.log('🧪 Simulando números en diferentes modos...');
+        window.bingoGame.addCalledNumberToMode('CLASSIC', 15);
+        window.bingoGame.addCalledNumberToMode('RAPID', 23);
+        window.bingoGame.addCalledNumberToMode('VIP', 45);
+        window.bingoGame.addCalledNumberToMode('NIGHT', 67);
+        
+        console.log('🧪 Después de agregar números:');
+        window.bingoGame.showAllModesStatus();
+        
+        // Renderizar para ver cambios
+        window.bingoGame.renderCalledNumbers();
+        
+    } else {
+        console.error('❌ BingoGame no disponible');
+    }
+};
+
+// 🎯 NUEVO: Función para sincronizar todos los modos
+window.syncAllModes = function() {
+    if (window.bingoGame && window.bingoGame.syncAllModesFromBackend) {
+        window.bingoGame.syncAllModesFromBackend();
+    } else {
+        console.error('❌ Función syncAllModesFromBackend no disponible');
     }
 };
