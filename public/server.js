@@ -550,36 +550,45 @@ class GlobalBingoGame {
         console.log('🔍 DEBUG: Tipo de userId:', typeof userId);
         console.log('🔍 DEBUG: Jugadores actuales:', Array.from(this.players.keys()));
         
-        // Verificar si el jugador ya existe (por email o userId)
-        if (this.players.has(userId)) {
-            // Actualizar la sesión existente
-            const existingPlayer = this.players.get(userId);
-            existingPlayer.cards = cards;
-            existingPlayer.lastSeen = new Date();
-            existingPlayer.sessionCount = (existingPlayer.sessionCount || 1); // Mantener contador de sesiones
-            this.players.set(userId, existingPlayer);
-            console.log('🔄 Sesión actualizada para jugador existente:', userId);
-            console.log('📊 Sesiones activas para este usuario:', existingPlayer.sessionCount);
-        } else {
-            // Crear nueva sesión
-            this.players.set(userId, {
-                cards: cards,
-                lastSeen: new Date(),
-                sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                sessionCount: 1, // Contador de sesiones activas
-                userId: userId // Guardar el userId para referencia
-            });
-            console.log('👤 Nuevo jugador unido al bingo global:', userId);
-        }
-        
-        console.log('📊 Total de jugadores únicos conectados:', this.players.size);
-        console.log('🔍 DEBUG: Lista completa de jugadores:', Array.from(this.players.keys()));
-        
-        // Log adicional para detectar duplicados
-        if (userId.includes('@')) {
-            console.log('📧 Usuario autenticado por email detectado:', userId);
-        } else if (userId.startsWith('anonymous_')) {
-            console.log('👤 Usuario anónimo detectado:', userId);
+        try {
+            // Verificar si el jugador ya existe (por email o userId)
+            if (this.players.has(userId)) {
+                // Actualizar la sesión existente
+                const existingPlayer = this.players.get(userId);
+                existingPlayer.cards = cards;
+                existingPlayer.lastSeen = new Date();
+                existingPlayer.sessionCount = (existingPlayer.sessionCount || 1); // Mantener contador de sesiones
+                this.players.set(userId, existingPlayer);
+                console.log('🔄 Sesión actualizada para jugador existente:', userId);
+                console.log('📊 Sesiones activas para este usuario:', existingPlayer.sessionCount);
+            } else {
+                // Crear nueva sesión
+                this.players.set(userId, {
+                    cards: cards,
+                    lastSeen: new Date(),
+                    sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    sessionCount: 1, // Contador de sesiones activas
+                    userId: userId // Guardar el userId para referencia
+                });
+                console.log('👤 Nuevo jugador unido al bingo global:', userId);
+            }
+            
+            console.log('📊 Total de jugadores únicos conectados:', this.players.size);
+            console.log('🔍 DEBUG: Lista completa de jugadores:', Array.from(this.players.keys()));
+            
+            // Log adicional para detectar duplicados
+            if (userId.includes('@')) {
+                console.log('📧 Usuario autenticado por email detectado:', userId);
+            } else if (userId.startsWith('anonymous_')) {
+                console.log('👤 Usuario anónimo detectado:', userId);
+            }
+            
+            // 🎯 CORREGIDO: Retornar true para indicar éxito
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Error en joinPlayer:', error);
+            return false;
         }
     }
     
