@@ -156,11 +156,17 @@ class GlobalBingoManager {
     }
     
     getTotalActivePlayers() {
-        let total = 0;
+        // 🚫 CORREGIDO: Contar jugadores únicos, no duplicados por modo
+        const uniquePlayers = new Set();
+        
         this.games.forEach(game => {
-            total += game.players.size;
+            // Agregar cada userId al Set (automáticamente elimina duplicados)
+            game.players.forEach((playerData, userId) => {
+                uniquePlayers.add(userId);
+            });
         });
-        return total;
+        
+        return uniquePlayers.size;
     }
     
     getTotalPlayersWithCards() {
