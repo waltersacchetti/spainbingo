@@ -1367,10 +1367,24 @@ class BingoPro {
         const totalOnlinePlayers = this.getTotalOnlinePlayers();
         const playersByMode = this.getActivePlayersByMode();
         
-        // Actualizar contador total de jugadores online
+        // 🔍 DEBUG: Verificar qué elementos del DOM existen
         const totalPlayersElement = document.getElementById('totalPlayers');
+        const activePlayersElement = document.getElementById('activePlayers');
+        
+        console.log('🔍 DEBUG: Elementos del DOM encontrados:', {
+            totalPlayersElement: !!totalPlayersElement,
+            activePlayersElement: !!activePlayersElement,
+            totalPlayersText: totalPlayersElement?.textContent,
+            activePlayersText: activePlayersElement?.textContent
+        });
+        
+        // Actualizar contador total de jugadores online
         if (totalPlayersElement) {
+            const previousText = totalPlayersElement.textContent;
             totalPlayersElement.textContent = totalOnlinePlayers.toLocaleString('es-ES');
+            console.log(`🔍 DEBUG: totalPlayers actualizado: "${previousText}" → "${totalPlayersElement.textContent}"`);
+        } else {
+            console.warn('⚠️ Elemento totalPlayers no encontrado en el DOM');
         }
         
         // Actualizar jugadores activos por modo
@@ -1381,9 +1395,12 @@ class BingoPro {
         
         // Actualizar contador general de jugadores activos
         const totalActivePlayers = Object.values(playersByMode).reduce((sum, count) => sum + count, 0);
-        const activePlayersElement = document.getElementById('activePlayers');
         if (activePlayersElement) {
+            const previousText = activePlayersElement.textContent;
             activePlayersElement.textContent = totalActivePlayers.toLocaleString('es-ES');
+            console.log(`🔍 DEBUG: activePlayers actualizado: "${previousText}" → "${activePlayersElement.textContent}"`);
+        } else {
+            console.warn('⚠️ Elemento activePlayers no encontrado en el DOM');
         }
         
         console.log('👥 Contadores actualizados con datos locales:', {

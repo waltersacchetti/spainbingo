@@ -1996,6 +1996,49 @@ app.get('/api/bingo/debug-players', (req, res) => {
     }
 });
 
+// 🔍 ENDPOINT DE DEBUGGING FRONTEND - Ver estado del DOM y JavaScript
+app.get('/api/bingo/debug-frontend', (req, res) => {
+    try {
+        console.log('🔍 DEBUG: Endpoint de debugging del frontend llamado');
+        
+        const debugInfo = {
+            timestamp: new Date().toISOString(),
+            backendStats: null,
+            frontendState: {
+                hasBingoGame: false,
+                hasGlobalGameState: false,
+                totalPlayersElements: [],
+                activePlayersElements: [],
+                modePlayerCountElements: []
+            }
+        };
+        
+        // Obtener estadísticas del backend
+        try {
+            const backendResponse = await fetch('http://localhost:3000/api/bingo/global-stats');
+            if (backendResponse.ok) {
+                const backendData = await backendResponse.json();
+                debugInfo.backendStats = backendData;
+            }
+        } catch (error) {
+            console.log('⚠️ No se pudo obtener estadísticas del backend:', error.message);
+        }
+        
+        res.json({
+            success: true,
+            debug: debugInfo,
+            message: 'Endpoint de debugging del frontend funcionando. Revisa la consola del navegador para más detalles.'
+        });
+        
+    } catch (error) {
+        console.error('❌ ERROR: Error generando debugging del frontend:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error generando debugging del frontend'
+        });
+    }
+});
+
 // API para unirse al juego global por modo
 app.post('/api/bingo/join', rateLimitMiddleware(bingoApiLimiter), (req, res) => {
     try {
