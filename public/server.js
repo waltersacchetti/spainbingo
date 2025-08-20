@@ -1997,7 +1997,7 @@ app.get('/api/bingo/debug-players', (req, res) => {
 });
 
 // 🔍 ENDPOINT DE DEBUGGING FRONTEND - Ver estado del DOM y JavaScript
-app.get('/api/bingo/debug-frontend', (req, res) => {
+app.get('/api/bingo/debug-frontend', async (req, res) => {
     try {
         console.log('🔍 DEBUG: Endpoint de debugging del frontend llamado');
         
