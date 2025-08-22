@@ -1351,7 +1351,8 @@ body::before {
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
-    animation: numberScale 1.5s ease-in-out infinite alternate !important;
+    /* 🚫 COMENTADO: Animación que causaba oscilación de contadores */
+    /* animation: numberScale 1.5s ease-in-out infinite alternate !important; */
 }
 
 .level-message {
