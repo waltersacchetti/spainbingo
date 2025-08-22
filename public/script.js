@@ -1312,15 +1312,16 @@ class BingoPro {
     }
     
     /**
-     * 🎯 OBTENER TOTAL DE JUGADORES ONLINE
+     * 🎯 CORREGIDO: OBTENER TOTAL DE JUGADORES ONLINE
+     * SOLUCIONA: Números simulados de jugadores que no existen
      */
     getTotalOnlinePlayers() {
         // Si tenemos datos del servidor, usarlos
-        if (this.globalGameState?.totalOnlinePlayers) {
+        if (this.globalGameState?.totalOnlinePlayers !== undefined) {
             return this.globalGameState.totalOnlinePlayers;
         }
         
-        // Simular basado en el estado actual del juego
+        // 🎯 SOLO CONTAR JUGADORES REALES, NO SIMULAR
         let total = 0;
         Object.keys(this.modeCycles).forEach(modeId => {
             const cycle = this.modeCycles[modeId];
@@ -1329,10 +1330,8 @@ class BingoPro {
             }
         });
         
-        // Añadir jugadores "fantasma" para simular actividad real
-        const baseOnline = Math.max(total, 50);
-        const randomVariation = Math.floor(Math.random() * 30) - 15; // ±15
-        return Math.max(baseOnline + randomVariation, 20);
+        // 🚫 NO SIMULAR JUGADORES FANTASMA - SOLO DATOS REALES
+        return total;
     }
     
     /**
