@@ -16,7 +16,7 @@ module.exports = {
       DB_PORT: 5432,
       DB_NAME: 'spainbingo',
       DB_USERNAME: 'spainbingo_admin',
-      DB_PASSWORD: process.env.DB_PASSWORD || '', // From environment variable
+      DB_PASSWORD: 'SpainBingo2024!', // Hardcoded for now
       SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '', // From environment variable
       SENDGRID_FROM_EMAIL: 'noreply@em438.bingoroyal.es',
       SENDGRID_FROM_NAME: 'BingoRoyal',
