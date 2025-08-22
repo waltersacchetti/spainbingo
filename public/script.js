@@ -4588,9 +4588,9 @@ class BingoPro {
         
         // Estadísticas adicionales
         if (totalPlayersElement) {
-            // Usar el mismo valor que se muestra en el hero section
-            const currentPlayers = this.globalGameState?.totalPlayers || 0;
-            totalPlayersElement.textContent = currentPlayers;
+            // 🚫 COMENTADO: No actualizar aquí para evitar interferencia con updatePlayerCounts()
+            // const currentPlayers = this.globalGameState?.totalPlayers || 0;
+            // totalPlayersElement.textContent = currentPlayers;
         }
         
         if (totalCardsElement) {
@@ -7897,20 +7897,21 @@ class BingoPro {
         }
         
         if (totalPlayersElement) {
-            console.log(`🔍 DEBUG: Actualizando total jugadores online:`, totalPlayersElement.textContent, '→', totalOnlinePlayers);
+            // 🚫 COMENTADO: No actualizar aquí para evitar interferencia con updatePlayerCounts()
+            // console.log(`🔍 DEBUG: Actualizando total jugadores online:`, totalPlayersElement.textContent, '→', totalOnlinePlayers);
             
             // Formatear el número con comas para mejor legibilidad
-            const formattedTotal = totalOnlinePlayers.toLocaleString('es-ES');
-            totalPlayersElement.textContent = formattedTotal;
+            // const formattedTotal = totalOnlinePlayers.toLocaleString('es-ES');
+            // totalPlayersElement.textContent = formattedTotal;
             
             // Agregar clase para animación si el número cambió
-            if (totalPlayersElement.dataset.lastCount !== totalOnlinePlayers.toString()) {
-                totalPlayersElement.classList.add('player-count-updated');
-                setTimeout(() => {
-                    totalPlayersElement.classList.remove('player-count-updated');
-                }, 1000);
-                totalPlayersElement.dataset.lastCount = totalOnlinePlayers.toString();
-            }
+            // if (totalPlayersElement.dataset.lastCount !== totalOnlinePlayers.toString()) {
+            //     totalPlayersElement.classList.add('player-count-updated');
+            //     setTimeout(() => {
+            //         totalPlayersElement.classList.remove('player-count-updated');
+            //     }, 1000);
+            //     totalPlayersElement.dataset.lastCount = totalOnlinePlayers.toString();
+            // }
         }
         
         console.log('👥 Jugadores actualizados - Con cartones:', playersWithCards, 'Total online:', totalOnlinePlayers);
