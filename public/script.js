@@ -1259,37 +1259,56 @@ class BingoPro {
     }
     
     /**
-     * 🎯 NUEVO: SISTEMA DE JUGADORES ONLINE Y ACTIVOS POR MODO
+     * 🎯 CORREGIDO: SISTEMA DE JUGADORES ONLINE Y ACTIVOS POR MODO
+     * SOLUCIONA: Contadores incorrectos de jugadores online vs activos por modo
      */
-    updatePlayerCounts() {
-        // Obtener datos reales del servidor o simular basado en el estado del juego
-        const totalOnlinePlayers = this.getTotalOnlinePlayers();
-        const playersByMode = this.getActivePlayersByMode();
-        
-        // Actualizar contador total de jugadores online
-        const totalPlayersElement = document.getElementById('totalPlayers');
-        if (totalPlayersElement) {
-            totalPlayersElement.textContent = totalOnlinePlayers.toLocaleString('es-ES');
+    async updatePlayerCounts() {
+        try {
+            // 🎯 OBTENER DATOS REALES DEL SERVIDOR
+            const serverData = await this.getGlobalStatsIntelligent();
+            
+            if (serverData && serverData.success && serverData.stats) {
+                const stats = serverData.stats;
+                
+                // 🎯 JUGADORES ONLINE (usuarios logueados, no necesariamente jugando)
+                const totalOnlinePlayers = stats.totalOnlinePlayers || 0;
+                const totalPlayersElement = document.getElementById('totalPlayers');
+                if (totalPlayersElement) {
+                    totalPlayersElement.textContent = totalOnlinePlayers.toLocaleString('es-ES');
+                }
+                
+                // 🎯 JUGADORES ACTIVOS POR MODO (con cartones comprados en cada modo)
+                if (stats.playersByMode) {
+                    Object.keys(stats.playersByMode).forEach(modeId => {
+                        const modeStats = stats.playersByMode[modeId];
+                        const activePlayers = modeStats.playersWithCards || 0;
+                        this.updateModePlayerCount(modeId, activePlayers);
+                    });
+                }
+                
+                // 🎯 TOTAL DE JUGADORES ACTIVOS (suma de todos los modos)
+                const totalActivePlayers = stats.totalPlayersWithCards || 0;
+                const activePlayersElement = document.getElementById('activePlayers');
+                if (activePlayersElement) {
+                    activePlayersElement.textContent = totalActivePlayers.toLocaleString('es-ES');
+                }
+                
+                console.log('✅ Contadores actualizados desde servidor:', {
+                    totalOnline: totalOnlinePlayers,
+                    totalActive: totalActivePlayers,
+                    byMode: stats.playersByMode
+                });
+                
+            } else {
+                // 🚨 FALLBACK: Usar datos locales si el servidor falla
+                console.warn('⚠️ Servidor no disponible, usando datos locales');
+                this.updatePlayerCountsFromLocalData();
+            }
+            
+        } catch (error) {
+            console.error('❌ Error actualizando contadores:', error);
+            this.updatePlayerCountsFromLocalData();
         }
-        
-        // Actualizar jugadores activos por modo
-        Object.keys(playersByMode).forEach(modeId => {
-            const activePlayers = playersByMode[modeId];
-            this.updateModePlayerCount(modeId, activePlayers);
-        });
-        
-        // Actualizar contador general de jugadores activos
-        const totalActivePlayers = Object.values(playersByMode).reduce((sum, count) => sum + count, 0);
-        const activePlayersElement = document.getElementById('activePlayers');
-        if (activePlayersElement) {
-            activePlayersElement.textContent = totalActivePlayers.toLocaleString('es-ES');
-        }
-        
-        console.log('👥 Jugadores online actualizados:', {
-            total: totalOnlinePlayers,
-            byMode: playersByMode,
-            totalActive: totalActivePlayers
-        });
     }
     
     /**
@@ -1340,26 +1359,40 @@ class BingoPro {
     }
     
     /**
-     * 🎯 ACTUALIZAR CONTADOR DE JUGADORES PARA UN MODO ESPECÍFICO
+     * 🎯 CORREGIDO: ACTUALIZAR CONTADOR DE JUGADORES PARA UN MODO ESPECÍFICO
+     * SOLUCIONA: Contadores por modo que no se actualizan correctamente
      */
     updateModePlayerCount(modeId, activePlayers) {
-        // Buscar elementos del DOM que muestren jugadores por modo
+        // 🎯 BUSCAR ELEMENTO DEL DOM POR MODO
         const modeContainer = document.querySelector(`[data-mode="${modeId}"]`);
-        if (modeContainer) {
-            const playerCountElement = modeContainer.querySelector('.mode-player-count');
-            if (playerCountElement) {
-                playerCountElement.textContent = activePlayers;
-                
-                // Añadir clase para animación si cambió
-                if (playerCountElement.dataset.lastCount !== activePlayers.toString()) {
-                    playerCountElement.classList.add('player-count-updated');
-                    setTimeout(() => {
-                        playerCountElement.classList.remove('player-count-updated');
-                    }, 1000);
-                    playerCountElement.dataset.lastCount = activePlayers.toString();
-                }
-            }
+        if (!modeContainer) {
+            console.warn(`⚠️ Contenedor para modo ${modeId} no encontrado`);
+            return;
         }
+        
+        // 🎯 BUSCAR ELEMENTO DE CONTADOR DE JUGADORES
+        const playerCountElement = modeContainer.querySelector('.mode-player-count');
+        if (!playerCountElement) {
+            console.warn(`⚠️ Contador de jugadores para modo ${modeId} no encontrado`);
+            return;
+        }
+        
+        // 🎯 ACTUALIZAR CONTADOR
+        const previousCount = parseInt(playerCountElement.textContent) || 0;
+        playerCountElement.textContent = activePlayers;
+        
+        // 🎯 ANIMACIÓN SI CAMBIÓ EL VALOR
+        if (previousCount !== activePlayers) {
+            playerCountElement.classList.add('player-count-updated');
+            setTimeout(() => {
+                playerCountElement.classList.remove('player-count-updated');
+            }, 1000);
+            
+            console.log(`✅ Contador actualizado para ${modeId}: ${previousCount} → ${activePlayers}`);
+        }
+        
+        // 🎯 GUARDAR ÚLTIMO VALOR PARA COMPARACIONES FUTURAS
+        playerCountElement.dataset.lastCount = activePlayers.toString();
     }
     
     /**
