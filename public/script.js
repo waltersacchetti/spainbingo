@@ -1302,12 +1302,14 @@ class BingoPro {
             } else {
                 // 🚨 FALLBACK: Usar datos locales si el servidor falla
                 console.warn('⚠️ Servidor no disponible, usando datos locales');
-                this.updatePlayerCountsFromLocalData();
+                // 🚫 COMENTADO: Función no implementada
+                // this.updatePlayerCountsFromLocalData();
             }
             
         } catch (error) {
             console.error('❌ Error actualizando contadores:', error);
-            this.updatePlayerCountsFromLocalData();
+            // 🚫 COMENTADO: Función no implementada
+            // this.updatePlayerCountsFromLocalData();
         }
     }
     
