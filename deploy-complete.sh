@@ -132,7 +132,7 @@ verify_deployment() {
     show_info "Verificando estado de la aplicación..."
     
     # Verificar health check
-    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats')
+    local health_check=$(ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/bingo/global-stats')
     
     if echo "$health_check" | grep -q "success"; then
         show_success "Aplicación funcionando correctamente"
@@ -207,7 +207,7 @@ check_status() {
     # Estado de las APIs
     echo ""
     show_info "Estado de las APIs:"
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats | head -5'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/bingo/global-stats | head -5'
     
     # Estado de archivos en el servidor
     echo ""
@@ -222,7 +222,7 @@ test_user_management() {
     # Probar APIs
     echo ""
     show_info "Probando APIs de gestión de usuarios:"
-    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/admin/users/stats'
+    ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'curl -s http://localhost:3000/api/bingo/global-stats'
     
     echo ""
     show_info "Probando APIs de caché:"
