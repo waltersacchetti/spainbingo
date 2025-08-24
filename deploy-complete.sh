@@ -124,6 +124,10 @@ deploy_to_ec2() {
     show_info "Reiniciando aplicación..."
     ssh -i spainbingo-key.pem ec2-user@$PUBLIC_IP 'cd /home/ec2-user && pm2 restart spainbingo'
     
+    # Esperar a que el servidor se inicialice
+    show_info "Esperando a que el servidor se inicialice..."
+    sleep 5
+    
     show_success "Despliegue a EC2 completado"
 }
 
